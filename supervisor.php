@@ -53,7 +53,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 <?php endif; ?>
 </div>
 <div class="flex items-center gap-3">
-<a href="#" onclick="logout(); return false;" class="text-sm font-semibold text-primary hover:underline">Cerrar sesioin / Log out</a>
+<a href="#" onclick="logout(); return false;" class="text-sm font-semibold text-primary hover:underline">Cerrar sesion / Log out</a>
 </div>
 </header>
 
@@ -86,7 +86,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 </main>
 
 <footer class="text-center py-6 text-slate-500 text-sm">
-                    © 2026 Laboratory Academic Management System. Todos los derechos reservados / All rights reserved.
+                    © 2026 GESTIUBO. Todos los derechos reservados / All rights reserved.
                 </footer>
 </div>
 </div>
@@ -95,6 +95,13 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
     let employees = [];
     const groupToShow = '<?php echo htmlspecialchars(trim($user['grupo'] ?? ''), ENT_QUOTES); ?>';
     const pendingChanges = new Map();
+    const maskDni = (value) => {
+        const str = String(value ?? '').trim();
+        if (!str) return '—';
+        if (str.length <= 4) return `**${str.slice(0, 1)}***`;
+        const middle = str.slice(2, -2) || '***';
+        return `**${middle}**`;
+    };
 
     function formatDate(dateStr) {
         const d = new Date(dateStr);
@@ -144,7 +151,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 <div>
                     <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">${emp.nombre} ${emp.apellidos}</p>
                     <p class="text-xs text-slate-500 dark:text-slate-400">${emp.email}</p>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">DNI: ${emp.dni}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">DNI: ${maskDni(emp.dni)}</p>
                 </div>
             `;
 
