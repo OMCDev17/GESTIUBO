@@ -1,0 +1,186 @@
+﻿<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recuperar contraseña</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        lab: {
+                            primary: '#0f172a',
+                            secondary: '#334155',
+                            accent: '#5c068c',
+                            accentLight: '#f3e8ff',
+                            accentHover: '#4a0570',
+                            success: '#10b981',
+                            warning: '#f59e0b',
+                            bg: '#f8fafc'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            background-color: #f8fafc;
+            font-family: 'Argentum Sans', system-ui, -apple-system, sans-serif;
+            overscroll-behavior: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
+<main class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col relative" data-purpose="main-terminal-card">
+<section class="p-8 md:p-16 bg-white flex flex-col relative" data-purpose="recovery-panel">
+<div class="absolute top-8 right-8 flex items-center gap-2 text-sm font-medium">
+<span class="text-lab-accent cursor-pointer border-b-2 border-lab-accent pb-0.5" id="lang-es" onclick="switchLanguage('es')">Español</span>
+<span class="text-slate-300">|</span>
+<span class="text-slate-400 hover:text-lab-primary cursor-pointer transition-colors border-b-2 border-transparent hover:border-slate-400 pb-0.5" id="lang-en" onclick="switchLanguage('en')">English</span>
+</div>
+<script>
+const texts = {
+    es: {
+        title: 'Recuperar contraseña',
+        desc: 'Te enviaremos un enlace para restablecer tu contraseña a tu correo registrado.',
+        emailLabel: 'Correo Electrónico',
+        emailPlaceholder: 'ej. empleado@dominio.com',
+        send: 'Enviar enlace de recuperación',
+        back: 'Volver al inicio de sesión',
+        alertSent: 'Se ha enviado un correo electrónico de recuperación a su dirección registrada.',
+        alertBack: 'Redirigiendo al inicio de sesión...',
+        invalidEmail: 'Por favor ingresa un correo válido (ej. Empleado@ull.es).',
+        languageToggleHint: 'Cambiar idioma'
+    },
+    en: {
+        title: 'Password Recovery',
+        desc: 'We will send a link to reset your password to your registered email.',
+        emailLabel: 'Email Address',
+        emailPlaceholder: 'e.g. employee@company.com',
+        send: 'Send recovery link',
+        back: 'Back to sign in',
+        alertSent: 'A recovery email has been sent to your registered address.',
+        alertBack: 'Redirecting to sign in...',
+        invalidEmail: 'Please enter a valid email (e.g. employee@ull.es).',
+        languageToggleHint: 'Switch language'
+    }
+};
+
+function switchLanguage(lang) {
+    window.currentLang = lang;
+    const t = texts[lang];
+
+    document.querySelector('h2').textContent = t.title;
+    document.querySelector('h2 + p').textContent = t.desc;
+    document.querySelector('label[for="email"]').textContent = t.emailLabel;
+    document.getElementById('email').placeholder = t.emailPlaceholder;
+    document.querySelector('button[type="submit"] span:first-child').textContent = t.send;
+    document.getElementById('back-link').textContent = t.back;
+
+    const errorEl = document.getElementById('email-error');
+    if (errorEl) {
+        errorEl.textContent = '';
+        errorEl.classList.add('hidden');
+    }
+
+    const esBtn = document.getElementById('lang-es');
+    const enBtn = document.getElementById('lang-en');
+
+    const setActive = (btn) => {
+        if (!btn) return;
+        btn.classList.add('text-lab-accent', 'border-lab-accent');
+        btn.classList.remove('text-slate-400', 'border-transparent');
+    };
+
+    const setInactive = (btn) => {
+        if (!btn) return;
+        btn.classList.add('text-slate-400', 'border-transparent');
+        btn.classList.remove('text-lab-accent', 'border-lab-accent');
+    };
+
+    if (lang === 'es') {
+        setActive(esBtn);
+        setInactive(enBtn);
+    } else {
+        setActive(enBtn);
+        setInactive(esBtn);
+    }
+}
+
+// Ensure the UI starts with the correct language highlighted
+switchLanguage('es');
+</script>
+<div class="mt-8 mb-10 text-center">
+<img alt="Universidad de La Laguna Logo" class="h-auto w-60 mx-auto mb-8" src="imagenes/instituto-biorganica-agonzalez-original.png"/>
+<h2 class="text-3xl font-bold text-lab-primary mb-2">Recuperar contraseña</h2>
+<p class="text-slate-500">Te enviaremos un enlace para restablecer tu contraseña a tu correo registrado.</p>
+</div>
+<form class="space-y-6 max-w-md mx-auto w-full" onsubmit="return false;">
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-700 block" for="email">Correo Electrónico</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">email</span>
+<input class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-lab-accent focus:border-transparent outline-none transition-all placeholder:text-slate-400" id="email" name="email" placeholder="ej. empleado@dominio.com" type="email" required/>
+<p id="email-error" class="mt-1 text-sm text-red-600 hidden" aria-live="polite"></p>
+</div>
+</div>
+<button class="w-full py-4 bg-lab-accent text-white font-bold rounded-2xl hover:bg-lab-accentHover shadow-lg shadow-purple-100 transition-all flex items-center justify-center gap-2 group" onclick="handleRecoverySubmit(this); return false;" type="submit">
+<span>Enviar enlace de recuperación</span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">send</span>
+</button>
+<div class="mt-8 text-center">
+<a id="back-link" class="text-lab-accent font-bold hover:underline" href="Loggin.php">Volver al inicio de sesión</a>
+</div>
+</form>
+<script>
+function handleRecoverySubmit(btn) {
+    const emailInput = document.getElementById('email');
+    const email = emailInput.value.trim();
+    const label = document.querySelector('button[type="submit"] span:first-child').textContent;
+    const isEnglish = label === 'Send recovery link';
+
+    const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    const errorEl = document.getElementById('email-error');
+
+    if (!emailPattern.test(email)) {
+        if (errorEl) {
+            errorEl.textContent = texts[window.currentLang || 'es'].invalidEmail;
+            errorEl.classList.remove('hidden');
+        }
+        emailInput.focus();
+        return;
+    }
+
+    if (errorEl) {
+        errorEl.textContent = '';
+        errorEl.classList.add('hidden');
+    }
+
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.classList.add('opacity-80', 'cursor-not-allowed');
+    btn.innerHTML = `<span>${label}</span><span class="material-symbols-outlined animate-spin">sync</span>`;
+
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.classList.remove('opacity-80', 'cursor-not-allowed');
+        btn.innerHTML = originalContent;
+
+        const alertText = isEnglish
+            ? 'A recovery email has been sent to your registered address.'
+            : 'Se ha enviado un correo electrónico de recuperación a su dirección registrada.';
+        alert(alertText);
+    }, 2000);
+}
+</script>
+</section>
+</main>
+</body></html>
