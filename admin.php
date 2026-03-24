@@ -98,6 +98,13 @@ Guardar cambios
 
     let employees = [];
     const normalizeGroup = (value) => value ? String(value).toUpperCase() : '';
+    const maskDni = (value) => {
+        const str = String(value ?? '').trim();
+        if (!str) return '—';
+        if (str.length <= 4) return `**${str.slice(0, 1)}***`;
+        const middle = str.slice(2, -2) || '***';
+        return `**${middle}**`;
+    };
     const resolveGroupName = (value) => {
         const upper = normalizeGroup(value);
         if (legacyLetterToName[upper]) return legacyLetterToName[upper];
@@ -288,7 +295,7 @@ Guardar cambios
                         { label: 'Nombre', name: 'nombre', value: emp.nombre },
                         { label: 'Apellidos', name: 'apellidos', value: emp.apellidos },
                         { label: 'Email', name: 'email', value: emp.email, type: 'email' },
-                        { label: 'DNI', name: 'dni', value: emp.dni },
+                        { label: 'DNI / Pasaporte', name: 'dni', value: emp.dni, type: 'maskedDni' },
                         { label: 'Grupo', name: 'grupo', value: resolveGroupName(emp.grupo), type: 'select', options: groupOptions },
                         { label: 'Rol', name: 'rol', value: emp.rol, type: 'select', options: roles },
                         { label: 'Inicio', name: 'fecha_inicio', value: emp.fecha_inicio, type: 'date' },
@@ -300,15 +307,22 @@ Guardar cambios
                         wrapper.className = 'space-y-1';
                         wrapper.innerHTML = `<p class="text-[11px] uppercase tracking-widest font-semibold text-slate-500 dark:text-slate-400">${label}</p>`;
 
-                        const input = type === 'select'
-                            ? createSelect({ value, name, options })
-                            : createInput({ type, value, name });
+                        if (type === 'maskedDni') {
+                            const masked = document.createElement('div');
+                            masked.className = 'mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200';
+                            masked.textContent = maskDni(value);
+                            wrapper.appendChild(masked);
+                        } else {
+                            const input = type === 'select'
+                                ? createSelect({ value, name, options })
+                                : createInput({ type, value, name });
 
-                        input.addEventListener('input', (event) => {
-                            emp[name] = event.target.value;
-                        });
+                            input.addEventListener('input', (event) => {
+                                emp[name] = event.target.value;
+                            });
 
-                        wrapper.appendChild(input);
+                            wrapper.appendChild(input);
+                        }
                         fields.appendChild(wrapper);
                     });
 
