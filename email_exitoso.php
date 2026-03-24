@@ -1,63 +1,116 @@
 ﻿<!DOCTYPE html>
-<html class="light" lang="es">
-<head>
+
+<html class="light" lang="es"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Email Enviado - Lab Portal</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5c068c",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Argentum Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
 <style>
-    body { font-family: 'Argentum Sans', sans-serif; }
-</style>
+        body {
+            font-family: 'Argentum Sans', sans-serif;
+        }
+    </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col font-display">
-<div class="flex h-full min-h-screen w-full flex-col bg-slate-50 overflow-x-hidden">
-    <div class="flex flex-col items-center pt-10 px-6">
-        <div class="max-w-[360px] mb-6">
-            <img alt="Logo universidad" class="w-full h-auto object-contain" src="imagenes/instituto-biorganica-agonzalez-original.png"/>
-        </div>
-    </div>
-    <main class="flex-1 flex items-center justify-center p-6">
-        <div class="flex flex-col max-w-[480px] w-full bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-            <div class="flex flex-col items-center mb-8">
-                <div class="w-full aspect-video bg-lab-accent/5 rounded-xl mb-8 flex items-center justify-center overflow-hidden border border-lab-accent/10">
-                    <span class="material-symbols-outlined text-lab-accent text-7xl select-none" style="font-variation-settings: 'FILL' 1, 'wght' 700;">mail</span>
-                </div>
-                <h2 class="text-slate-900 tracking-tight text-2xl md:text-3xl font-bold leading-tight text-center mb-2">
-                    Correo enviado con Ã©xito
-                </h2>
-                <p class="text-slate-500 text-lg font-medium leading-normal text-center">
-                    Hemos enviado un correo de recuperaciÃ³n a la direcciÃ³n indicada.
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display">
+<div class="relative flex h-full min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<!-- Top Logo Area -->
+<div class="flex flex-col items-center pt-10 px-6">
+<div class="max-w-[360px] mb-6">
+<img alt="Logo universidad" class="w-full h-auto object-contain" src="imagenes/instituto-biorganica-agonzalez-original.png"/>
+</div>
+</div>
+<!-- Main Content Area -->
+<main class="flex-1 flex items-center justify-center p-6">
+<div class="layout-content-container flex flex-col max-w-[480px] w-full bg-white dark:bg-slate-900/50 p-8 rounded-2xl shadow-sm border border-primary/5">
+<!-- Visual Feedback -->
+<div class="flex flex-col items-center mb-8">
+<div class="w-full aspect-video bg-primary/5 rounded-xl mb-8 flex items-center justify-center overflow-hidden border border-primary/10">
+<div class="relative">
+<span class="material-symbols-outlined text-primary text-7xl select-none" style="font-variation-settings: 'FILL' 1, 'wght' 700;">mail</span>
+</div>
+</div>
+<!-- Main Message -->
+<h2 class="text-slate-900 dark:text-slate-100 tracking-tight text-2xl md:text-3xl font-bold leading-tight text-center mb-2">
+                            Correo enviado con éxito
+                        </h2>
+<p class="text-slate-500 dark:text-slate-400 text-lg font-medium leading-normal text-center">
+                            Email sent successfully
+                        </p>
+</div>
+<!-- Informational Text -->
+<div class="text-center mb-8">
+<p class="text-slate-500 dark:text-slate-400 text-sm">
+                            Hemos enviado un correo de recuperación a la dirección indicada.
+                        </p>
+<p class="text-slate-400 dark:text-slate-500 text-xs mt-1 italic">
+                            We have sent a recovery email to the specified address.
+                        </p>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-4">
+                            Si no lo ves en unos minutos, revisa tu carpeta de spam o correo no deseado.
+                        </p>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-4">
+                            Serás redirigido al inicio de sesión en <span id="countdown" class="font-bold text-primary">8</span> segundos.
+                        </p>
+</div>
+<!-- Actions -->
+<div class="flex flex-col gap-3">
+<a href="Loggin.php" class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-5 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] hover:opacity-90 transition-opacity">
+<span class="truncate">Volver a iniciar sesión / Back to Login</span>
+</a>
+<div class="flex justify-center mt-4">
+<div class="flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">mail</span>
+<span class="text-[10px] uppercase tracking-widest font-bold">Email Sent</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer / Copyright -->
+<footer class="py-6 px-10 border-t border-primary/5 text-center">
+<p class="text-slate-400 text-xs font-medium uppercase tracking-widest">
+                    © 2026 Lab Portal. All Rights Reserved.
                 </p>
-            </div>
-            <div class="text-center mb-8">
-                <p class="text-slate-500 text-sm">
-                    Si no lo ves en unos minutos, revisa tu carpeta de spam o correo no deseado.
-                </p>
-                <p class="text-slate-500 text-sm mt-4">
-                    SerÃ¡s redirigido al inicio de sesiÃ³n en <span id="countdown" class="font-bold text-lab-accent">8</span> segundos.
-                </p>
-            </div>
-            <div class="flex flex-col gap-3">
-                <a href="Loggin.php" class="flex w-full items-center justify-center h-12 px-5 bg-lab-accent text-white text-base font-bold rounded-xl hover:bg-lab-accentHover transition-colors">
-                    Volver a iniciar sesiÃ³n
-                </a>
-            </div>
-        </div>
-    </main>
+</footer>
+</div>
 </div>
 <script>
-let seconds = 8;
-const countdownEl = document.getElementById('countdown');
-const timer = setInterval(() => {
-    seconds -= 1;
-    if (countdownEl) countdownEl.textContent = seconds;
-    if (seconds <= 0) {
-        clearInterval(timer);
-        window.location.href = 'Loggin.php';
-    }
-}, 1000);
+    (() => {
+        const countdownEl = document.getElementById('countdown');
+        let remaining = 8;
+        const tick = () => {
+            if (countdownEl) countdownEl.textContent = remaining;
+            if (remaining <= 0) {
+                window.location.href = 'Loggin.php';
+                return;
+            }
+            remaining--;
+            setTimeout(tick, 1000);
+        };
+        tick();
+    })();
 </script>
 </body>
 </html>
