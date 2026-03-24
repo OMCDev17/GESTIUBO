@@ -112,7 +112,9 @@ function switchLanguage(lang) {
     const forgotLink = document.getElementById('forgotLink');
     if (forgotLink) {
         forgotLink.textContent = t.forgot;
-        forgotLink.onclick = () => { alert(t.alertForgot); return false; };
+        // Always send the user to the password change flow
+        forgotLink.href = 'recuperacion.html';
+        forgotLink.onclick = null;
     }
     const rememberLabel = document.querySelector('label[for="remember"]');
     if (rememberLabel) rememberLabel.textContent = t.remember;
@@ -172,7 +174,7 @@ switchLanguage('es');
 </div>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">lock</span>
-<input class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-lab-accent focus:border-transparent outline-none transition-all placeholder:text-slate-400" id="password" name="password" placeholder="••••••••" type="password"/>
+<input class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-lab-accent focus:border-transparent outline-none transition-all placeholder:text-slate-400" id="password" name="password" placeholder="********" type="password"/>
 </div>
 </div>
 <div class="flex items-center">
@@ -187,7 +189,7 @@ switchLanguage('es');
 </form>
 <div class="mt-12 pt-8 border-t border-slate-100 text-center">
 <p class="text-slate-500 text-sm">
-                    ¿No tienes una cuenta? 
+                    �No tienes una cuenta? 
                     <a class="text-lab-accent font-bold hover:underline" href="Formulario.php">Crear Cuenta de Miembro</a>
 </p>
 </div>
@@ -215,7 +217,7 @@ switchLanguage('es');
         const password = document.getElementById('password').value;
 
         if (!username || !password) {
-            loginError.textContent = 'Por favor, introduce usuario y contraseña.';
+            loginError.textContent = 'Por favor, introduce usuario y contrase�a.';
             loginError.classList.remove('hidden');
             return;
         }
@@ -232,7 +234,7 @@ switchLanguage('es');
             const result = await resp.json();
 
             if (!resp.ok) {
-                loginError.textContent = result.error || 'Usuario o contraseña incorrectos.';
+                loginError.textContent = result.error || 'Usuario o contrase�a incorrectos.';
                 loginError.classList.remove('hidden');
                 return;
             }
@@ -258,5 +260,6 @@ switchLanguage('es');
 </script>
 
 </body></html>
+
 
 
