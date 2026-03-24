@@ -193,14 +193,14 @@
         <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">Grupo / Group</p>
         <select name="grupo" required class="form-select rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary h-12 text-slate-700 dark:text-slate-300">
             <option disabled selected value="">Seleccione grupo / Select group</option>
-            <option value="a">AFM-NANO</option>
-            <option value="b">AMBILAB</option>
-            <option value="c">BIOLAB</option>
-            <option value="d">GEO-GLOBAL</option>
-            <option value="e">PRODMAR</option>
-            <option value="f">QUIBIONAT</option>
-            <option value="g">QUIMIOPLAN</option>
-            <option value="h">SINTESTER</option>
+            <option value="AFM-NANO">AFM-NANO</option>
+            <option value="AMBILAB">AMBILAB</option>
+            <option value="BIOLAB">BIOLAB</option>
+            <option value="GEO-GLOBAL">GEO-GLOBAL</option>
+            <option value="PRODMAR">PRODMAR</option>
+            <option value="QUIBIONAT">QUIBIONAT</option>
+            <option value="QUIMIOPLAN">QUIMIOPLAN</option>
+            <option value="SINTESTER">SINTESTER</option>
         </select>
     </label>
 </div>

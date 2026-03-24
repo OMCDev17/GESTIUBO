@@ -97,6 +97,12 @@ Guardar cambios
     ];
 
     let employees = [];
+    const normalizeGroup = (value) => value ? String(value).toUpperCase() : '';
+    const resolveGroupName = (value) => {
+        const upper = normalizeGroup(value);
+        if (legacyLetterToName[upper]) return legacyLetterToName[upper];
+        return value || '';
+    };
 
     function formatDate(dateStr) {
         const d = new Date(dateStr);
@@ -110,11 +116,34 @@ Guardar cambios
         return end >= new Date(today.getFullYear(), today.getMonth(), today.getDate());
     }
 
+    const groupOptions = [
+        { value: 'AFM-NANO', label: 'AFM-NANO' },
+        { value: 'AMBILAB', label: 'AMBILAB' },
+        { value: 'BIOLAB', label: 'BIOLAB' },
+        { value: 'GEO-GLOBAL', label: 'GEO-GLOBAL' },
+        { value: 'PRODMAR', label: 'PRODMAR' },
+        { value: 'QUIBIONAT', label: 'QUIBIONAT' },
+        { value: 'QUIMIOPLAN', label: 'QUIMIOPLAN' },
+        { value: 'SINTESTER', label: 'SINTESTER' },
+    ];
+
+    const legacyLetterToName = {
+        'A': 'AFM-NANO',
+        'B': 'AMBILAB',
+        'C': 'BIOLAB',
+        'D': 'GEO-GLOBAL',
+        'E': 'PRODMAR',
+        'F': 'QUIBIONAT',
+        'G': 'QUIMIOPLAN',
+        'H': 'SINTESTER',
+    };
+
     function mapFromDb(emp) {
         return {
             ...emp,
             dni: emp.dni_pasaporte,
             foto: emp.foto_url,
+            grupo: resolveGroupName(emp.grupo),
         };
     }
 
@@ -131,7 +160,7 @@ Guardar cambios
             motivo: emp.motivo || null,
             fecha_inicio: emp.fecha_inicio || null,
             fecha_fin: emp.fecha_fin || null,
-            grupo: emp.grupo || null,
+            grupo: resolveGroupName(emp.grupo) || null,
             foto_url: emp.foto || null,
             rol: emp.rol || 'empleado',
         };
@@ -197,16 +226,26 @@ Guardar cambios
         const container = document.getElementById('groupsContainer');
         container.innerHTML = '';
 
-        const groups = Array.from(new Set(employees.map(e => e.grupo))).sort();
+        const groups = Array.from(new Set(employees.map(e => resolveGroupName(e.grupo)).filter(Boolean)))
+            .sort((a, b) => {
+                const order = groupOptions.map(o => o.value);
+                const ia = order.indexOf(resolveGroupName(a));
+                const ib = order.indexOf(resolveGroupName(b));
+                if (ia === -1 && ib === -1) return String(a).localeCompare(String(b));
+                if (ia === -1) return 1;
+                if (ib === -1) return -1;
+                return ia - ib;
+            });
 
         groups.forEach((group) => {
+            const currentLabel = resolveGroupName(group);
             const groupSection = document.createElement('section');
             groupSection.className = 'space-y-4';
 
             const header = document.createElement('div');
             header.className = 'flex items-center justify-between gap-3';
             header.innerHTML = `
-                <h2 class="text-lg font-bold text-primary">Grupo ${group}</h2>
+                <h2 class="text-lg font-bold text-primary">Grupo ${currentLabel}</h2>
                 <span class="text-sm text-slate-500 dark:text-slate-400">${employees.filter(e => e.grupo === group).length} empleados</span>
             `;
 
@@ -250,12 +289,7 @@ Guardar cambios
                         { label: 'Apellidos', name: 'apellidos', value: emp.apellidos },
                         { label: 'Email', name: 'email', value: emp.email, type: 'email' },
                         { label: 'DNI', name: 'dni', value: emp.dni },
-                        { label: 'Grupo', name: 'grupo', value: emp.grupo, type: 'select', options: [
-                            { value: 'A', label: 'A' },
-                            { value: 'B', label: 'B' },
-                            { value: 'C', label: 'C' },
-                            { value: 'D', label: 'D' },
-                        ] },
+                        { label: 'Grupo', name: 'grupo', value: resolveGroupName(emp.grupo), type: 'select', options: groupOptions },
                         { label: 'Rol', name: 'rol', value: emp.rol, type: 'select', options: roles },
                         { label: 'Inicio', name: 'fecha_inicio', value: emp.fecha_inicio, type: 'date' },
                         { label: 'Fin', name: 'fecha_fin', value: emp.fecha_fin, type: 'date' },
@@ -308,13 +342,14 @@ Guardar cambios
         expired.forEach((emp) => {
             const item = document.createElement('div');
             item.className = 'flex flex-col gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4';
+            const label = resolveGroupName(emp.grupo);
             item.innerHTML = `
                 <div class="flex items-center justify-between gap-4">
                     <div class="flex items-center gap-3">
                         <img class="h-12 w-12 rounded-full object-cover border border-slate-200 dark:border-slate-700" src="${emp.foto}" alt="${emp.nombre} ${emp.apellidos}" />
                         <div>
                             <p class="font-semibold text-slate-900 dark:text-slate-100">${emp.nombre} ${emp.apellidos}</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">${emp.rol} — Grupo ${emp.grupo}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">${emp.rol} — Grupo ${label}</p>
                         </div>
                     </div>
                     <span class="text-xs font-semibold text-rose-700 dark:text-rose-200">Contrato finalizado</span>

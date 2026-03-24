@@ -189,7 +189,7 @@ switchLanguage('es');
 </form>
 <div class="mt-12 pt-8 border-t border-slate-100 text-center">
 <p class="text-slate-500 text-sm">
-                    �No tienes una cuenta? 
+                    ¿No tienes una cuenta? 
                     <a class="text-lab-accent font-bold hover:underline" href="Formulario.php">Crear Cuenta de Miembro</a>
 </p>
 </div>
