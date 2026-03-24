@@ -53,7 +53,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 <?php endif; ?>
 </div>
 <div class="flex items-center gap-3">
-<a href="#" onclick="logout(); return false;" class="text-sm font-semibold text-primary hover:underline">Cerrar sesi�n / Log out</a>
+<a href="#" onclick="logout(); return false;" class="text-sm font-semibold text-primary hover:underline">Cerrar sesion / Log out</a>
 </div>
 </header>
 
@@ -76,7 +76,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 <!-- Save section -->
 <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 p-6">
 <div>
-<p class="text-sm text-slate-600 dark:text-slate-400">Modifica la fecha de finalización y pulsa guardar para aplicar los cambios (simulado).</p>
+<p class="text-sm text-slate-600 dark:text-slate-400">Modifica la fecha de finalización y pulsa guardar para aplicar los cambios.</p>
 <p id="saveStatus" class="mt-2 text-sm font-semibold text-green-600 dark:text-green-400 hidden">Cambios guardados correctamente.</p>
 </div>
 <button id="saveButton" class="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all">Guardar cambios</button>
@@ -109,6 +109,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             if (!Array.isArray(json.employees)) throw new Error('Respuesta inválida');
             employees = json.employees.map((emp) => ({
                 ...emp,
+                id: Number(emp.id),
                 dni: emp.dni_pasaporte,
                 foto: emp.foto_url,
             }));

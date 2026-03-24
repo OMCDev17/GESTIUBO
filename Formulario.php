@@ -58,7 +58,7 @@
 <div class="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/40 z-10"></div>
 <img alt="Laboratory Background" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZINg3o_zUPuS5vXuAfwcYBTPAY7UjRzIkRxchiRppJOXJBYT77Q4ZjA6ibEOrIGyCZJm_6886aBItSr_RkLtAaQ6FaAoNDGT08M-qYujjz5SOp4Z0euT6ZLlandn9BC1XDLC9RZzDwHHE9LQJaCDDxUepy-vii0jOsCshBOOTfYTUvyoLltdOSHSVKEcGqiuUPaw5svrDnuc-KTMst5JN7kDCGOx4YoU3CtE1b74EN_nQCMwnPu-1mKtJjd674GTO8ufwI2YAk6o"/>
 <div class="relative z-20 h-full flex flex-col justify-end p-8">
-<h1 class="text-white text-3xl font-bold">Alta de Empleado de Laboratorio / Laboratory Employee Registration</h1>
+<h1 class="text-white text-3xl font-bold">Alta de Miembro / Member Registration</h1>
 <p class="text-white/80 text-sm mt-2">Formulario oficial para la incorporación de personal académico y científico / Official form for the incorporation of academic and scientific staff.</p>
 </div>
 </div>
@@ -71,7 +71,8 @@
 <span class="material-symbols-outlined text-sm">person</span>
                                 Información Personal / Personal Information
                             </h3>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+<div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
 <label class="flex flex-col gap-2">
 <p class="text-slate-700 dark:text-slate-300 text-sm font-semibold">Nombre / Name</p>
 <input class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12" placeholder="Ej: Francisco / e.g., Francis" type="text" name="nombre" required/>
@@ -99,17 +100,39 @@
 <label class="flex flex-col gap-2">
 <p class="text-slate-700 dark:text-slate-300 text-sm font-semibold flex items-center justify-between">
     <span>Contraseña / Password</span>
-    <button type="button" class="toggle-pass text-xs text-primary hover:underline" data-target="password">Mostrar</button>
+    <button type="button" class="toggle-pass text-sm text-primary hover:text-primary/80 flex items-center gap-1" data-target="password" aria-label="Mostrar u ocultar contraseña">
+        <span class="material-symbols-outlined text-base">visibility</span>
+    </button>
 </p>
 <input id="password" class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12" placeholder="*******" type="password" name="password" required/>
 </label>
 <label class="flex flex-col gap-2">
 <p class="text-slate-700 dark:text-slate-300 text-sm font-semibold flex items-center justify-between">
     <span>Repetir contraseña / Confirm Password</span>
-    <button type="button" class="toggle-pass text-xs text-primary hover:underline" data-target="password_confirm">Mostrar</button>
+    <button type="button" class="toggle-pass text-sm text-primary hover:text-primary/80 flex items-center gap-1" data-target="password_confirm" aria-label="Mostrar u ocultar contraseña">
+        <span class="material-symbols-outlined text-base">visibility</span>
+    </button>
 </p>
 <input id="password_confirm" class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12" placeholder="*******" type="password" name="password_confirm" required/>
 </label>
+</div>
+<div class="lg:col-span-1">
+    <p class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Foto / Photo</p>
+    <label for="photoUpload" class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition">
+        <input id="photoUpload" name="photo" type="file" accept="image/*" class="sr-only" />
+        <span id="photoDropHint" class="flex flex-col items-center gap-2">
+            <span class="material-symbols-outlined text-4xl text-primary">photo_camera</span>
+            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Arrastra y suelta aquí una foto / Drag & drop a photo here</span>
+            <span class="text-xs text-slate-500 dark:text-slate-400">JPG/PNG hasta 5 MB / JPG/PNG up to 5 MB</span>
+        </span>
+        <div id="photoPreview" class="hidden flex flex-col items-center gap-2">
+            <img id="photoPreviewImg" alt="Vista previa" class="h-28 w-28 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
+            <span id="photoFileName" class="text-sm text-slate-700 dark:text-slate-200"></span>
+            <button type="button" id="photoRemoveButton" class="text-xs text-primary hover:underline" aria-label="Eliminar foto">Eliminar</button>
+        </div>
+        <p id="photoError" class="mt-2 text-xs text-red-600 dark:text-red-400 hidden"></p>
+    </label>
+</div>
 </div>
 </div>
 <hr class="border-slate-100 dark:border-slate-800"/>
@@ -125,8 +148,8 @@
 <input class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12" placeholder="Universidad o Centro de Investigación / University or Research Center" type="text" name="institucion" required/>
 </label>
 <label class="flex flex-col gap-2">
-<p class="text-slate-700 dark:text-slate-300 text-sm font-semibold">País / Country</p>
-<input class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12" placeholder="País de residencia / Country of residence" type="text" name="pais" required/>
+<p class="text-slate-700 dark:text-slate-300 text-sm font-semibold">País de la institución / Institution Country</p>
+<input class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12" placeholder="País de la institución / Institution Country" type="text" name="pais" required/>
 </label>
 </div>
 </div>
@@ -174,21 +197,6 @@
             <option value="b">B</option>
             <option value="c">C</option>
         </select>
-    </label>
-    <p class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Foto / Photo</p>
-    <label for="photoUpload" class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition">
-        <input id="photoUpload" name="photo" type="file" accept="image/*" class="sr-only" />
-        <span id="photoDropHint" class="flex flex-col items-center gap-2">
-            <span class="material-symbols-outlined text-4xl text-primary">photo_camera</span>
-            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Arrastra y suelta aquí una foto / Drag & drop a photo here</span>
-            <span class="text-xs text-slate-500 dark:text-slate-400">JPG/PNG hasta 5 MB / JPG/PNG up to 5 MB</span>
-        </span>
-        <div id="photoPreview" class="hidden flex flex-col items-center gap-2">
-            <img id="photoPreviewImg" alt="Vista previa" class="h-28 w-28 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
-            <span id="photoFileName" class="text-sm text-slate-700 dark:text-slate-200"></span>
-            <button type="button" id="photoRemoveButton" class="text-xs text-primary hover:underline" aria-label="Eliminar foto">Eliminar</button>
-        </div>
-        <p id="photoError" class="mt-2 text-xs text-red-600 dark:text-red-400 hidden"></p>
     </label>
 </div>
 </div>
@@ -297,7 +305,9 @@
                 if (!input) return;
                 const isPassword = input.type === 'password';
                 input.type = isPassword ? 'text' : 'password';
-                btn.textContent = isPassword ? 'Ocultar' : 'Mostrar';
+                const iconSpan = btn.querySelector('.material-symbols-outlined');
+                if (iconSpan) iconSpan.textContent = isPassword ? 'visibility_off' : 'visibility';
+                btn.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
             });
         });
 

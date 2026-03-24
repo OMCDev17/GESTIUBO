@@ -123,7 +123,7 @@ switchLanguage('es');
 <h2 class="text-3xl font-bold text-lab-primary mb-2">Recuperar contraseña</h2>
 <p class="text-slate-500">Te enviaremos un enlace para restablecer tu contraseña a tu correo registrado.</p>
 </div>
-<form class="space-y-6 max-w-md mx-auto w-full" onsubmit="return false;">
+<form id="recoveryForm" class="space-y-6 max-w-md mx-auto w-full" action="send_recovery_email.php" method="POST" onsubmit="return handleRecoverySubmit(event);">
 <div class="space-y-2">
 <label class="text-sm font-semibold text-slate-700 block" for="email">Correo Electrónico</label>
 <div class="relative">
@@ -132,7 +132,7 @@ switchLanguage('es');
 <p id="email-error" class="mt-1 text-sm text-red-600 hidden" aria-live="polite"></p>
 </div>
 </div>
-<button class="w-full py-4 bg-lab-accent text-white font-bold rounded-2xl hover:bg-lab-accentHover shadow-lg shadow-purple-100 transition-all flex items-center justify-center gap-2 group" onclick="handleRecoverySubmit(this); return false;" type="submit">
+<button class="w-full py-4 bg-lab-accent text-white font-bold rounded-2xl hover:bg-lab-accentHover shadow-lg shadow-purple-100 transition-all flex items-center justify-center gap-2 group" type="submit">
 <span>Enviar enlace de recuperación</span>
 <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">send</span>
 </button>
@@ -141,22 +141,20 @@ switchLanguage('es');
 </div>
 </form>
 <script>
-function handleRecoverySubmit(btn) {
+function handleRecoverySubmit(event) {
     const emailInput = document.getElementById('email');
     const email = emailInput.value.trim();
-    const label = document.querySelector('button[type="submit"] span:first-child').textContent;
-    const isEnglish = label === 'Send recovery link';
-
-    const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
     const errorEl = document.getElementById('email-error');
 
+    const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
     if (!emailPattern.test(email)) {
         if (errorEl) {
             errorEl.textContent = texts[window.currentLang || 'es'].invalidEmail;
             errorEl.classList.remove('hidden');
         }
         emailInput.focus();
-        return;
+        event.preventDefault();
+        return false;
     }
 
     if (errorEl) {
@@ -164,23 +162,10 @@ function handleRecoverySubmit(btn) {
         errorEl.classList.add('hidden');
     }
 
-    const originalContent = btn.innerHTML;
-    btn.disabled = true;
-    btn.classList.add('opacity-80', 'cursor-not-allowed');
-    btn.innerHTML = `<span>${label}</span><span class="material-symbols-outlined animate-spin">sync</span>`;
-
-    setTimeout(() => {
-        btn.disabled = false;
-        btn.classList.remove('opacity-80', 'cursor-not-allowed');
-        btn.innerHTML = originalContent;
-
-        const alertText = isEnglish
-            ? 'A recovery email has been sent to your registered address.'
-            : 'Se ha enviado un correo electrónico de recuperación a su dirección registrada.';
-        alert(alertText);
-    }, 2000);
+    return true;
 }
 </script>
 </section>
 </main>
 </body></html>
+
