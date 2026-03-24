@@ -41,8 +41,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 <div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
     <div class="layout-container flex h-full grow flex-col">
         <!-- Navigation / Header -->
-        <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-10 py-4 sticky top-0 z-50">
-            <div class="flex items-center gap-4">
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-10 py-4 sticky top-0 z-50">
+            <div class="flex items-center gap-3 flex-wrap">
                 <img alt="Logo de la Institución" class="h-10 w-auto object-contain" src="imagenes/instituto-biorganica-agonzalez-original.png"/>
                 <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] border-l border-slate-300 dark:border-slate-700 pl-4">Seguridad / Security Dashboard</h2>
                 <?php if ($fullName): ?>
@@ -74,7 +74,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         </main>
 
         <footer class="text-center py-6 text-slate-500 text-sm">
-            © 2026 Laboratory Academic Management System. Todos los derechos reservados / All rights reserved.
+            © 2026 GESTIUBO. Todos los derechos reservados / All rights reserved.
         </footer>
     </div>
 </div>

@@ -44,8 +44,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 <div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
 <div class="layout-container flex h-full grow flex-col">
 <!-- Navigation / Header -->
-<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-10 py-4 sticky top-0 z-50">
-<div class="flex items-center gap-4">
+<header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-10 py-4 sticky top-0 z-50">
+<div class="flex items-center gap-3 flex-wrap">
 <img alt="Logo de la Institución" class="h-10 w-auto object-contain" src="imagenes/instituto-biorganica-agonzalez-original.png"/>
 <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] border-l border-slate-300 dark:border-slate-700 pl-4">Admin / Administración</h2>
 <?php if ($fullName): ?>
@@ -233,7 +233,10 @@ Guardar cambios
         const container = document.getElementById('groupsContainer');
         container.innerHTML = '';
 
-        const groups = Array.from(new Set(employees.map(e => resolveGroupName(e.grupo)).filter(Boolean)))
+        // Solo contratos activos en la vista principal
+        const activeEmployees = employees.filter((e) => isContractActive(e.fecha_fin));
+
+        const groups = Array.from(new Set(activeEmployees.map(e => resolveGroupName(e.grupo)).filter(Boolean)))
             .sort((a, b) => {
                 const order = groupOptions.map(o => o.value);
                 const ia = order.indexOf(resolveGroupName(a));
@@ -253,13 +256,13 @@ Guardar cambios
             header.className = 'flex items-center justify-between gap-3';
             header.innerHTML = `
                 <h2 class="text-lg font-bold text-primary">Grupo ${currentLabel}</h2>
-                <span class="text-sm text-slate-500 dark:text-slate-400">${employees.filter(e => e.grupo === group).length} empleados</span>
+                <span class="text-sm text-slate-500 dark:text-slate-400">${activeEmployees.filter(e => e.grupo === group).length} empleados</span>
             `;
 
             const list = document.createElement('div');
             list.className = 'grid gap-6';
 
-            employees
+            activeEmployees
                 .filter(e => e.grupo === group)
                 .forEach((emp) => {
                     const card = document.createElement('div');
