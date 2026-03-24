@@ -53,7 +53,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 <?php endif; ?>
 </div>
 <div class="flex items-center gap-3">
-<a href="#" onclick="logout(); return false;" class="text-sm font-semibold text-primary hover:underline">Cerrar sesion / Log out</a>
+<a href="#" onclick="logout(); return false;" class="text-sm font-semibold text-primary hover:underline">Cerrar sesioin / Log out</a>
 </div>
 </header>
 
