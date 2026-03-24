@@ -454,6 +454,18 @@
                 });
                 const json = await res.json();
                 if (!res.ok || json.error) {
+                    // Duplicate user handling: show same style as required field errors
+                    if (res.status === 409) {
+                        const usernameField = form.querySelector('input[name="username"]');
+                        const emailField = form.querySelector('input[name="email"]');
+                        const dniField = form.querySelector('input[name="dni_pasaporte"]');
+                        [usernameField, emailField, dniField].forEach((field) => {
+                            if (field) showFieldError(field, json.error || 'El usuario ya existe.');
+                        });
+                        (usernameField || emailField || dniField)?.focus();
+                        (usernameField || emailField || dniField)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        return;
+                    }
                     showPhotoError(json.error || 'Error al registrar. Inténtelo de nuevo.');
                     return;
                 }

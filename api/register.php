@@ -35,6 +35,19 @@ if (!empty($missing)) {
     exit;
 }
 
+// Check for existing user by username, email or DNI/passport before inserting
+$dupStmt = $mysqli->prepare('SELECT id FROM employees WHERE username = ? OR email = ? OR dni_pasaporte = ? LIMIT 1');
+if ($dupStmt) {
+    $dupStmt->bind_param('sss', $data['username'], $data['email'], $data['dni_pasaporte']);
+    $dupStmt->execute();
+    $dupStmt->store_result();
+    if ($dupStmt->num_rows > 0) {
+        http_response_code(409);
+        echo json_encode(['error' => 'El usuario ya existe con el mismo nombre de usuario, email o DNI/Pasaporte']);
+        exit;
+    }
+}
+
 // Default role for self-registration
 $data['rol'] = 'empleado';
 
