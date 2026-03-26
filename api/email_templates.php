@@ -74,7 +74,7 @@ function sendWelcomeEmail($email, $userName, $firstName, $loginUrl, $config) {
         $mailer->Port = $config['smtp']['port'];
         $mailer->setFrom($config['smtp']['from_email'], 'Instituto de Bio-Orgánica Antonio González');
         $mailer->addAddress($email);
-        $mailer->Subject = 'Bienvenida a Instituto de Bio-Orgánica Antonio González';
+        $mailer->Subject = 'Bienvenido/a al Instituto de Bio-Orgánica Antonio González';
         $mailer->isHTML(true);
         $mailer->Body = $htmlBody;
         $mailer->AltBody = $textBody;
@@ -345,7 +345,7 @@ function getWelcomeTemplate($firstName, $userName, $loginUrl) {
                 overflow: hidden;
             }
             .header {
-                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                background: linear-gradient(135deg, #5c068c 0%, #7c1fa8 100%);
                 padding: 40px 20px;
                 text-align: center;
                 color: #ffffff;
@@ -375,26 +375,26 @@ function getWelcomeTemplate($firstName, $userName, $loginUrl) {
                 line-height: 1.6;
             }
             .welcome-box {
-                background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-                border: 2px solid #10b981;
+                background-color: #f3e8ff;
+                border: 2px solid #5c068c;
                 border-radius: 8px;
-                padding: 25px;
+                padding: 30px;
                 text-align: center;
-                margin: 25px 0;
+                margin: 30px 0;
             }
             .welcome-icon {
                 font-size: 48px;
                 margin-bottom: 15px;
             }
             .welcome-text {
-                font-size: 18px;
+                font-size: 22px;
                 font-weight: 600;
-                color: #059669;
+                color: #5c068c;
                 margin-bottom: 10px;
             }
             .welcome-subtext {
                 font-size: 14px;
-                color: #047857;
+                color: #64748b;
             }
             .credentials-box {
                 background-color: #f1f5f9;
@@ -472,17 +472,17 @@ function getWelcomeTemplate($firstName, $userName, $loginUrl) {
                 content: "✓";
                 position: absolute;
                 left: 0;
-                color: #10b981;
+                color: #5c068c;
                 font-weight: 700;
             }
             .info-box {
-                background-color: #f0f9ff;
-                border-left: 4px solid #0284c7;
+                background-color: #f3e8ff;
+                border-left: 4px solid #5c068c;
                 padding: 15px;
                 margin: 20px 0;
                 border-radius: 4px;
                 font-size: 13px;
-                color: #0c4a6e;
+                color: #334155;
                 line-height: 1.6;
             }
             .footer {

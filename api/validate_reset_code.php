@@ -3,6 +3,8 @@
 // API: Validar Código de Restablecimiento y Actualizar Contraseña
 // ============================================================================
 
+session_start();
+
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -26,10 +28,18 @@ $resetCode = trim($_POST['code'] ?? '');
 $newPassword = trim($_POST['newPwd'] ?? '');
 $confirmPassword = trim($_POST['confirmPwd'] ?? '');
 
+// Debug: log de datos recibidos
+error_log("DEBUG - Paso 1 - Datos recibidos: resetId=$resetId, code=$resetCode, newPwd=" . strlen($newPassword) . " chars, confirmPwd=" . strlen($confirmPassword) . " chars");
+
 // Validaciones
-if ($resetId <= 0 || empty($resetCode) || empty($newPassword)) {
+if ($resetId <= 0 || empty($resetCode) || empty($newPassword) || empty($confirmPassword)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Datos inválidos']);
+    $details = [];
+    if ($resetId <= 0) $details[] = "resetId=$resetId";
+    if (empty($resetCode)) $details[] = "code vacio";
+    if (empty($newPassword)) $details[] = "newPwd vacio";
+    if (empty($confirmPassword)) $details[] = "confirmPwd vacio";
+    echo json_encode(['error' => 'Datos inválidos: ' . implode(', ', $details)]);
     exit;
 }
 
@@ -78,5 +88,10 @@ $stmt->execute();
 $stmt->close();
 
 $mysqli->close();
+
+// Limpiar datos de sesión
+unset($_SESSION['reset_id']);
+unset($_SESSION['user_id']);
+unset($_SESSION['reset_code']);
 
 echo json_encode(['success' => true, 'message' => 'Contraseña restablecida exitosamente']);

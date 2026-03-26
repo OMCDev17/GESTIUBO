@@ -3,11 +3,15 @@
 // Página de Validación de Código y Restablecimiento de Contraseña
 // ============================================================================
 
+session_start();
+
 $config = require __DIR__ . '/api/config.php';
 $step = isset($_GET['step']) ? $_GET['step'] : 1; // Paso 1: ingresa código, Paso 2: nueva contraseña
 $validCode = false;
 $codeError = '';
 $resetCode = '';
+$resetId = 0;
+$userId = 0;
 
 // Si viene de POST, validar el código
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step == 1) {
@@ -36,10 +40,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step == 1) {
                 $validCode = true;
                 $resetId = intval($row['id']);
                 $userId = intval($row['user_id']);
+                
+                // Guardar en sesión para que persista
+                $_SESSION['reset_id'] = $resetId;
+                $_SESSION['user_id'] = $userId;
+                $_SESSION['reset_code'] = $resetCode;
+                
+                // Redirigir al paso 2
+                header('Location: resetear_contraseña.php?step=2');
+                exit;
             } else {
                 $codeError = 'El código es inválido o ha expirado';
             }
         }
+    }
+} else if ($step == 2) {
+    // Paso 2: recuperar valores de sesión
+    if (isset($_SESSION['reset_id'], $_SESSION['user_id'], $_SESSION['reset_code'])) {
+        $validCode = true;
+        $resetId = intval($_SESSION['reset_id']);
+        $userId = intval($_SESSION['user_id']);
+        $resetCode = $_SESSION['reset_code'];
+    } else {
+        // Si no hay datos en sesión, redirige al inicio
+        header('Location: resetear_contraseña.php');
+        exit;
     }
 }
 ?>
@@ -120,12 +145,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step == 1) {
                 
                 <div>
                     <label id="labelNewPassword" class="text-sm font-semibold text-slate-700 dark:text-slate-200">Nueva contraseña</label>
-                    <input id="newPwd" type="password" class="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-3 focus:ring-primary focus:border-primary" placeholder="Mínimo 4 caracteres" required>
+                    <input id="newPwd" name="newPwd" type="password" class="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-3 focus:ring-primary focus:border-primary" placeholder="Mínimo 4 caracteres" required>
                 </div>
                 
                 <div>
                     <label id="labelConfirmPassword" class="text-sm font-semibold text-slate-700 dark:text-slate-200">Confirmar contraseña</label>
-                    <input id="confirmPwd" type="password" class="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-3 focus:ring-primary focus:border-primary" placeholder="Repite tu contraseña" required>
+                    <input id="confirmPwd" name="confirmPwd" type="password" class="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-3 focus:ring-primary focus:border-primary" placeholder="Repite tu contraseña" required>
                 </div>
 
                 <div id="passwordHelp" class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 flex gap-2 text-sm text-blue-800 dark:text-blue-300">
@@ -215,8 +240,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step == 1) {
 
             try {
                 const fd = new FormData(form);
+                // Debug: mostrar datos que se envían
+                console.log('Datos enviados:');
+                for (let pair of fd.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
+                
                 const res = await fetch('api/validate_reset_code.php', { method: 'POST', body: fd });
                 const data = await res.json();
+                console.log('Respuesta del servidor:', data);
 
                 if (data.success) {
                     alert(window.passwordAlerts?.alertSuccess || 'Contraseña restablecida exitosamente');

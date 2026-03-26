@@ -93,6 +93,7 @@ if ($mailSent) {
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -125,7 +126,7 @@ if ($mailSent) {
             <div class="layout-content-container flex flex-col max-w-[520px] w-full bg-white dark:bg-slate-900/50 p-8 rounded-2xl shadow-sm border border-primary/5">
                 <div class="flex flex-col items-center mb-8">
                     <div class="w-full aspect-video bg-[#f0fdf4] dark:bg-[#064e3b] rounded-xl mb-6 flex items-center justify-center border border-emerald-200 dark:border-emerald-900">
-                        <span class="text-primary dark:text-emerald-300 text-7xl font-bold">✓</span>
+                        <span class="material-symbols-outlined text-primary text-7xl select-none" style="font-variation-settings: 'FILL' 1, 'wght' 700;">check_circle</span>
                     </div>
                     <h2 class="text-slate-900 dark:text-slate-100 tracking-tight text-2xl md:text-3xl font-bold text-center mb-2">¡Correo enviado! / Email sent</h2>
                     <p class="text-slate-500 dark:text-slate-400 text-sm text-center"><?php echo htmlspecialchars($email); ?></p>
