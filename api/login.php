@@ -1,38 +1,83 @@
-<?php
+﻿<?php
 header('Content-Type: application/json; charset=utf-8');
 
 $config = require __DIR__ . '/config.php';
-$mysqli = new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
-if ($mysqli->connect_errno) {
+
+function send500($msg)
+{
     http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión con la base de datos']);
+    echo json_encode(['error' => $msg]);
     exit;
 }
-$mysqli->set_charset($config['charset']);
+
+$db = null;
+$usingMysqli = class_exists('mysqli');
+if ($usingMysqli) {
+    $db = @new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
+    if ($db->connect_errno) {
+        send500('Error de conexión con la base de datos');
+    }
+    $db->set_charset($config['charset']);
+} elseif (extension_loaded('pdo_mysql')) {
+    try {
+        $dsn = "mysql:host={$config['host']};dbname={$config['db']};charset={$config['charset']}";
+        $db = new PDO($dsn, $config['user'], $config['pass'], [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+    } catch (Throwable $e) {
+        send500('Error de conexión con la base de datos');
+    }
+} else {
+    send500('Extensiones mysqli/pdo_mysql no disponibles en PHP.');
+}
 
 $input = json_decode(file_get_contents('php://input'), true);
-if (!is_array($input) || empty($input['username']) || empty($input['password'])) {
+if (!is_array($input) || empty($input['username']) || !array_key_exists('password', $input)) {
+    $input = $_POST;
+}
+if (!is_array($input) || empty($input['username']) || !array_key_exists('password', $input)) {
     http_response_code(400);
     echo json_encode(['error' => 'Faltan credenciales']);
     exit;
 }
 
 $username = trim($input['username']);
-$password = trim($input['password']);
+$password = $input['password'];
 
-// Start session and store user data on successful login.
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$stmt = $mysqli->prepare(
-    'SELECT id, nombre, apellidos, email, rol, grupo, foto_url, password FROM employees WHERE username = ? OR email = ? LIMIT 1'
-);
-$stmt->bind_param('ss', $username, $username);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result ? $result->fetch_assoc() : null;
-$stmt->close();
+$user = null;
+if ($usingMysqli) {
+    $stmt = $db->prepare('SELECT id, nombre, apellidos, email, rol, grupo, foto_url, password FROM employees WHERE username = ? OR email = ? LIMIT 1');
+    $stmt->bind_param('ss', $username, $username);
+    $stmt->execute();
+
+    if ($result = $stmt->get_result()) {
+        $user = $result->fetch_assoc();
+    } else {
+        $stmt->bind_result($id, $nombre, $apellidos, $email, $rol, $grupo, $foto_url, $stored);
+        if ($stmt->fetch()) {
+            $user = [
+                'id' => $id,
+                'nombre' => $nombre,
+                'apellidos' => $apellidos,
+                'email' => $email,
+                'rol' => $rol,
+                'grupo' => $grupo,
+                'foto_url' => $foto_url,
+                'password' => $stored,
+            ];
+        }
+    }
+    $stmt->close();
+} else { // PDO
+    $stmt = $db->prepare('SELECT id, nombre, apellidos, email, rol, grupo, foto_url, password FROM employees WHERE username = ? OR email = ? LIMIT 1');
+    $stmt->execute([$username, $username]);
+    $user = $stmt->fetch();
+}
 
 if (!$user) {
     http_response_code(401);
@@ -40,31 +85,20 @@ if (!$user) {
     exit;
 }
 
-// NOTE: Here we compare the password directly.
-// For real apps, store hashed passwords and use password_verify().
-if ($user['password'] !== $password) {
+$stored = $user['password'] ?? '';
+$plainMatch = hash_equals((string)$stored, (string)$password);
+$hashMatch = password_get_info($stored)['algo'] !== 0 && password_verify($password, $stored);
+if (!$plainMatch && !$hashMatch) {
     http_response_code(401);
     echo json_encode(['error' => 'Usuario o contraseña incorrectos']);
     exit;
 }
-
-// Remove password before returning
 unset($user['password']);
 
-// Save session info for server-side auth
-$_SESSION['user'] = [
-    'id' => $user['id'] ?? null,
-    'nombre' => $user['nombre'] ?? null,
-    'apellidos' => $user['apellidos'] ?? null,
-    'email' => $user['email'] ?? null,
-    'rol' => $user['rol'] ?? null,
-    'grupo' => $user['grupo'] ?? null,
-    'foto_url' => $user['foto_url'] ?? null,
-];
+$_SESSION['user'] = $user;
 
-// Determine landing page based on role.
-$role = strtolower($_SESSION['user']['rol'] ?? '');
-$redirect = 'Loggin.php';
+$role = strtolower($rol ?? '');
+$redirect = 'empleado.php';
 switch ($role) {
     case 'admin':
         $redirect = 'admin.php';
@@ -75,9 +109,6 @@ switch ($role) {
         break;
     case 'seguridad':
         $redirect = 'seguridad.php';
-        break;
-    default:
-        $redirect = 'empleado.php';
         break;
 }
 

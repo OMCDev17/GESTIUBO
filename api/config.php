@@ -7,7 +7,8 @@
 return [
     'host' => '127.0.0.1',
     'user' => 'root',
-    'pass' => '1234',
+    // XAMPP por defecto usa root sin contraseña; ajusta si tu MySQL usa otra.
+    'pass' => '',
     'db'   => 'mayhem_db',
     'charset' => 'utf8mb4',
     'smtp' => [
