@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Registro Exitoso - Lab Portal</title>
+<title>Registro Exitoso - Instituto de Bio-Orgánica Antonio González</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -65,7 +65,7 @@
                             Gracias por registrarte en el portal de laboratorio. Ya puedes iniciar sesión con tus credenciales.
                         </p>
 <p class="text-slate-400 dark:text-slate-500 text-xs mt-1 italic">
-                            Thank you for registering in our lab portal. You can now log in with your credentials.
+                            Thank you for registering at Instituto de Bio-Orgánica Antonio González. You can now log in with your credentials.
                         </p>
 <p class="text-slate-500 dark:text-slate-400 text-sm mt-4">
                             Se le redirigirá automáticamente a la página de inicio en <span id="countdown" class="font-bold text-primary">10</span> segundos.
@@ -88,7 +88,7 @@
 <!-- Footer / Copyright -->
 <footer class="py-6 px-10 border-t border-primary/5 text-center">
 <p class="text-slate-400 text-xs font-medium uppercase tracking-widest">
-                    © 2026 Lab Portal. All Rights Reserved.
+                    © 2026 Instituto de Bio-Orgánica Antonio González. All rights reserved.
                 </p>
 </footer>
 </div>

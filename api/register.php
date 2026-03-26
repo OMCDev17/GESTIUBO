@@ -93,5 +93,22 @@ if (!$stmt->execute()) {
     exit;
 }
 
-echo json_encode(['success' => true, 'id' => $mysqli->insert_id]);
+$newUserId = $mysqli->insert_id;
+
+// Enviar correo de bienvenida
+require_once __DIR__ . '/email_templates.php';
+
+$firstName = trim($data['nombre'] ?? '');
+$userName = trim($data['username'] ?? '');
+$email = trim($data['email'] ?? '');
+
+$host = $_SERVER['HTTP_HOST'];
+$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$basePath = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
+$loginUrl = "{$scheme}://{$host}{$basePath}/Loggin.php";
+
+// Enviar correo de bienvenida (no es crítico si falla)
+@sendWelcomeEmail($email, $userName, $firstName, $loginUrl, $config);
+
+echo json_encode(['success' => true, 'id' => $newUserId]);
 

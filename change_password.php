@@ -33,7 +33,7 @@ if (!$isPasswordResetToken) {
 <html class="light" lang="es"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Cambiar contraseña - Lab Portal</title>
+<title>Cambiar contraseña - Instituto de Bio-Orgánica Antonio González</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -100,7 +100,6 @@ if (!$isPasswordResetToken) {
                 </div>
                 <button id="submitBtn" type="submit" class="w-full h-12 rounded-xl bg-primary text-white font-semibold hover:opacity-90 transition flex items-center justify-center gap-2">
                     <span id="btnText"><?php echo $isPasswordResetToken ? 'Restablecer contraseña' : 'Actualizar contraseña'; ?></span>
-                    <span class="material-symbols-outlined">key</span>
                 </button>
             </form>
         <?php endif; ?>
