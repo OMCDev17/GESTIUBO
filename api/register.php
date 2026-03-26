@@ -42,8 +42,10 @@ if ($dupStmt) {
     $dupStmt->execute();
     $dupStmt->store_result();
     if ($dupStmt->num_rows > 0) {
-        http_response_code(409);
-        echo json_encode(['error' => 'El usuario ya existe con el mismo nombre de usuario, email o DNI/Pasaporte']);
+        $dupStmt->bind_result($existingId);
+        $dupStmt->fetch();
+        // Responder idempotente: si ya existe devolvemos éxito con la misma id
+        echo json_encode(['success' => true, 'id' => $existingId, 'existing' => true]);
         exit;
     }
 }

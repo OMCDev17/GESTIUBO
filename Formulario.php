@@ -362,6 +362,15 @@
 
         // Validación visual + envío
         const form = document.getElementById('registrationForm');
+        const submitBtn = form?.querySelector('button[type="submit"]');
+        // Evita envíos concurrentes incluso si el handler se adjunta dos veces
+        let isSubmitting = false;
+        const releaseSubmit = () => {
+            isSubmitting = false;
+            submitBtn?.removeAttribute('disabled');
+            submitBtn?.classList.remove('opacity-70', 'cursor-not-allowed');
+            window.__registerSubmitting = false;
+        };
         const requiredFields = Array.from(form?.querySelectorAll('input, select, textarea') || []).filter((el) => {
             if (!el.name) return false;
             if (el.type === 'file') return false;
@@ -390,6 +399,11 @@
 
         form?.addEventListener('submit', async (event) => {
             event.preventDefault();
+            if (isSubmitting || window.__registerSubmitting) return;
+            isSubmitting = true;
+            window.__registerSubmitting = true;
+            submitBtn?.setAttribute('disabled', 'true');
+            submitBtn?.classList.add('opacity-70', 'cursor-not-allowed');
             clearErrors();
 
             const fijo = personalFijo?.checked;
@@ -414,6 +428,7 @@
             if (firstInvalid) {
                 firstInvalid.focus();
                 firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                releaseSubmit();
                 return;
             }
 
@@ -423,6 +438,7 @@
                 showFieldError(passwordConfirm, 'Las contraseñas no coinciden / Passwords do not match');
                 password.focus();
                 password.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                releaseSubmit();
                 return;
             }
 
@@ -441,6 +457,7 @@
                 const upJson = await upRes.json();
                 if (!upRes.ok || upJson.error) {
                     showPhotoError(upJson.error || 'No se pudo subir la foto.');
+                    releaseSubmit();
                     return;
                 }
                 data.foto_url = upJson.url;
@@ -464,9 +481,11 @@
                         });
                         (usernameField || emailField || dniField)?.focus();
                         (usernameField || emailField || dniField)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        releaseSubmit();
                         return;
                     }
                     showPhotoError(json.error || 'Error al registrar. Inténtelo de nuevo.');
+                    releaseSubmit();
                     return;
                 }
                 form.classList.add('ring-2', 'ring-primary/40');
@@ -478,6 +497,8 @@
             } catch (error) {
                 console.error(error);
                 showPhotoError('No se pudo conectar con el servidor.');
+            } finally {
+                releaseSubmit();
             }
         });
     });
