@@ -44,6 +44,14 @@ if (!empty($missing)) {
     exit;
 }
 
+// Validar y hashear la contraseña antes de seguir
+if (strlen((string)$data['password']) < 6) {
+    http_response_code(400);
+    echo json_encode(['error' => 'La contraseña debe tener al menos 6 caracteres']);
+    exit;
+}
+$data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+
 // Check for existing user by username, email or DNI/passport before inserting
 $username = $data['username'];
 $email = $data['email'];

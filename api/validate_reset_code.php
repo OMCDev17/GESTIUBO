@@ -72,8 +72,10 @@ if (!$row) {
 $userId = intval($row['user_id']);
 
 // Actualizar la contraseña del usuario
+$newHash = password_hash($newPassword, PASSWORD_DEFAULT);
+
 $stmt = $mysqli->prepare('UPDATE employees SET password = ? WHERE id = ?');
-$stmt->bind_param('si', $newPassword, $userId);
+$stmt->bind_param('si', $newHash, $userId);
 if (!$stmt->execute()) {
     http_response_code(500);
     echo json_encode(['error' => 'No se pudo actualizar la contraseña']);

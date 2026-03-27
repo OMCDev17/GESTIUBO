@@ -49,14 +49,20 @@ $res = $stmt->get_result();
 $row = $res ? $res->fetch_assoc() : null;
 $stmt->close();
 
-if (!$row || $row['password'] !== $current) {
+$stored = $row['password'] ?? '';
+$isHash = password_get_info($stored)['algo'] !== 0;
+$validCurrent = $isHash ? password_verify($current, $stored) : hash_equals((string)$stored, (string)$current);
+
+if (!$row || !$validCurrent) {
     http_response_code(400);
     echo json_encode(['error' => 'La contraseña actual no es correcta']);
     exit;
 }
 
+$newHash = password_hash($new, PASSWORD_DEFAULT);
+
 $stmt = $mysqli->prepare('UPDATE employees SET password = ? WHERE id = ?');
-$stmt->bind_param('si', $new, $user['id']);
+$stmt->bind_param('si', $newHash, $user['id']);
 if (!$stmt->execute()) {
     http_response_code(500);
     echo json_encode(['error' => 'No se pudo actualizar la contraseña']);
