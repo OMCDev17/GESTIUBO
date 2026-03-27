@@ -473,14 +473,16 @@
                 if (!res.ok || json.error) {
                     // Duplicate user handling: show same style as required field errors
                     if (res.status === 409) {
-                        const usernameField = form.querySelector('input[name="username"]');
-                        const emailField = form.querySelector('input[name="email"]');
-                        const dniField = form.querySelector('input[name="dni_pasaporte"]');
-                        [usernameField, emailField, dniField].forEach((field) => {
-                            if (field) showFieldError(field, json.error || 'El usuario ya existe.');
-                        });
-                        (usernameField || emailField || dniField)?.focus();
-                        (usernameField || emailField || dniField)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        const targetField = json.field || 'username';
+                        const fieldEl = form.querySelector(`input[name="${targetField}"]`) ||
+                            form.querySelector('input[name="username"]');
+                        if (fieldEl) {
+                            showFieldError(fieldEl, json.error || 'El usuario ya existe.');
+                            fieldEl.focus();
+                            fieldEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else {
+                            showPhotoError(json.error || 'El usuario ya existe.');
+                        }
                         releaseSubmit();
                         return;
                     }

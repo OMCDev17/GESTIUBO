@@ -97,7 +97,8 @@ unset($user['password']);
 
 $_SESSION['user'] = $user;
 
-$role = strtolower($rol ?? '');
+// Determine redirect according to stored role
+$role = strtolower($user['rol'] ?? '');
 $redirect = 'empleado.php';
 switch ($role) {
     case 'admin':

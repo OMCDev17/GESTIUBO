@@ -13,6 +13,8 @@ if ($mysqli->connect_errno) {
     exit;
 }
 $mysqli->set_charset($config['charset']);
+// Desactivar autocommit para poder hacer rollback si algo falla
+$mysqli->autocommit(false);
 
 $body = file_get_contents('php://input');
 $data = json_decode($body, true);
@@ -20,6 +22,13 @@ if (!is_array($data)) {
     http_response_code(400);
     echo json_encode(['error' => 'Payload inválido']);
     exit;
+}
+
+// Normalizar entradas para evitar duplicados por espacios o mayúsculas
+foreach (['nombre', 'apellidos', 'dni_pasaporte', 'username', 'email'] as $k) {
+    if (isset($data[$k]) && is_string($data[$k])) {
+        $data[$k] = trim($data[$k]);
+    }
 }
 
 $required = ['nombre', 'apellidos', 'dni_pasaporte', 'username', 'password', 'email'];
@@ -36,19 +45,44 @@ if (!empty($missing)) {
 }
 
 // Check for existing user by username, email or DNI/passport before inserting
-$dupStmt = $mysqli->prepare('SELECT id FROM employees WHERE username = ? OR email = ? OR dni_pasaporte = ? LIMIT 1');
-if ($dupStmt) {
-    $dupStmt->bind_param('sss', $data['username'], $data['email'], $data['dni_pasaporte']);
-    $dupStmt->execute();
-    $dupStmt->store_result();
-    if ($dupStmt->num_rows > 0) {
-        $dupStmt->bind_result($existingId);
-        $dupStmt->fetch();
-        // Responder idempotente: si ya existe devolvemos éxito con la misma id
-        echo json_encode(['success' => true, 'id' => $existingId, 'existing' => true]);
-        exit;
-    }
+$username = $data['username'];
+$email = $data['email'];
+$dni = $data['dni_pasaporte'];
+
+$dupStmt = $mysqli->prepare('SELECT id, username, email, dni_pasaporte FROM employees WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR dni_pasaporte = ? LIMIT 1');
+if (!$dupStmt) {
+    $mysqli->rollback();
+    http_response_code(500);
+    echo json_encode(['error' => 'Error al preparar comprobación de duplicados']);
+    exit;
 }
+$dupStmt->bind_param('sss', $username, $email, $dni);
+$dupStmt->execute();
+$dupStmt->store_result();
+if ($dupStmt->num_rows > 0) {
+    $dupStmt->bind_result($existingId, $existingUser, $existingEmail, $existingDni);
+    $dupStmt->fetch();
+    $dupStmt->free_result();
+    $dupStmt->close();
+    $mysqli->rollback();
+    // Respuesta idempotente: si ya existe, devolvemos éxito sin insertar
+    $field = 'username';
+    if (strcasecmp($existingEmail, $email) === 0) {
+        $field = 'email';
+    } elseif ($existingDni === $dni) {
+        $field = 'dni_pasaporte';
+    }
+    echo json_encode([
+        'success' => true,
+        'id' => $existingId,
+        'existing' => true,
+        'field' => $field,
+        'message' => "El {$field} ya estaba registrado.",
+    ]);
+    exit;
+}
+$dupStmt->free_result();
+$dupStmt->close();
 
 // Default role for self-registration
 $data['rol'] = 'empleado';
@@ -76,11 +110,19 @@ if (count($fields) === 0) {
     exit;
 }
 
-$sql = sprintf(
-    "INSERT INTO employees (%s) VALUES (%s)",
-    implode(', ', $fields),
-    implode(', ', array_fill(0, count($fields), '?'))
-);
+$placeholders = implode(', ', array_fill(0, count($fields), '?'));
+$columns = implode(', ', $fields);
+
+// Atomic insert that only runs if no duplicate exists (prevents race conditions)
+$sql = "
+INSERT INTO employees ($columns)
+SELECT $placeholders
+FROM DUAL
+WHERE NOT EXISTS (
+    SELECT 1 FROM employees
+    WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR dni_pasaporte = ?
+)";
+
 $stmt = $mysqli->prepare($sql);
 if (!$stmt) {
     http_response_code(500);
@@ -88,14 +130,49 @@ if (!$stmt) {
     exit;
 }
 
-$stmt->bind_param($types, ...$params);
-if (!$stmt->execute()) {
+// Bind params twice: values, then duplicate checks
+$bindParams = array_merge($params, [$username, $email, $dni]);
+$typesWithDup = $types . 'sss';
+$stmt->bind_param($typesWithDup, ...$bindParams);
+$stmt->execute();
+
+if ($stmt->errno) {
+    $mysqli->rollback();
+    $field = 'username';
+    if (strpos($stmt->error, 'email') !== false) {
+        $field = 'email';
+    } elseif (strpos($stmt->error, 'dni') !== false) {
+        $field = 'dni_pasaporte';
+    }
+    // Idempotente en caso de duplicado
+    if ($stmt->errno === 1062) {
+        echo json_encode([
+            'success' => true,
+            'existing' => true,
+            'field' => $field,
+            'message' => "El {$field} ya estaba registrado.",
+        ]);
+        exit;
+    }
     http_response_code(500);
     echo json_encode(['error' => $stmt->error]);
     exit;
 }
 
+if ($stmt->affected_rows === 0) {
+    // NOT EXISTS triggered => duplicate
+    $mysqli->rollback();
+    echo json_encode([
+        'success' => true,
+        'existing' => true,
+        'field' => 'username',
+        'message' => 'El usuario ya estaba registrado (usuario/email/DNI).',
+    ]);
+    exit;
+}
+
 $newUserId = $mysqli->insert_id;
+$mysqli->commit();
 
 // Enviar correo de bienvenida
 require_once __DIR__ . '/email_templates.php';
