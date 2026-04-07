@@ -51,6 +51,7 @@ if (strlen((string)$data['password']) < 6) {
     exit;
 }
 $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+$data['horario'] = isset($data['horario']) ? (int) !!$data['horario'] : 1; // Completo por defecto
 
 // Check for existing user by username, email or DNI/passport before inserting
 $username = $data['username'];
@@ -98,7 +99,7 @@ $data['rol'] = 'empleado';
 $allowed = [
     'nombre', 'apellidos', 'dni_pasaporte', 'username', 'password', 'email',
     'fecha_nacimiento', 'institucion', 'pais', 'motivo', 'fecha_inicio', 'fecha_fin',
-    'grupo', 'foto_url', 'rol'
+    'grupo', 'foto_url', 'rol', 'horario'
 ];
 
 $fields = [];
@@ -107,8 +108,13 @@ $types = '';
 foreach ($allowed as $col) {
     if (array_key_exists($col, $data) && $data[$col] !== null) {
         $fields[] = $col;
-        $params[] = $data[$col];
-        $types .= 's';
+        if ($col === 'horario') {
+            $params[] = (int) !!$data[$col];
+            $types .= 'i';
+        } else {
+            $params[] = $data[$col];
+            $types .= 's';
+        }
     }
 }
 

@@ -1,6 +1,6 @@
-<?php
+﻿<?php
 // ============================================================================
-// MIGRACIÓN: Actualizar tabla password_resets con columna 'code'
+// MIGRACIÓN: Actualizar esquema (employees.horario) y tabla password_resets
 // ============================================================================
 // Ejecuta este archivo una sola vez para migrar la base de datos
 
@@ -12,7 +12,27 @@ if ($mysqli->connect_errno) {
 $mysqli->set_charset($config['charset']);
 
 echo "<pre>";
-echo "=== MIGRACIÓN: Actualizando tabla password_resets ===\n\n";
+echo "=== MIGRACIÓN: Actualizando esquema ===\n\n";
+
+// 0. Asegurar columna 'horario' en employees
+echo "Comprobando columna 'horario' en employees...\n";
+$checkEmployees = $mysqli->query("SHOW TABLES LIKE 'employees'");
+if ($checkEmployees && $checkEmployees->num_rows > 0) {
+    $checkHorario = $mysqli->query("SHOW COLUMNS FROM employees LIKE 'horario'");
+    if ($checkHorario->num_rows === 0) {
+        echo "La columna 'horario' no existe. Agregándola (TINYINT(1) DEFAULT 1)...\n";
+        $addHorario = "ALTER TABLE employees ADD COLUMN horario TINYINT(1) NOT NULL DEFAULT 1 AFTER rol";
+        if ($mysqli->query($addHorario)) {
+            echo "✓ Columna 'horario' agregada correctamente\n";
+        } else {
+            echo "✗ Error al agregar 'horario': " . $mysqli->error . "\n";
+        }
+    } else {
+        echo "✓ La columna 'horario' ya existe\n";
+    }
+}
+
+echo "\n=== MIGRACIÓN: Actualizando tabla password_resets ===\n\n";
 
 // 1. Verificar que la tabla existe
 $checkTable = $mysqli->query("SHOW TABLES LIKE 'password_resets'");

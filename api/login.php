@@ -51,14 +51,14 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $user = null;
 if ($usingMysqli) {
-    $stmt = $db->prepare('SELECT id, nombre, apellidos, email, rol, grupo, foto_url, password FROM employees WHERE username = ? OR email = ? LIMIT 1');
+    $stmt = $db->prepare('SELECT id, nombre, apellidos, email, rol, grupo, foto_url, horario, password FROM employees WHERE username = ? OR email = ? LIMIT 1');
     $stmt->bind_param('ss', $username, $username);
     $stmt->execute();
 
     if ($result = $stmt->get_result()) {
         $user = $result->fetch_assoc();
     } else {
-        $stmt->bind_result($id, $nombre, $apellidos, $email, $rol, $grupo, $foto_url, $stored);
+        $stmt->bind_result($id, $nombre, $apellidos, $email, $rol, $grupo, $foto_url, $horario, $stored);
         if ($stmt->fetch()) {
             $user = [
                 'id' => $id,
@@ -68,13 +68,14 @@ if ($usingMysqli) {
                 'rol' => $rol,
                 'grupo' => $grupo,
                 'foto_url' => $foto_url,
+                'horario' => $horario,
                 'password' => $stored,
             ];
         }
     }
     $stmt->close();
 } else { // PDO
-    $stmt = $db->prepare('SELECT id, nombre, apellidos, email, rol, grupo, foto_url, password FROM employees WHERE username = ? OR email = ? LIMIT 1');
+    $stmt = $db->prepare('SELECT id, nombre, apellidos, email, rol, grupo, foto_url, horario, password FROM employees WHERE username = ? OR email = ? LIMIT 1');
     $stmt->execute([$username, $username]);
     $user = $stmt->fetch();
 }

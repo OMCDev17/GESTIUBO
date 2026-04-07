@@ -25,7 +25,7 @@ if (!is_array($data) || !isset($data['employees']) || !is_array($data['employees
 $allowed = [
     'nombre', 'apellidos', 'dni_pasaporte', 'fecha_nacimiento', 'email',
     'institucion', 'pais', 'motivo', 'fecha_inicio', 'fecha_fin',
-    'grupo', 'foto_url', 'rol'
+    'grupo', 'foto_url', 'rol', 'horario'
 ];
 
 $updateStmt = $mysqli->prepare(
@@ -48,8 +48,13 @@ foreach ($data['employees'] as $emp) {
     foreach ($allowed as $col) {
         if (array_key_exists($col, $emp)) {
             $fields[] = "$col = ?";
-            $params[] = $emp[$col];
-            $types .= 's';
+            if ($col === 'horario') {
+                $params[] = isset($emp[$col]) ? (int) !!$emp[$col] : 0;
+                $types .= 'i';
+            } else {
+                $params[] = $emp[$col];
+                $types .= 's';
+            }
         }
     }
 

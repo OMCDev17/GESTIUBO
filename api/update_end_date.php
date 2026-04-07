@@ -26,17 +26,6 @@ if (!is_array($data) || empty($data['updates']) || !is_array($data['updates'])) 
     exit;
 }
 
-// Solo se permite cambiar fecha_fin. Supervisores/coordinadores limitados a su grupo.
-$stmt = $mysqli->prepare("UPDATE employees SET fecha_fin = ? WHERE id = ? %s");
-
-$extraFilter = '';
-$paramsTypes = 'si';
-
-if (in_array($sessionRole, ['supervisor', 'coordinador'], true) && $sessionGroup !== '') {
-    $extraFilter = ' AND grupo = ?';
-    $paramsTypes .= 's';
-}
-
 $updated = 0;
 $errors = [];
 
@@ -46,20 +35,44 @@ foreach ($data['updates'] as $row) {
         continue;
     }
     $id = (int)$row['id'];
-    $fecha = isset($row['fecha_fin']) ? $row['fecha_fin'] : null;
+    $fields = [];
+    $types = '';
+    $params = [];
 
-    $sql = sprintf("UPDATE employees SET fecha_fin = ? WHERE id = ?%s", $extraFilter);
+    if (array_key_exists('fecha_fin', $row)) {
+        $fields[] = 'fecha_fin = ?';
+        $types .= 's';
+        $params[] = $row['fecha_fin'];
+    }
+    if (array_key_exists('horario', $row)) {
+        $fields[] = 'horario = ?';
+        $types .= 'i';
+        $params[] = isset($row['horario']) ? (int) !!$row['horario'] : 0;
+    }
+
+    if (empty($fields)) {
+        $errors[] = ['id' => $id, 'error' => 'Nada que actualizar'];
+        continue;
+    }
+
+    $extraFilter = '';
+    if (in_array($sessionRole, ['supervisor', 'coordinador'], true) && $sessionGroup !== '') {
+        $extraFilter = ' AND grupo = ?';
+        $types .= 's';
+        $params[] = $sessionGroup;
+    }
+
+    $types .= 'i';
+    $params[] = $id;
+
+    $sql = sprintf("UPDATE employees SET %s WHERE id = ?%s", implode(', ', $fields), $extraFilter);
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
         $errors[] = ['id' => $id, 'error' => 'Error al preparar'];
         continue;
     }
 
-    if ($extraFilter) {
-        $stmt->bind_param($paramsTypes, $fecha, $id, $sessionGroup);
-    } else {
-        $stmt->bind_param('si', $fecha, $id);
-    }
+    $stmt->bind_param($types, ...$params);
 
     if (!$stmt->execute()) {
         $errors[] = ['id' => $id, 'error' => $stmt->error];

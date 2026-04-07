@@ -107,8 +107,13 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         const json = await res.json();
         employees = (json.employees || []).map((e) => ({
             ...e,
+            horario: typeof e.horario !== 'undefined' ? Number(e.horario) : 1,
             foto: e.foto_url || 'https://i.pravatar.cc/160?u=' + encodeURIComponent(e.email || e.username || e.id || Math.random()),
         }));
+    }
+
+    function formatHorario(value) {
+        return Number(value) === 0 ? 'Solo lectivo' : 'Completo';
     }
 
     function renderResults(results) {
@@ -125,6 +130,10 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         }
 
         results.forEach((emp) => {
+            const isSoloLectivo = Number(emp.horario) === 0;
+            const badgeClass = isSoloLectivo
+                ? 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40'
+                : 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30';
             const card = document.createElement('div');
             card.className = 'bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5';
             card.innerHTML = `
@@ -134,6 +143,9 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         <p class="text-lg font-semibold text-slate-900 dark:text-slate-100 truncate">${emp.nombre} ${emp.apellidos}</p>
                         <p class="text-sm text-slate-500 dark:text-slate-400">Grupo: ${emp.grupo || '—'}</p>
                         <p class="text-sm text-slate-500 dark:text-slate-400">DNI/Pasaporte: ${maskDni(emp.dni_pasaporte)}</p>
+                        <p class="mt-1 inline-flex items-center gap-2 text-xs font-semibold ${badgeClass} px-2 py-1 rounded-full">
+                            <span class="material-symbols-outlined text-base">schedule</span>${formatHorario(emp.horario)}
+                        </p>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 text-sm text-slate-600 dark:text-slate-300">

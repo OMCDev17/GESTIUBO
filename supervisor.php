@@ -62,7 +62,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 <div>
 <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Usuarios del grupo <?php echo htmlspecialchars(trim($user['grupo'] ?? '')); ?></h1>
-<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Como supervisor, puedes revisar los perfiles y actualizar únicamente la fecha de finalización de la estancia.</p>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Como supervisor, puedes revisar los perfiles y actualizar la fecha de finalización y el horario (completo o solo lectivo).</p>
 </div>
 <div class="flex items-center gap-3">
 <span class="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Grupo</span>
@@ -95,6 +95,10 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
     let employees = [];
     const groupToShow = '<?php echo htmlspecialchars(trim($user['grupo'] ?? ''), ENT_QUOTES); ?>';
     const pendingChanges = new Map();
+    const horarioOptions = [
+        { value: 1, label: 'Completo' },
+        { value: 0, label: 'Solo lectivo' },
+    ];
     const maskDni = (value) => {
         const str = String(value ?? '').trim();
         if (!str) return '—';
@@ -119,6 +123,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 id: Number(emp.id),
                 dni: emp.dni_pasaporte,
                 foto: emp.foto_url,
+                horario: typeof emp.horario !== 'undefined' ? Number(emp.horario) : 1,
             }));
         } catch (error) {
             console.error('No se pudieron cargar los usuarios:', error);
@@ -156,7 +161,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             `;
 
             const dates = document.createElement('div');
-            dates.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3 w-full md:w-auto';
+            dates.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3 w-full md:w-auto';
             dates.innerHTML = `
                 <div class="rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
                     <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Inicio</p>
@@ -164,7 +169,13 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 </div>
                 <div class="rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
                     <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Fin</p>
-                    <input type="date" value="${emp.fecha_fin}" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm px-3 py-2 focus:outline-none focus:ring-primary focus:border-primary" data-employee-id="${emp.id}" />
+                    <input type="date" value="${emp.fecha_fin}" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm px-3 py-2 focus:outline-none focus:ring-primary focus:border-primary" data-employee-id="${emp.id}" data-field="fecha_fin" />
+                </div>
+                <div class="rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
+                    <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Horario</p>
+                    <select class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm px-3 py-2 focus:outline-none focus:ring-primary focus:border-primary" data-employee-id="${emp.id}" data-field="horario">
+                        ${horarioOptions.map(opt => `<option value=\"${opt.value}\" ${Number(opt.value) === Number(emp.horario) ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                    </select>
                 </div>
             `;
 
@@ -175,16 +186,24 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         });
 
         // Delegated listener to capturar cambios aunque se re-renderice
-        container.addEventListener('change', (event) => {
+        container.onchange = (event) => {
             const target = event.target;
             if (target?.dataset?.employeeId) {
                 const id = Number(target.dataset.employeeId);
                 const emp = employees.find((e) => e.id === id);
                 if (!emp) return;
-                emp.fecha_fin = target.value;
-                pendingChanges.set(id, { id, fecha_fin: emp.fecha_fin });
+                const field = target.dataset.field;
+                if (field === 'horario') {
+                    emp.horario = Number(target.value);
+                } else if (field === 'fecha_fin') {
+                    emp.fecha_fin = target.value;
+                }
+                const current = pendingChanges.get(id) || { id };
+                if (field === 'horario') current.horario = emp.horario;
+                if (field === 'fecha_fin') current.fecha_fin = emp.fecha_fin;
+                pendingChanges.set(id, current);
             }
-        });
+        };
     }
 
     async function saveChanges() {

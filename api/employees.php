@@ -32,7 +32,7 @@ if (!empty($where)) {
     $whereSql = ' WHERE ' . implode(' AND ', $where);
 }
 
-$query = "SELECT id, nombre, apellidos, dni_pasaporte, fecha_nacimiento, email, institucion, pais, motivo, fecha_inicio, fecha_fin, grupo, foto_url, rol FROM employees {$whereSql} ORDER BY grupo, apellidos DESC, nombre DESC";
+$query = "SELECT id, nombre, apellidos, dni_pasaporte, fecha_nacimiento, email, institucion, pais, motivo, fecha_inicio, fecha_fin, grupo, foto_url, rol, horario FROM employees {$whereSql} ORDER BY grupo, apellidos DESC, nombre DESC";
 $result = $mysqli->query($query);
 
 $employees = [];

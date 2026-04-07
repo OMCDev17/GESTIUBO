@@ -95,6 +95,10 @@ Guardar cambios
         { value: 'seguridad', label: 'Seguridad' },
         { value: 'admin', label: 'Administrador' }
     ];
+    const horarioOptions = [
+        { value: 1, label: 'Completo' },
+        { value: 0, label: 'Solo lectivo' },
+    ];
 
     let employees = [];
     const normalizeGroup = (value) => value ? String(value).toUpperCase() : '';
@@ -160,6 +164,7 @@ Guardar cambios
             ...emp,
             dni: emp.dni_pasaporte,
             foto: emp.foto_url,
+            horario: typeof emp.horario !== 'undefined' ? Number(emp.horario) : 1,
             grupo: resolveGroupName(emp.grupo),
         };
     }
@@ -180,6 +185,7 @@ Guardar cambios
             grupo: resolveGroupName(emp.grupo) || null,
             foto_url: emp.foto || null,
             rol: emp.rol || 'empleado',
+            horario: typeof emp.horario !== 'undefined' ? Number(emp.horario) : 1,
         };
     }
 
@@ -200,7 +206,7 @@ Guardar cambios
             const option = document.createElement('option');
             option.value = opt.value;
             option.textContent = opt.label;
-            if (opt.value === value) option.selected = true;
+            if (String(opt.value) === String(value)) option.selected = true;
             select.appendChild(option);
         });
         return select;
@@ -311,6 +317,7 @@ Guardar cambios
                         { label: 'DNI / Pasaporte', name: 'dni', value: emp.dni, type: 'text' },
                         { label: 'Grupo', name: 'grupo', value: resolveGroupName(emp.grupo), type: 'select', options: groupOptions },
                         { label: 'Rol', name: 'rol', value: emp.rol, type: 'select', options: roles },
+                        { label: 'Horario', name: 'horario', value: String(emp.horario ?? 1), type: 'select', options: horarioOptions },
                         { label: 'Inicio', name: 'fecha_inicio', value: emp.fecha_inicio, type: 'date' },
                         { label: 'Fin', name: 'fecha_fin', value: emp.fecha_fin, type: 'date' },
                     ];
@@ -331,7 +338,12 @@ Guardar cambios
                                 : createInput({ type, value, name });
 
                             input.addEventListener('input', (event) => {
-                                emp[name] = event.target.value;
+                                const newValue = event.target.value;
+                                if (name === 'horario') {
+                                    emp[name] = Number(newValue);
+                                } else {
+                                    emp[name] = newValue;
+                                }
                             });
 
                             wrapper.appendChild(input);
