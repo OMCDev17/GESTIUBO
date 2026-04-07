@@ -117,6 +117,13 @@ Guardar cambios
         return d.toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' });
     }
 
+    function formatEndDate(dateStr, role) {
+        const isIndef = String(dateStr).split('T')[0] === '2100-01-01';
+        const isCoveredRole = role === 'empleado' || role === 'seguridad';
+        if (isIndef && isCoveredRole) return 'Personal indefinido';
+        return formatDate(dateStr);
+    }
+
     function isContractActive(fechaFin) {
         const today = new Date();
         const end = new Date(fechaFin);
@@ -381,7 +388,7 @@ Guardar cambios
                     </div>
                     <div>
                         <p class="font-semibold">Fin</p>
-                        <p>${formatDate(emp.fecha_fin)}</p>
+                        <p>${formatEndDate(emp.fecha_fin, emp.rol)}</p>
                     </div>
                 </div>
             `;

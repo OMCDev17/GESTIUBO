@@ -146,7 +146,12 @@ $fotoUrl = !empty($employee['foto_url'])
 </div>
 <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5">
 <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Fecha de Finalización / End Date</p>
-<p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100"><?= $safe('fecha_fin') ?></p>
+<p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">
+    <?php
+        $fechaFin = $employee['fecha_fin'] ?? '';
+        echo ($fechaFin === '2100-01-01') ? 'Personal indefinido' : htmlspecialchars($fechaFin, ENT_QUOTES, 'UTF-8');
+    ?>
+</p>
 </div>
 </div>
 <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">

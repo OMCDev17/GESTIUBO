@@ -96,6 +96,11 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         return d.toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' });
     }
 
+    function formatEndDate(dateStr) {
+        const isIndef = String(dateStr).split('T')[0] === '2100-01-01';
+        return isIndef ? 'Personal indefinido' : formatDate(dateStr);
+    }
+
     async function fetchEmployees() {
         const res = await fetch('api/employees.php', { credentials: 'same-origin' });
         if (!res.ok) throw new Error('No se pudieron cargar los usuarios');
@@ -138,7 +143,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                     </div>
                     <div>
                         <p class="text-[11px] uppercase tracking-widest font-semibold text-slate-500 dark:text-slate-400">Fin</p>
-                        <p>${formatDate(emp.fecha_fin)}</p>
+                        <p>${formatEndDate(emp.fecha_fin)}</p>
                     </div>
                 </div>
             `;
