@@ -37,7 +37,7 @@ $errors = [];
 
 foreach ($data['employees'] as $emp) {
     if (!isset($emp['id'])) {
-        $errors[] = ['error' => 'Empleado sin ID'];
+        $errors[] = ['error' => 'Usuario sin ID'];
         continue;
     }
 

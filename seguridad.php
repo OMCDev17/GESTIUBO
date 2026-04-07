@@ -57,8 +57,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         <main class="flex-1 flex justify-center py-10 px-4 md:px-0">
             <div class="w-full max-w-[980px] flex flex-col gap-6">
                 <div class="text-center">
-                    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Buscador de empleados</h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Busca por nombre o apellidos para ver el estado del contrato.</p>
+                    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Buscador de usuarios</h1>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Busca por nombre o apellidos para ver el estado de la estancia.</p>
                 </div>
 
                 <div class="bg-white dark:bg-slate-900 rounded-xl shadow border border-slate-100 dark:border-slate-800 p-5 flex flex-col gap-4">
@@ -98,7 +98,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
     async function fetchEmployees() {
         const res = await fetch('api/employees.php', { credentials: 'same-origin' });
-        if (!res.ok) throw new Error('No se pudieron cargar los empleados');
+        if (!res.ok) throw new Error('No se pudieron cargar los usuarios');
         const json = await res.json();
         employees = (json.employees || []).map((e) => ({
             ...e,
@@ -165,7 +165,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         } catch (e) {
             console.error(e);
             const container = document.getElementById('resultsContainer');
-            container.innerHTML = '<p class="text-sm text-red-600">No se pudieron cargar los empleados.</p>';
+            container.innerHTML = '<p class="text-sm text-red-600">No se pudieron cargar los usuarios.</p>';
             return;
         }
 

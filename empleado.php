@@ -2,7 +2,7 @@
 require __DIR__ . '/api/auth.php';
 requireRole(['empleado', 'supervisor', 'coordinador', 'admin']);
 
-// Obtener datos del empleado autenticado desde la base de datos
+// Obtener datos del usuario autenticado desde la base de datos
 $employee = getSessionUser();
 $config = require __DIR__ . '/api/config.php';
 $mysqli = @new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
@@ -36,7 +36,7 @@ $fotoUrl = !empty($employee['foto_url'])
 <html class="light" lang="es"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Empleado - Lab Portal</title>
+<title>Usuario - Lab Portal</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>

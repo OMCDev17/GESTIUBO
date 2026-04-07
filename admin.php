@@ -67,8 +67,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 <div id="groupsContainer" class="flex flex-col gap-8"></div>
 
 <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
-    <h2 class="text-lg font-bold text-primary">Historial de contratos finalizados</h2>
-    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Aquí puedes ver ejemplos de empleados que ya no tienen contrato activo.</p>
+    <h2 class="text-lg font-bold text-primary">Historial de estancias finalizadas</h2>
+    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Aquí puedes ver ejemplos de empleados que ya no tienen estancia activa.</p>
     <div id="historyContainer" class="mt-4 grid gap-4"></div>
 </section>
 
@@ -233,7 +233,7 @@ Guardar cambios
         const container = document.getElementById('groupsContainer');
         container.innerHTML = '';
 
-        // Solo contratos activos en la vista principal
+        // Solo estancias activas en la vista principal
         const activeEmployees = employees.filter((e) => isContractActive(e.fecha_fin));
 
         const groups = Array.from(new Set(activeEmployees.map(e => resolveGroupName(e.grupo)).filter(Boolean)))
@@ -352,7 +352,7 @@ Guardar cambios
             .sort((a, b) => new Date(b.fecha_fin) - new Date(a.fecha_fin));
 
         if (expired.length === 0) {
-            historyContainer.innerHTML = `<p class="text-sm text-slate-500 dark:text-slate-400">No hay contratos finalizados aún.</p>`;
+            historyContainer.innerHTML = `<p class="text-sm text-slate-500 dark:text-slate-400">No hay estancias finalizadas aún.</p>`;
             return;
         }
 
@@ -369,7 +369,7 @@ Guardar cambios
                             <p class="text-xs text-slate-500 dark:text-slate-400">${emp.rol} — Grupo ${label}</p>
                         </div>
                     </div>
-                    <span class="text-xs font-semibold text-rose-700 dark:text-rose-200">Contrato finalizado</span>
+                    <span class="text-xs font-semibold text-rose-700 dark:text-rose-200">Estancia finalizada</span>
                 </div>
                 <div class="grid grid-cols-2 gap-4 text-xs text-slate-500 dark:text-slate-400">
                     <div>

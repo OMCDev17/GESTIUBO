@@ -73,7 +73,7 @@ function switchLanguage(lang) {
             title: 'Recursos Humanos',
             desc: 'Ingresa tus credenciales para acceder.',
             userLabel: 'Usuario o Correo Electrónico',
-            userPlaceholder: 'ej. empleado_123',
+            userPlaceholder: 'ej. usuario_123',
             passLabel: 'Contraseña',
             forgot: '¿Olvidaste tu contraseña?',
             remember: 'Recordar mi sesión',

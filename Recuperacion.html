@@ -52,12 +52,12 @@ const texts = {
         title: 'Recuperar contraseña',
         desc: 'Te enviaremos un enlace para restablecer tu contraseña a tu correo registrado.',
         emailLabel: 'Correo Electrónico',
-        emailPlaceholder: 'ej. empleado@dominio.com',
+        emailPlaceholder: 'ej. usuario@dominio.com',
         send: 'Enviar enlace de recuperación',
         back: 'Volver al inicio de sesión',
         alertSent: 'Se ha enviado un correo electrónico de recuperación a su dirección registrada.',
         alertBack: 'Redirigiendo al inicio de sesión...',
-        invalidEmail: 'Por favor ingresa un correo válido (ej. Empleado@ull.es).',
+        invalidEmail: 'Por favor ingresa un correo válido (ej. Usuario@ull.es).',
         languageToggleHint: 'Cambiar idioma'
     },
     en: {
@@ -128,7 +128,7 @@ switchLanguage('es');
 <label class="text-sm font-semibold text-slate-700 block" for="email">Correo Electrónico</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">email</span>
-<input class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-lab-accent focus:border-transparent outline-none transition-all placeholder:text-slate-400" id="email" name="email" placeholder="ej. empleado@dominio.com" type="email" required/>
+<input class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-lab-accent focus:border-transparent outline-none transition-all placeholder:text-slate-400" id="email" name="email" placeholder="ej. usuario@dominio.com" type="email" required/>
 <p id="email-error" class="mt-1 text-sm text-red-600 hidden" aria-live="polite"></p>
 </div>
 </div>

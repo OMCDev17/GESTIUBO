@@ -61,8 +61,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 <div class="w-full max-w-[980px] flex flex-col gap-6">
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 <div>
-<h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Empleados del grupo <?php echo htmlspecialchars(trim($user['grupo'] ?? '')); ?></h1>
-<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Como supervisor, puedes revisar los perfiles y actualizar únicamente la fecha de finalización del contrato.</p>
+<h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Usuarios del grupo <?php echo htmlspecialchars(trim($user['grupo'] ?? '')); ?></h1>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Como supervisor, puedes revisar los perfiles y actualizar únicamente la fecha de finalización de la estancia.</p>
 </div>
 <div class="flex items-center gap-3">
 <span class="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Grupo</span>
@@ -121,7 +121,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 foto: emp.foto_url,
             }));
         } catch (error) {
-            console.error('No se pudieron cargar los empleados:', error);
+            console.error('No se pudieron cargar los usuarios:', error);
             employees = [];
         }
     }
@@ -133,7 +133,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         const groupEmployees = groupToShow ? employees.filter((e) => e.grupo === groupToShow) : employees;
 
         if (groupEmployees.length === 0) {
-            container.innerHTML = `<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center"><p class="text-lg font-semibold text-slate-900 dark:text-slate-100">No hay empleados en el grupo ${groupToShow}.</p></div>`;
+            container.innerHTML = `<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center"><p class="text-lg font-semibold text-slate-900 dark:text-slate-100">No hay usuarios en el grupo ${groupToShow}.</p></div>`;
             return;
         }
 

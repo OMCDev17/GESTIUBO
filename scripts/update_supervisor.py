@@ -40,7 +40,7 @@ new_script = """<script>
                 foto: emp.foto_url,
             }));
         } catch (error) {
-            console.error('No se pudieron cargar los empleados:', error);
+            console.error('No se pudieron cargar los usuarios:', error);
             employees = [];
         }
     }
@@ -52,7 +52,7 @@ new_script = """<script>
         const groupEmployees = employees.filter((e) => e.grupo === groupToShow);
 
         if (groupEmployees.length === 0) {
-            container.innerHTML = `<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center"><p class="text-lg font-semibold text-slate-900 dark:text-slate-100">No hay empleados en el grupo ${groupToShow}.</p></div>`;
+            container.innerHTML = `<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center"><p class="text-lg font-semibold text-slate-900 dark:text-slate-100">No hay usuarios en el grupo ${groupToShow}.</p></div>`;
             return;
         }
 
