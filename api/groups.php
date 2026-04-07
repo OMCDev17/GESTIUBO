@@ -44,9 +44,6 @@ if (!is_array($body)) {
 }
 
 $action = strtolower(trim($body['action'] ?? 'create'));
-$logLine = date('c') . " action={$action} payload=" . json_encode($body) . PHP_EOL;
-@file_put_contents(__DIR__ . '/groups.log', $logLine, FILE_APPEND);
-
 if ($action === 'delete') {
     $id = isset($body['id']) ? (int)$body['id'] : null;
     if (!$id) $sendError(400, 'Falta id');
@@ -59,7 +56,6 @@ if ($action === 'delete') {
         $check->bind_param('i', $id);
         $check->execute();
         $res = $check->get_result();
-        @file_put_contents(__DIR__ . '/groups.log', date('c') . " delete_check id={$id} rows={$res->num_rows}" . PHP_EOL, FILE_APPEND);
         if ($res->num_rows === 0) {
             $sendError(404, "Grupo no encontrado (id $id)");
         }
@@ -70,13 +66,49 @@ if ($action === 'delete') {
             $stmt = $mysqli->prepare("UPDATE groups SET deleted_at = NOW() WHERE id = ?");
             $stmt->bind_param('i', $id);
             $stmt->execute();
-            @file_put_contents(__DIR__ . '/groups.log', date('c') . " delete_update id={$id} affected={$stmt->affected_rows}" . PHP_EOL, FILE_APPEND);
         }
 
         echo json_encode(['success' => true, 'id' => $id, 'deleted' => true, 'alreadyDeleted' => $alreadyDeleted]);
         exit;
     } catch (Throwable $e) {
         $sendError(500, $e->getMessage());
+    }
+}
+
+if ($action === 'rename') {
+    $id = isset($body['id']) ? (int)$body['id'] : null;
+    $newName = trim($body['name'] ?? '');
+    if (!$id || $newName === '') $sendError(400, 'Faltan id o nombre');
+    try {
+        // comprobar duplicado distinto del propio id
+        $dup = $mysqli->prepare("SELECT id, deleted_at FROM groups WHERE LOWER(name) = LOWER(?) AND id <> ? LIMIT 1");
+        $dup->bind_param('si', $newName, $id);
+        $dup->execute();
+        $dupRes = $dup->get_result();
+        if ($dupRes && $dupRes->num_rows > 0) {
+            $row = $dupRes->fetch_assoc();
+            if (!empty($row['deleted_at'])) {
+                // Si el duplicado está borrado, impedir para no reabrirlo por error
+                $sendError(409, 'Ya existe un grupo con ese nombre (borrado previamente)');
+            } else {
+                $sendError(409, 'Ya existe un grupo con ese nombre');
+            }
+        }
+
+        $stmt = $mysqli->prepare("UPDATE groups SET name = ?, deleted_at = NULL WHERE id = ?");
+        $stmt->bind_param('si', $newName, $id);
+        $stmt->execute();
+        if ($stmt->affected_rows === 0) {
+            // Si no afectó filas, el id no existe
+            $sendError(404, "Grupo no encontrado (id $id)");
+        }
+        echo json_encode(['success' => true, 'id' => $id, 'name' => $newName]);
+        exit;
+    } catch (mysqli_sql_exception $ex) {
+        if ($ex->getCode() === 1062) {
+            $sendError(409, 'Ya existe un grupo con ese nombre');
+        }
+        $sendError(500, $ex->getMessage());
     }
 }
 
@@ -94,12 +126,22 @@ try {
     exit;
 } catch (mysqli_sql_exception $ex) {
     if ($ex->getCode() === 1062) {
-        // reactivar si estaba borrado
-        $reactivate = $mysqli->prepare("UPDATE groups SET deleted_at = NULL WHERE LOWER(name) = LOWER(?)");
-        $reactivate->bind_param('s', $name);
-        $reactivate->execute();
-        echo json_encode(['success' => true, 'reactivated' => true]);
-        exit;
+        // Ver si está borrado lógicamente y reactivarlo
+        $check = $mysqli->prepare("SELECT id, deleted_at FROM groups WHERE LOWER(name) = LOWER(?) LIMIT 1");
+        $check->bind_param('s', $name);
+        $check->execute();
+        $res = $check->get_result();
+        if ($res && $res->num_rows === 1) {
+            $row = $res->fetch_assoc();
+            if (!empty($row['deleted_at'])) {
+                $reactivate = $mysqli->prepare("UPDATE groups SET deleted_at = NULL WHERE id = ?");
+                $reactivate->bind_param('i', $row['id']);
+                $reactivate->execute();
+                echo json_encode(['success' => true, 'id' => $row['id'], 'reactivated' => true]);
+                exit;
+            }
+        }
+        $sendError(409, 'El grupo ya existe');
     }
     $sendError(500, $ex->getMessage());
 }

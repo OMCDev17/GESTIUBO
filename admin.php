@@ -153,6 +153,78 @@ Guardar cambios
     const basePath = `${window.location.origin}${window.location.pathname.replace(/[^/]+$/, '')}`;
     const apiUrl = (path) => `${basePath}${path}`;
 
+    // Toast simple con estilos del sitio
+    const toastHost = document.createElement('div');
+    toastHost.className = 'fixed bottom-4 right-4 flex flex-col gap-3 z-[9999] pointer-events-none';
+    document.addEventListener('DOMContentLoaded', () => document.body.appendChild(toastHost));
+
+    function showToast(message, variant = 'info') {
+        // Todos los toasts en el morado de la app, variando solo la opacidad
+        const palette = {
+            success: 'bg-primary text-white',
+            error: 'bg-primary text-white',
+            info: 'bg-primary text-white',
+        };
+        const toast = document.createElement('div');
+        toast.className = `pointer-events-auto min-w-[240px] max-w-xs rounded-lg shadow-lg px-4 py-3 text-sm font-semibold ${palette[variant] || palette.info}`;
+        toast.textContent = message;
+        toastHost.appendChild(toast);
+        setTimeout(() => toast.remove(), 3200);
+    }
+
+    // Confirm modal con estilo de la página
+    function uiConfirm(message) {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9998]';
+
+        const dialog = document.createElement('div');
+        dialog.className = 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-sm w-full mx-4 p-6 space-y-5';
+        dialog.innerHTML = `
+            <p class="text-base font-semibold text-center leading-relaxed">${message.replace(/\n/g, '<br>')}</p>
+            <div class="flex justify-center gap-3">
+                <button id="uiConfirmCancel" class="px-4 py-2 rounded-lg bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 text-sm font-semibold shadow hover:bg-slate-50 dark:hover:bg-slate-700">Cancelar</button>
+                <button id="uiConfirmOk" class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold shadow hover:bg-primary/90">Continuar</button>
+            </div>
+        `;
+
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+
+            dialog.querySelector('#uiConfirmCancel').onclick = () => { overlay.remove(); resolve(false); };
+            dialog.querySelector('#uiConfirmOk').onclick = () => { overlay.remove(); resolve(true); };
+        });
+    }
+
+    // Prompt con estilo para editar nombre
+    function uiPrompt(message, defaultValue = '') {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9998]';
+
+            const dialog = document.createElement('div');
+            dialog.className = 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-sm w-full mx-4 p-6 space-y-4';
+            dialog.innerHTML = `
+                <p class="text-base font-semibold text-center leading-relaxed">${message.replace(/\n/g, '<br>')}</p>
+                <input id="uiPromptInput" type="text" value="${defaultValue.replace(/"/g, '&quot;')}" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-primary focus:border-primary" />
+                <div class="flex justify-center gap-3">
+                    <button id="uiPromptCancel" class="px-4 py-2 rounded-lg bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 text-sm font-semibold shadow hover:bg-slate-50 dark:hover:bg-slate-700">Cancelar</button>
+                    <button id="uiPromptOk" class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold shadow hover:bg-primary/90">Guardar</button>
+                </div>
+            `;
+
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+
+            const input = dialog.querySelector('#uiPromptInput');
+            input.focus();
+            input.select();
+
+            dialog.querySelector('#uiPromptCancel').onclick = () => { overlay.remove(); resolve(null); };
+            dialog.querySelector('#uiPromptOk').onclick = () => { const val = input.value.trim(); overlay.remove(); resolve(val || null); };
+        });
+    }
+
     async function parseJsonSafe(resp) {
         const text = await resp.text();
         try {
@@ -191,10 +263,17 @@ Guardar cambios
         } else {
             groupOptions.forEach((g) => {
                 const item = document.createElement('div');
-                item.className = 'flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm';
+                item.className = 'flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm gap-3';
                 item.innerHTML = `
                     <span class="font-semibold">${g.label}</span>
-                    <button class="text-rose-600 hover:text-rose-500 text-xs font-semibold" onclick="deleteGroup(${g.id})">Eliminar</button>
+                    <div class="flex items-center gap-2">
+                        <button class="h-8 w-8 inline-flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-primary/30 text-primary hover:bg-primary/10 shadow" onclick="editGroup(${g.id})" title="Renombrar">
+                            <span class="material-symbols-outlined text-base">edit</span>
+                        </button>
+                        <button class="h-8 w-8 inline-flex items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-primary/30 text-primary hover:bg-primary/10 shadow" onclick="deleteGroup(${g.id})" title="Eliminar">
+                            <span class="material-symbols-outlined text-base">delete</span>
+                        </button>
+                    </div>
                 `;
                 list.appendChild(item);
             });
@@ -209,7 +288,9 @@ Guardar cambios
         if (createBtn) {
             createBtn.onclick = async () => {
                 const name = (input.value || '').trim();
-                if (!name) return alert('Introduce un nombre de grupo');
+                if (!name) return showToast('Introduce un nombre de grupo', 'error');
+                const ok = await uiConfirm(`Estás a punto de CREAR el grupo "${name}".\n¿Quieres continuar?`);
+                if (!ok) return;
                 const resp = await fetch(apiUrl('api/groups.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -217,9 +298,10 @@ Guardar cambios
                     body: JSON.stringify({ name }),
                 });
                 let json;
-                try { json = await parseJsonSafe(resp); } catch (e) { alert(e.message); return; }
-                if (!resp.ok) { alert(json.error || 'No se pudo crear el grupo'); return; }
+                try { json = await parseJsonSafe(resp); } catch (e) { showToast(e.message, 'error'); return; }
+                if (!resp.ok) { showToast(json.error || 'No se pudo crear el grupo', 'error'); return; }
                 input.value = '';
+                showToast(`Grupo "${name}" creado`, 'success');
                 await fetchGroups();
                 renderGroupManager();
                 render();
@@ -230,8 +312,8 @@ Guardar cambios
 
     window.deleteGroup = async function(id) {
         const group = groupOptions.find(g => Number(g.id) === Number(id));
-        if (!group) { alert('Grupo no encontrado'); return; }
-        const ok = confirm(`¿Eliminar el grupo "${group.label}"?\nLos empleados existentes conservarán el nombre.`);
+        if (!group) { showToast('Grupo no encontrado', 'error'); return; }
+        const ok = await uiConfirm(`¿Eliminar el grupo "${group.label}"?\nLos empleados existentes conservarán el nombre.`);
         if (!ok) return;
         const resp = await fetch(apiUrl('api/groups.php'), {
             method: 'POST',
@@ -242,9 +324,31 @@ Guardar cambios
         let json;
         try { json = await parseJsonSafe(resp); } catch (e) { console.error('Delete parse error', e); alert(e.message); return; }
         console.log('Respuesta delete', resp.status, json);
-        if (!resp.ok) { alert(json.error || 'No se pudo eliminar el grupo'); return; }
-        alert(`Grupo "${group.label}" eliminado`);
+        if (!resp.ok) { showToast(json.error || 'No se pudo eliminar el grupo', 'error'); return; }
+        showToast(`Grupo "${group.label}" eliminado`, 'success');
         groupOptions = groupOptions.filter(g => g.id !== id);
+        await fetchGroups();
+        renderGroupManager();
+        render();
+    }
+
+    window.editGroup = async function(id) {
+        const group = groupOptions.find(g => Number(g.id) === Number(id));
+        if (!group) { showToast('Grupo no encontrado', 'error'); return; }
+        const newName = await uiPrompt('Editar nombre del grupo', group.label);
+        if (!newName || newName === group.label) return;
+        const ok = await uiConfirm(`Vas a cambiar el nombre del grupo:\n"${group.label}" → "${newName}"\n¿Confirmas?`);
+        if (!ok) return;
+        const resp = await fetch(apiUrl('api/groups.php'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ action: 'rename', id, name: newName }),
+        });
+        let json;
+        try { json = await parseJsonSafe(resp); } catch (e) { showToast(e.message, 'error'); return; }
+        if (!resp.ok) { showToast(json.error || 'No se pudo renombrar el grupo', 'error'); return; }
+        showToast(`Grupo renombrado a "${newName}"`, 'success');
         await fetchGroups();
         renderGroupManager();
         render();
