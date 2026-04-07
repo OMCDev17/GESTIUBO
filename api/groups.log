@@ -1,0 +1,12 @@
+2026-04-07T14:36:41+02:00 action=create payload={"name":"DIRECCION"}
+2026-04-07T14:46:44+02:00 action=create payload={"name":"DIRECCION"}
+2026-04-07T14:49:39+02:00 action=delete payload={"action":"delete","id":42}
+2026-04-07T14:49:39+02:00 delete_check id=42 rows=1
+2026-04-07T14:49:39+02:00 delete_update id=42 affected=1
+2026-04-07T14:50:26+02:00 action=create payload={"name":"DIRECCION"}
+2026-04-07T14:51:28+02:00 action=delete payload={"action":"delete","id":42}
+2026-04-07T14:51:28+02:00 delete_check id=42 rows=1
+2026-04-07T14:51:28+02:00 delete_update id=42 affected=1
+2026-04-07T14:53:10+02:00 action=delete payload={"action":"delete","id":4}
+2026-04-07T14:53:10+02:00 delete_check id=4 rows=1
+2026-04-07T14:53:10+02:00 delete_update id=4 affected=1

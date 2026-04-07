@@ -28,10 +28,6 @@ $allowed = [
     'grupo', 'foto_url', 'rol', 'horario'
 ];
 
-$updateStmt = $mysqli->prepare(
-    "UPDATE employees SET %s WHERE id = ?"
-);
-
 $updated = 0;
 $errors = [];
 

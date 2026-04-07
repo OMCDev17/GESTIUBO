@@ -64,6 +64,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Edita cualquier dato de los usuarios y guarda los cambios cuando termines.</p>
 </div>
 
+<div id="groupManager"></div>
+
 <div id="groupsContainer" class="flex flex-col gap-8"></div>
 
 <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
@@ -134,19 +136,7 @@ Guardar cambios
         return end >= new Date(today.getFullYear(), today.getMonth(), today.getDate());
     }
 
-    const groupOptions = [
-        { value: 'AFM-NANO', label: 'AFM-NANO' },
-        { value: 'AMBILAB', label: 'AMBILAB' },
-        { value: 'BIOLAB', label: 'BIOLAB' },
-        { value: 'GEO-GLOBAL', label: 'GEO-GLOBAL' },
-        { value: 'PRODMAR', label: 'PRODMAR' },
-        { value: 'QUIBIONAT', label: 'QUIBIONAT' },
-        { value: 'QUIMIOPLAN', label: 'QUIMIOPLAN' },
-        { value: 'SINTESTER', label: 'SINTESTER' },
-        { value: 'PTGAS', label: 'PTGAS' },
-        { value: 'ECOBERTURA', label: 'ECOBERTURA' },
-        { value: 'Otros usuarios', label: 'Otros usuarios' },
-    ];
+    let groupOptions = [];
 
     const legacyLetterToName = {
         'A': 'AFM-NANO',
@@ -159,11 +149,113 @@ Guardar cambios
         'H': 'SINTESTER',
     };
 
+    // Construye rutas absolutas robustas (soporta despliegue en subcarpeta)
+    const basePath = `${window.location.origin}${window.location.pathname.replace(/[^/]+$/, '')}`;
+    const apiUrl = (path) => `${basePath}${path}`;
+
+    async function parseJsonSafe(resp) {
+        const text = await resp.text();
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error(`Respuesta no JSON (HTTP ${resp.status}): ${text.slice(0, 200)}`);
+        }
+    }
+
+    function renderGroupManager() {
+        const host = document.getElementById('groupManager');
+        if (!host) return;
+        host.innerHTML = '';
+
+        const card = document.createElement('div');
+        card.className = 'rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5';
+
+        const header = document.createElement('div');
+        header.className = 'flex flex-col md:flex-row md:items-center md:justify-between gap-3';
+        header.innerHTML = `
+            <div>
+                <h3 class="text-lg font-bold text-primary">Gestión de grupos</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Crea nuevos grupos o elimina los que ya no necesites. Las estancias finalizadas conservarán su nombre de grupo.</p>
+            </div>
+            <div class="flex gap-2">
+                <input id="newGroupInput" type="text" placeholder="Nuevo grupo" class="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm px-3 py-2 focus:outline-none focus:ring-primary focus:border-primary" />
+                <button id="createGroupBtn" class="rounded-lg bg-primary text-white px-4 py-2 text-sm font-semibold hover:bg-primary/90 focus:outline-none">Crear</button>
+            </div>
+        `;
+
+        const list = document.createElement('div');
+        list.className = 'mt-4 grid sm:grid-cols-2 md:grid-cols-3 gap-3';
+
+        if (groupOptions.length === 0) {
+            list.innerHTML = '<p class="text-sm text-slate-500 dark:text-slate-400">No hay grupos.</p>';
+        } else {
+            groupOptions.forEach((g) => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm';
+                item.innerHTML = `
+                    <span class="font-semibold">${g.label}</span>
+                    <button class="text-rose-600 hover:text-rose-500 text-xs font-semibold" onclick="deleteGroup(${g.id})">Eliminar</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        card.appendChild(header);
+        card.appendChild(list);
+        host.appendChild(card);
+
+        const input = document.getElementById('newGroupInput');
+        const createBtn = document.getElementById('createGroupBtn');
+        if (createBtn) {
+            createBtn.onclick = async () => {
+                const name = (input.value || '').trim();
+                if (!name) return alert('Introduce un nombre de grupo');
+                const resp = await fetch(apiUrl('api/groups.php'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ name }),
+                });
+                let json;
+                try { json = await parseJsonSafe(resp); } catch (e) { alert(e.message); return; }
+                if (!resp.ok) { alert(json.error || 'No se pudo crear el grupo'); return; }
+                input.value = '';
+                await fetchGroups();
+                renderGroupManager();
+                render();
+            };
+        }
+
+    }
+
+    window.deleteGroup = async function(id) {
+        const group = groupOptions.find(g => Number(g.id) === Number(id));
+        if (!group) { alert('Grupo no encontrado'); return; }
+        const ok = confirm(`¿Eliminar el grupo "${group.label}"?\nLos empleados existentes conservarán el nombre.`);
+        if (!ok) return;
+        const resp = await fetch(apiUrl('api/groups.php'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ action: 'delete', id }),
+        });
+        let json;
+        try { json = await parseJsonSafe(resp); } catch (e) { console.error('Delete parse error', e); alert(e.message); return; }
+        console.log('Respuesta delete', resp.status, json);
+        if (!resp.ok) { alert(json.error || 'No se pudo eliminar el grupo'); return; }
+        alert(`Grupo "${group.label}" eliminado`);
+        groupOptions = groupOptions.filter(g => g.id !== id);
+        await fetchGroups();
+        renderGroupManager();
+        render();
+    }
+
     function mapFromDb(emp) {
+        const fallbackFoto = emp.foto_url || `https://i.pravatar.cc/160?u=${encodeURIComponent(emp.email || emp.username || emp.id || Math.random())}`;
         return {
             ...emp,
             dni: emp.dni_pasaporte,
-            foto: emp.foto_url,
+            foto: fallbackFoto,
             horario: typeof emp.horario !== 'undefined' ? Number(emp.horario) : 1,
             grupo: resolveGroupName(emp.grupo),
         };
@@ -214,8 +306,9 @@ Guardar cambios
 
     async function fetchEmployees() {
         try {
-            const resp = await fetch('api/employees.php');
-            const json = await resp.json();
+            const resp = await fetch(apiUrl('api/employees.php'), { credentials: 'same-origin' });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const json = await parseJsonSafe(resp);
             if (!Array.isArray(json.employees)) throw new Error('Respuesta inválida');
             employees = json.employees.map(mapFromDb);
         } catch (error) {
@@ -224,24 +317,51 @@ Guardar cambios
         }
     }
 
+    async function fetchGroups() {
+        try {
+            const resp = await fetch(apiUrl('api/groups.php'), { credentials: 'same-origin' });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const json = await parseJsonSafe(resp);
+            if (!Array.isArray(json.groups)) throw new Error('Respuesta inválida');
+            groupOptions = json.groups
+                .filter(g => !g.deleted_at)
+                .map(g => {
+                    const display = resolveGroupName(g.name) || g.name;
+                    return { value: g.name, label: display, id: Number(g.id) };
+                })
+                .sort((a, b) => a.label.localeCompare(b.label));
+        } catch (error) {
+            console.error('No se pudieron cargar los grupos:', error);
+            groupOptions = [];
+        }
+    }
+
     async function saveAll() {
         const payload = {
             employees: employees.map(mapToDb)
         };
 
-        const resp = await fetch('api/save_employees.php', {
+        const resp = await fetch(apiUrl('api/save_employees.php'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
             body: JSON.stringify(payload),
         });
 
-        const result = await resp.json();
+        let result;
+        try {
+            result = await parseJsonSafe(resp);
+        } catch (e) {
+            console.error(e);
+            alert(e.message);
+            return;
+        }
         if (resp.ok) {
             alert(`Cambios guardados (${result.updated} actualizaciones).`);
             await loadAndRender();
         } else {
             console.error(result);
-            alert('Hubo un error al guardar. Revisa la consola.');
+            alert(result.error || 'Hubo un error al guardar. Revisa la consola.');
         }
     }
 
@@ -310,12 +430,18 @@ Guardar cambios
                     const fields = document.createElement('div');
                     fields.className = 'grid gap-4 md:grid-cols-2';
 
+                    const groupValue = resolveGroupName(emp.grupo);
+                    const groupOptionsForEmp = [...groupOptions];
+                    if (groupValue && !groupOptionsForEmp.some(o => o.value === groupValue)) {
+                        groupOptionsForEmp.push({ value: groupValue, label: groupValue });
+                    }
+
                     const fieldConfigs = [
                         { label: 'Nombre', name: 'nombre', value: emp.nombre },
                         { label: 'Apellidos', name: 'apellidos', value: emp.apellidos },
                         { label: 'Email', name: 'email', value: emp.email, type: 'email' },
                         { label: 'DNI / Pasaporte', name: 'dni', value: emp.dni, type: 'text' },
-                        { label: 'Grupo', name: 'grupo', value: resolveGroupName(emp.grupo), type: 'select', options: groupOptions },
+                        { label: 'Grupo', name: 'grupo', value: groupValue, type: 'select', options: groupOptionsForEmp.sort((a, b) => a.label.localeCompare(b.label)) },
                         { label: 'Rol', name: 'rol', value: emp.rol, type: 'select', options: roles },
                         { label: 'Horario', name: 'horario', value: String(emp.horario ?? 1), type: 'select', options: horarioOptions },
                         { label: 'Inicio', name: 'fecha_inicio', value: emp.fecha_inicio, type: 'date' },
@@ -410,8 +536,9 @@ Guardar cambios
     }
 
     async function loadAndRender() {
-        await fetchEmployees();
+        await Promise.all([fetchGroups(), fetchEmployees()]);
         render();
+        renderGroupManager();
     }
 
     document.getElementById('saveAll').addEventListener('click', saveAll);
