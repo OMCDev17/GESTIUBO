@@ -132,6 +132,9 @@ Guardar cambios
         { value: 'QUIBIONAT', label: 'QUIBIONAT' },
         { value: 'QUIMIOPLAN', label: 'QUIMIOPLAN' },
         { value: 'SINTESTER', label: 'SINTESTER' },
+        { value: 'PTGAS', label: 'PTGAS' },
+        { value: 'ECOBERTURA', label: 'ECOBERTURA' },
+        { value: 'Otros usuarios', label: 'Otros usuarios' },
     ];
 
     const legacyLetterToName = {

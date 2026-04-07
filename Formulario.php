@@ -201,6 +201,9 @@
             <option value="QUIBIONAT">QUIBIONAT</option>
             <option value="QUIMIOPLAN">QUIMIOPLAN</option>
             <option value="SINTESTER">SINTESTER</option>
+            <option value="PTGAS">PTGAS</option>
+            <option value="ECOBERTURA">ECOBERTURA</option>
+            <option value="Otros usuarios">Otros usuarios</option>
         </select>
     </label>
 </div>
