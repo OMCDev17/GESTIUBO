@@ -61,14 +61,14 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 <div class="w-full max-w-[980px] flex flex-col gap-6">
 <div class="text-center">
 <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Panel de Administración</h1>
-<p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Edita cualquier dato de los empleados y guarda los cambios cuando termines.</p>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Edita cualquier dato de los usuarios y guarda los cambios cuando termines.</p>
 </div>
 
 <div id="groupsContainer" class="flex flex-col gap-8"></div>
 
 <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
     <h2 class="text-lg font-bold text-primary">Historial de estancias finalizadas</h2>
-    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Aquí puedes ver ejemplos de empleados que ya no tienen estancia activa.</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Aquí puedes ver ejemplos de usuarios que ya no tienen estancia activa.</p>
     <div id="historyContainer" class="mt-4 grid gap-4"></div>
 </section>
 
@@ -90,7 +90,7 @@ Guardar cambios
 
 <script>
     const roles = [
-        { value: 'empleado', label: 'Empleado' },
+        { value: 'empleado', label: 'Usuario' },
         { value: 'coordinador', label: 'Coordinador' },
         { value: 'seguridad', label: 'Seguridad' },
         { value: 'admin', label: 'Administrador' }
@@ -219,7 +219,7 @@ Guardar cambios
             if (!Array.isArray(json.employees)) throw new Error('Respuesta inválida');
             employees = json.employees.map(mapFromDb);
         } catch (error) {
-            console.error('No se pudieron cargar los empleados:', error);
+            console.error('No se pudieron cargar los usuarios:', error);
             employees = [];
         }
     }
@@ -272,7 +272,7 @@ Guardar cambios
             header.className = 'flex items-center justify-between gap-3';
             header.innerHTML = `
                 <h2 class="text-lg font-bold text-primary">Grupo ${currentLabel}</h2>
-                <span class="text-sm text-slate-500 dark:text-slate-400">${activeEmployees.filter(e => e.grupo === group).length} empleados</span>
+                <span class="text-sm text-slate-500 dark:text-slate-400">${activeEmployees.filter(e => e.grupo === group).length} usuarios</span>
             `;
 
             const list = document.createElement('div');
@@ -382,13 +382,14 @@ Guardar cambios
             const item = document.createElement('div');
             item.className = 'flex flex-col gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4';
             const label = resolveGroupName(emp.grupo);
+            const displayRole = String(emp.rol).toLowerCase() === 'empleado' ? 'Usuario' : emp.rol;
             item.innerHTML = `
                 <div class="flex items-center justify-between gap-4">
                     <div class="flex items-center gap-3">
                         <img class="h-12 w-12 rounded-full object-cover border border-slate-200 dark:border-slate-700" src="${emp.foto}" alt="${emp.nombre} ${emp.apellidos}" />
                         <div>
                             <p class="font-semibold text-slate-900 dark:text-slate-100">${emp.nombre} ${emp.apellidos}</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">${emp.rol} — Grupo ${label}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">${displayRole} — Grupo ${label}</p>
                         </div>
                     </div>
                     <span class="text-xs font-semibold text-rose-700 dark:text-rose-200">Estancia finalizada</span>
