@@ -166,7 +166,7 @@ window.addEventListener('DOMContentLoaded', () => {
 <label class="text-sm font-semibold text-slate-700 block" for="username">Usuario o Correo Electrónico</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">person</span>
-<input class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-lab-accent focus:border-transparent outline-none transition-all placeholder:text-slate-400" id="username" name="username" placeholder="ej. empleado_123" type="text"/>
+<input class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-lab-accent focus:border-transparent outline-none transition-all placeholder:text-slate-400" id="username" name="username" placeholder="ej. User_123" type="text"/>
 </div>
 </div>
 <div class="space-y-2">

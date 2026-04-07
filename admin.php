@@ -298,7 +298,7 @@ Guardar cambios
                         { label: 'Nombre', name: 'nombre', value: emp.nombre },
                         { label: 'Apellidos', name: 'apellidos', value: emp.apellidos },
                         { label: 'Email', name: 'email', value: emp.email, type: 'email' },
-                        { label: 'DNI / Pasaporte', name: 'dni', value: emp.dni, type: 'maskedDni' },
+                        { label: 'DNI / Pasaporte', name: 'dni', value: emp.dni, type: 'text' },
                         { label: 'Grupo', name: 'grupo', value: resolveGroupName(emp.grupo), type: 'select', options: groupOptions },
                         { label: 'Rol', name: 'rol', value: emp.rol, type: 'select', options: roles },
                         { label: 'Inicio', name: 'fecha_inicio', value: emp.fecha_inicio, type: 'date' },
