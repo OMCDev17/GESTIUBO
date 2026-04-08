@@ -214,6 +214,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step == 1) {
 </div>
 
 <script>
+    // Toast reutilizable con estilo del panel (morado)
+    const toastHost = (() => {
+        const existing = document.getElementById('toastHost');
+        if (existing) return existing;
+        const el = document.createElement('div');
+        el.id = 'toastHost';
+        el.className = 'fixed bottom-4 right-4 flex flex-col gap-3 z-[9999] pointer-events-none';
+        document.addEventListener('DOMContentLoaded', () => document.body.appendChild(el));
+        return el;
+    })();
+    function showToast(message, variant = 'info') {
+        const palette = { success: 'bg-primary text-white', error: 'bg-primary text-white', info: 'bg-primary text-white' };
+        const toast = document.createElement('div');
+        toast.className = `pointer-events-auto min-w-[240px] max-w-xs rounded-lg shadow-lg px-4 py-3 text-sm font-semibold ${palette[variant] || palette.info}`;
+        toast.textContent = message;
+        toastHost.appendChild(toast);
+        setTimeout(() => toast.remove(), 3200);
+    }
+
     <?php if ($validCode): ?>
     const form = document.getElementById('pwdForm');
     const btn = document.getElementById('submitBtn');
@@ -226,11 +245,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step == 1) {
             const confirm = document.getElementById('confirmPwd').value.trim();
 
             if (neu !== confirm) {
-                alert(window.passwordAlerts?.alertMismatch || 'Las contraseñas no coinciden.');
+                showToast(window.passwordAlerts?.alertMismatch || 'Las contraseñas no coinciden.', 'error');
                 return;
             }
             if (neu.length < 4) {
-                alert(window.passwordAlerts?.alertLength || 'La contraseña debe tener al menos 4 caracteres.');
+                showToast(window.passwordAlerts?.alertLength || 'La contraseña debe tener al menos 4 caracteres.', 'error');
                 return;
             }
 
@@ -251,17 +270,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step == 1) {
                 console.log('Respuesta del servidor:', data);
 
                 if (data.success) {
-                    alert(window.passwordAlerts?.alertSuccess || 'Contraseña restablecida exitosamente');
+                    showToast(window.passwordAlerts?.alertSuccess || 'Contraseña restablecida exitosamente', 'success');
                     window.location.href = 'Loggin.php';
                 } else {
-                    alert(data.error || window.passwordAlerts?.alertError || 'Error al restablecer la contraseña');
+                    showToast(data.error || window.passwordAlerts?.alertError || 'Error al restablecer la contraseña', 'error');
                     btn.disabled = false;
                     btn.classList.remove('opacity-80');
                     btnText.textContent = window.passwordAlerts?.btnText || 'Restablecer contraseña';
                 }
             } catch (err) {
                 console.error(err);
-                alert('Error al procesar la solicitud');
+                showToast('Error al procesar la solicitud', 'error');
                 btn.disabled = false;
                 btn.classList.remove('opacity-80');
                 btnText.textContent = 'Restablecer contraseña';

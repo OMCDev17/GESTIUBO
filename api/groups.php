@@ -2,7 +2,6 @@
 header('Content-Type: application/json; charset=utf-8');
 
 require __DIR__ . '/auth.php';
-requireRole('admin', true);
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
@@ -13,16 +12,16 @@ $sendError = function(int $code, string $msg) {
 };
 
 $config = require __DIR__ . '/config.php';
-try {
-    $mysqli = new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
-    $mysqli->set_charset($config['charset']);
-} catch (Throwable $e) {
-    $sendError(500, 'Error de conexión con la base de datos');
-}
-
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
+    try {
+        $mysqli = new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
+        $mysqli->set_charset($config['charset']);
+    } catch (Throwable $e) {
+        $sendError(500, 'Error de conexión con la base de datos');
+    }
+
     try {
         $result = $mysqli->query("SELECT id, name, deleted_at FROM groups ORDER BY name");
         $groups = [];
@@ -35,6 +34,16 @@ if ($method === 'GET') {
     } catch (Throwable $e) {
         $sendError(500, $e->getMessage());
     }
+}
+
+// Para el resto de métodos mantenemos la protección de rol admin
+requireRole('admin', true);
+
+try {
+    $mysqli = new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
+    $mysqli->set_charset($config['charset']);
+} catch (Throwable $e) {
+    $sendError(500, 'Error de conexión con la base de datos');
 }
 
 // POST for create or soft-delete

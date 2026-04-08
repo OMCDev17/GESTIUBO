@@ -212,6 +212,25 @@ $fotoUrl = !empty($employee['foto_url'])
 </div>
 </div>
 <script>
+    // Toast reutilizable con estética del panel (morado)
+    const toastHost = (() => {
+        const existing = document.getElementById('toastHost');
+        if (existing) return existing;
+        const el = document.createElement('div');
+        el.id = 'toastHost';
+        el.className = 'fixed bottom-4 right-4 flex flex-col gap-3 z-[9999] pointer-events-none';
+        document.addEventListener('DOMContentLoaded', () => document.body.appendChild(el));
+        return el;
+    })();
+    function showToast(message, variant = 'info') {
+        const palette = { success: 'bg-primary text-white', error: 'bg-primary text-white', info: 'bg-primary text-white' };
+        const toast = document.createElement('div');
+        toast.className = `pointer-events-auto min-w-[240px] max-w-xs rounded-lg shadow-lg px-4 py-3 text-sm font-semibold ${palette[variant] || palette.info}`;
+        toast.textContent = message;
+        toastHost.appendChild(toast);
+        setTimeout(() => toast.remove(), 3200);
+    }
+
     function logout() {
         window.location.href = 'api/logout.php';
     }

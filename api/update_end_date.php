@@ -56,14 +56,15 @@ foreach ($data['updates'] as $row) {
     }
 
     $extraFilter = '';
+    // Orden correcto de placeholders en WHERE: primero id, luego grupo (si aplica)
+    $types .= 'i';
+    $params[] = $id;
+
     if (in_array($sessionRole, ['supervisor', 'coordinador'], true) && $sessionGroup !== '') {
         $extraFilter = ' AND grupo = ?';
         $types .= 's';
         $params[] = $sessionGroup;
     }
-
-    $types .= 'i';
-    $params[] = $id;
 
     $sql = sprintf("UPDATE employees SET %s WHERE id = ?%s", implode(', ', $fields), $extraFilter);
     $stmt = $mysqli->prepare($sql);

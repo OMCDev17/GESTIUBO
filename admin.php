@@ -289,7 +289,7 @@ Guardar cambios
             createBtn.onclick = async () => {
                 const name = (input.value || '').trim();
                 if (!name) return showToast('Introduce un nombre de grupo', 'error');
-                const ok = await uiConfirm(`Estás a punto de CREAR el grupo "${name}".\n¿Quieres continuar?`);
+                const ok = await uiConfirm(`Se creará el nuevo grupo: "${name}".\n¿Deseas continuar?`);
                 if (!ok) return;
                 const resp = await fetch(apiUrl('api/groups.php'), {
                     method: 'POST',
@@ -313,7 +313,7 @@ Guardar cambios
     window.deleteGroup = async function(id) {
         const group = groupOptions.find(g => Number(g.id) === Number(id));
         if (!group) { showToast('Grupo no encontrado', 'error'); return; }
-        const ok = await uiConfirm(`¿Eliminar el grupo "${group.label}"?\nLos empleados existentes conservarán el nombre.`);
+        const ok = await uiConfirm(`Se eliminará el grupo: "${group.label}" ¿Deseas continuar?\nLos empleados existentes conservarán el nombre.`);
         if (!ok) return;
         const resp = await fetch(apiUrl('api/groups.php'), {
             method: 'POST',
@@ -322,7 +322,7 @@ Guardar cambios
             body: JSON.stringify({ action: 'delete', id }),
         });
         let json;
-        try { json = await parseJsonSafe(resp); } catch (e) { console.error('Delete parse error', e); alert(e.message); return; }
+        try { json = await parseJsonSafe(resp); } catch (e) { console.error('Delete parse error', e); showToast(e.message, 'error'); return; }
         console.log('Respuesta delete', resp.status, json);
         if (!resp.ok) { showToast(json.error || 'No se pudo eliminar el grupo', 'error'); return; }
         showToast(`Grupo "${group.label}" eliminado`, 'success');
@@ -457,15 +457,15 @@ Guardar cambios
             result = await parseJsonSafe(resp);
         } catch (e) {
             console.error(e);
-            alert(e.message);
+            showToast(e.message, 'error');
             return;
         }
         if (resp.ok) {
-            alert(`Cambios guardados (${result.updated} actualizaciones).`);
+            showToast(`Cambios guardados (${result.updated} actualizaciones).`, 'success');
             await loadAndRender();
         } else {
             console.error(result);
-            alert(result.error || 'Hubo un error al guardar. Revisa la consola.');
+            showToast(result.error || 'Hubo un error al guardar. Revisa la consola.', 'error');
         }
     }
 

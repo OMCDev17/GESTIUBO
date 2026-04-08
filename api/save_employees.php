@@ -71,7 +71,8 @@ foreach ($data['employees'] as $emp) {
     $stmt->bind_param($types, ...$params);
     if (!$stmt->execute()) {
         $errors[] = ['id' => $emp['id'], 'error' => $stmt->error];
-    } else {
+    } elseif ($stmt->affected_rows > 0) {
+        // Solo contar cuando realmente cambia algo
         $updated++;
     }
     $stmt->close();

@@ -192,18 +192,7 @@
     <label class="flex flex-col gap-2 mb-4">
         <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">Grupo / Group</p>
         <select name="grupo" required class="form-select rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary h-12 text-slate-700 dark:text-slate-300">
-            <option disabled selected value="">Seleccione grupo / Select group</option>
-            <option value="AFM-NANO">AFM-NANO</option>
-            <option value="AMBILAB">AMBILAB</option>
-            <option value="BIOLAB">BIOLAB</option>
-            <option value="GEO-GLOBAL">GEO-GLOBAL</option>
-            <option value="PRODMAR">PRODMAR</option>
-            <option value="QUIBIONAT">QUIBIONAT</option>
-            <option value="QUIMIOPLAN">QUIMIOPLAN</option>
-            <option value="SINTESTER">SINTESTER</option>
-            <option value="PTGAS">PTGAS</option>
-            <option value="ECOBERTURA">ECOBERTURA</option>
-            <option value="Otros usuarios">Otros usuarios</option>
+            <option disabled selected value="">Cargando grupos...</option>
         </select>
     </label>
 </div>
@@ -235,6 +224,25 @@
 </div>
 </div>
 <script>
+    // Toast reutilizable con estética del panel (morado)
+    const toastHost = (() => {
+        const existing = document.getElementById('toastHost');
+        if (existing) return existing;
+        const el = document.createElement('div');
+        el.id = 'toastHost';
+        el.className = 'fixed bottom-4 right-4 flex flex-col gap-3 z-[9999] pointer-events-none';
+        document.addEventListener('DOMContentLoaded', () => document.body.appendChild(el));
+        return el;
+    })();
+    function showToast(message, variant = 'info') {
+        const palette = { success: 'bg-primary text-white', error: 'bg-primary text-white', info: 'bg-primary text-white' };
+        const toast = document.createElement('div');
+        toast.className = `pointer-events-auto min-w-[240px] max-w-xs rounded-lg shadow-lg px-4 py-3 text-sm font-semibold ${palette[variant] || palette.info}`;
+        toast.textContent = message;
+        toastHost.appendChild(toast);
+        setTimeout(() => toast.remove(), 3200);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         const photoUpload = document.getElementById('photoUpload');
         const photoDropHint = document.getElementById('photoDropHint');
@@ -246,6 +254,55 @@
         const maxBytes = 5 * 1024 * 1024; // 5 MB
         const password = document.getElementById('password');
         const passwordConfirm = document.getElementById('password_confirm');
+        const groupSelect = document.querySelector('select[name="grupo"]');
+
+        // Carga dinámica de grupos desde la base de datos
+        const renderGroupPlaceholder = (text) => {
+            if (!groupSelect) return;
+            groupSelect.innerHTML = '';
+            const opt = document.createElement('option');
+            opt.disabled = true;
+            opt.selected = true;
+            opt.value = '';
+            opt.textContent = text;
+            groupSelect.appendChild(opt);
+        };
+        renderGroupPlaceholder('Cargando grupos...');
+
+        const loadGroups = async () => {
+            if (!groupSelect) return;
+            try {
+                const resp = await fetch('api/groups.php');
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const json = await resp.json();
+                const groups = Array.isArray(json.groups)
+                    ? json.groups.filter((g) => !g.deleted_at)
+                    : [];
+                if (groups.length === 0) throw new Error('No hay grupos configurados');
+
+                groupSelect.innerHTML = '';
+                const placeholder = document.createElement('option');
+                placeholder.disabled = true;
+                placeholder.selected = true;
+                placeholder.value = '';
+                placeholder.textContent = 'Seleccione grupo / Select group';
+                groupSelect.appendChild(placeholder);
+
+                groups
+                    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
+                    .forEach((g) => {
+                        const opt = document.createElement('option');
+                        opt.value = g.name;
+                        opt.textContent = g.name;
+                        groupSelect.appendChild(opt);
+                    });
+            } catch (error) {
+                console.error('No se pudieron cargar los grupos', error);
+                renderGroupPlaceholder('No se pudieron cargar los grupos');
+            }
+        };
+
+        loadGroups();
 
         const showPhotoError = (msg) => {
             photoError.textContent = msg;
