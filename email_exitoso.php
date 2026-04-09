@@ -3,7 +3,7 @@
 <html class="light" lang="es"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Email Enviado - Lab Portal</title>
+<title>Email Enviado - GESTIUBO</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -91,7 +91,7 @@
 <!-- Footer / Copyright -->
 <footer class="py-6 px-10 border-t border-primary/5 text-center">
 <p class="text-slate-400 text-xs font-medium uppercase tracking-widest">
-                    © 2026 Lab Portal. All Rights Reserved.
+                    © 2026 GESTIUBO. All Rights Reserved.
                 </p>
 </footer>
 </div>

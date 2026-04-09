@@ -18,6 +18,7 @@ if ($usingMysqli) {
         send500('Error de conexión con la base de datos');
     }
     $db->set_charset($config['charset']);
+    $db->query("SET NAMES {$config['charset']}");
 } elseif (extension_loaded('pdo_mysql')) {
     try {
         $dsn = "mysql:host={$config['host']};dbname={$config['db']};charset={$config['charset']}";
@@ -51,31 +52,29 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $user = null;
 if ($usingMysqli) {
-    $stmt = $db->prepare('SELECT id, nombre, apellidos, email, rol, grupo, foto_url, horario, password FROM employees WHERE username = ? OR email = ? LIMIT 1');
+$sql = 'SELECT e.id, e.nombre, e.apellidos, e.email, e.username, e.dni_pasaporte, e.fecha_nacimiento, e.rol, e.password,
+                   s.group_id, g.name AS group_name, s.horario, s.fecha_inicio, s.fecha_fin, s.motivo, s.institucion, s.pais, e.foto_url
+            FROM employees e
+            LEFT JOIN stays s ON s.employee_id = e.id AND s.status = "active"
+            LEFT JOIN groups g ON g.id = s.group_id
+            WHERE e.username = ? OR e.email = ?
+            LIMIT 1';
+    $stmt = $db->prepare($sql);
     $stmt->bind_param('ss', $username, $username);
     $stmt->execute();
 
     if ($result = $stmt->get_result()) {
         $user = $result->fetch_assoc();
-    } else {
-        $stmt->bind_result($id, $nombre, $apellidos, $email, $rol, $grupo, $foto_url, $horario, $stored);
-        if ($stmt->fetch()) {
-            $user = [
-                'id' => $id,
-                'nombre' => $nombre,
-                'apellidos' => $apellidos,
-                'email' => $email,
-                'rol' => $rol,
-                'grupo' => $grupo,
-                'foto_url' => $foto_url,
-                'horario' => $horario,
-                'password' => $stored,
-            ];
-        }
     }
     $stmt->close();
 } else { // PDO
-    $stmt = $db->prepare('SELECT id, nombre, apellidos, email, rol, grupo, foto_url, horario, password FROM employees WHERE username = ? OR email = ? LIMIT 1');
+    $stmt = $db->prepare('SELECT e.id, e.nombre, e.apellidos, e.email, e.username, e.dni_pasaporte, e.fecha_nacimiento, e.rol, e.password,
+                                 s.group_id, g.name AS group_name, s.horario, s.fecha_inicio, s.fecha_fin, s.motivo, s.institucion, s.pais, e.foto_url
+                          FROM employees e
+                          LEFT JOIN stays s ON s.employee_id = e.id AND s.status = "active"
+                          LEFT JOIN groups g ON g.id = s.group_id
+                          WHERE e.username = ? OR e.email = ?
+                          LIMIT 1');
     $stmt->execute([$username, $username]);
     $user = $stmt->fetch();
 }

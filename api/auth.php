@@ -15,6 +15,10 @@
  *   requireRole(['admin'], true);
  */
 
+// Forzar UTF-8 en toda la aplicación
+ini_set('default_charset', 'UTF-8');
+mb_internal_encoding('UTF-8');
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

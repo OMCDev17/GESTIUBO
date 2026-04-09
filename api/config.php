@@ -23,6 +23,6 @@ return [
         'password' => 'dqbe lydf ypbj kwaz',
         // Opcional - cambiar a tu dominio
         'from_email' => 'jairilicious@gmail.com',
-        'from_name' => 'Lab Portal - Recuperación',
+        'from_name' => 'GESTIUBO - Recuperación',
     ],
 ];
