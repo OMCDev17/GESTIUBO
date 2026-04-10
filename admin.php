@@ -126,6 +126,9 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
         let employees = [];
         let historyStays = [];
+        let employeeBaselineById = new Map();
+        let stayBaselineById = new Map();
+        const saveButtonBaseText = 'Guardar cambios';
         const normalizeGroup = (value) => value ? String(value).toUpperCase() : '';
         const maskDni = (value) => {
             const str = String(value ?? '').trim();
@@ -148,6 +151,12 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 month: '2-digit',
                 day: '2-digit'
             });
+        }
+
+        function normalizeDateKey(dateStr) {
+            const raw = String(dateStr ?? '').trim();
+            if (!raw) return '';
+            return raw.split('T')[0];
         }
 
         function formatEndDate(dateStr, role) {
@@ -473,6 +482,61 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             };
         }
 
+        function employeeSignature(emp) {
+            const db = mapToDb(emp);
+            return JSON.stringify({
+                id: Number(db.id),
+                nombre: db.nombre || '',
+                apellidos: db.apellidos || '',
+                dni_pasaporte: db.dni_pasaporte || '',
+                fecha_nacimiento: db.fecha_nacimiento || null,
+                email: db.email || '',
+                institucion: db.institucion || null,
+                pais: db.pais || null,
+                motivo: db.motivo || null,
+                fecha_inicio: normalizeDateKey(db.fecha_inicio),
+                fecha_fin: normalizeDateKey(db.fecha_fin),
+                group_id: db.group_id ? Number(db.group_id) : null,
+                grupo: db.grupo || null,
+                foto_url: db.foto_url || null,
+                rol: db.rol || 'empleado',
+                horario: Number(typeof db.horario !== 'undefined' ? db.horario : 1),
+            });
+        }
+
+        function staySignature(stay) {
+            return JSON.stringify({
+                id: Number(stay.id),
+                fecha_inicio: normalizeDateKey(stay.fecha_inicio),
+                fecha_fin: normalizeDateKey(stay.fecha_fin),
+            });
+        }
+
+        function employeeHasChanges(emp) {
+            const id = Number(emp.id);
+            return employeeBaselineById.get(id) !== employeeSignature(emp);
+        }
+
+        function stayHasChanges(stay) {
+            const id = Number(stay.id);
+            return stayBaselineById.get(id) !== staySignature(stay);
+        }
+
+        function getPendingChangesCount() {
+            const employeeChanges = employees.reduce((count, emp) => count + (employeeHasChanges(emp) ? 1 : 0), 0);
+            const stayChanges = historyStays.reduce((count, stay) => count + (stayHasChanges(stay) ? 1 : 0), 0);
+            return employeeChanges + stayChanges;
+        }
+
+        function updateSaveButtonLabel() {
+            const button = document.getElementById('saveAll');
+            if (!button) return;
+            const label = button.querySelector('.truncate');
+            if (!label) return;
+            const count = getPendingChangesCount();
+            label.textContent = count > 0 ? `${saveButtonBaseText} (${count})` : saveButtonBaseText;
+        }
+
         function createInput({
             type = 'text',
             value = '',
@@ -578,7 +642,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
             // Guardar cambios en estancias finalizadas (si hay)
             const stayUpdates = historyStays
-                .filter(s => s._dirtyStay)
+                .filter((s) => stayHasChanges(s))
                 .map(s => ({
                     stay_id: s.id,
                     fecha_inicio: (s.fecha_inicio || '').split('T')[0] || s.fecha_inicio,
@@ -678,6 +742,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                             reader.onload = () => {
                                 emp.foto = reader.result;
                                 card.querySelector('img').src = emp.foto;
+                                updateSaveButtonLabel();
                             };
                             reader.readAsDataURL(file);
                         });
@@ -794,6 +859,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                                     } else {
                                         emp[name] = newValue;
                                     }
+                                    updateSaveButtonLabel();
                                 });
 
                                 wrapper.appendChild(input);
@@ -859,6 +925,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 const endInput = item.querySelector('input[data-field="end"]');
                 const markDirty = () => {
                     emp._dirtyStay = true;
+                    updateSaveButtonLabel();
                 };
                 startInput?.addEventListener('input', (e) => {
                     emp.fecha_inicio = e.target.value;
@@ -875,8 +942,11 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
         async function loadAndRender() {
             await Promise.all([fetchGroups(), fetchEmployees()]);
+            employeeBaselineById = new Map(employees.map((emp) => [Number(emp.id), employeeSignature(emp)]));
+            stayBaselineById = new Map(historyStays.map((stay) => [Number(stay.id), staySignature(stay)]));
             render();
             renderGroupManager();
+            updateSaveButtonLabel();
         }
 
         document.getElementById('saveAll').addEventListener('click', saveAll);

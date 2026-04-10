@@ -129,6 +129,7 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
         let employees = [];
         const groupToShow = '<?php echo $groupLabel; ?>';
         const pendingChanges = new Map();
+        const saveButtonBaseText = 'Guardar cambios';
         const horarioOptions = [{
                 value: 1,
                 label: 'Completo'
@@ -154,6 +155,23 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
                 month: '2-digit',
                 day: '2-digit'
             });
+        }
+
+        function normalizeDateKey(dateStr) {
+            const raw = String(dateStr ?? '').trim();
+            if (!raw) return '';
+            return raw.split('T')[0];
+        }
+
+        function addDaysToDateKey(dateKey, days) {
+            if (!dateKey) return '';
+            const d = new Date(`${dateKey}T00:00:00`);
+            if (Number.isNaN(d.getTime())) return '';
+            d.setDate(d.getDate() + Number(days || 0));
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
         }
 
         async function fetchEmployees() {
@@ -190,6 +208,9 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
             }
 
             groupEmployees.forEach((emp) => {
+                const startKey = normalizeDateKey(emp.fecha_inicio);
+                const endKey = normalizeDateKey(emp.fecha_fin);
+                const minEndKey = addDaysToDateKey(startKey, 1);
                 const card = document.createElement('div');
                 card.className = 'bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 p-6';
 
@@ -216,7 +237,7 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
                 </div>
                 <div class="rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
                     <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Fin</p>
-                    <input type="date" value="${emp.fecha_fin}" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm px-3 py-2 focus:outline-none focus:ring-primary focus:border-primary" data-employee-id="${emp.id}" data-field="fecha_fin" />
+                    <input type="date" value="${endKey}" min="${minEndKey}" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm px-3 py-2 focus:outline-none focus:ring-primary focus:border-primary" data-employee-id="${emp.id}" data-field="fecha_fin" />
                 </div>
                 <div class="rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
                     <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Horario</p>
@@ -243,6 +264,13 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
                     if (field === 'horario') {
                         emp.horario = Number(target.value);
                     } else if (field === 'fecha_fin') {
+                        const startKey = normalizeDateKey(emp.fecha_inicio);
+                        const nextEndKey = normalizeDateKey(target.value);
+                        if (startKey && nextEndKey && nextEndKey <= startKey) {
+                            showToast('La fecha de fin debe ser posterior a la fecha de inicio.', 'error');
+                            target.value = normalizeDateKey(emp.fecha_fin);
+                            return;
+                        }
                         emp.fecha_fin = target.value;
                     }
                     const current = pendingChanges.get(id) || {
@@ -251,46 +279,67 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
                     if (field === 'horario') current.horario = emp.horario;
                     if (field === 'fecha_fin') current.fecha_fin = emp.fecha_fin;
                     pendingChanges.set(id, current);
+                    updateSaveButtonLabel();
                 }
             };
         }
 
+        function updateSaveButtonLabel() {
+            const btn = document.getElementById('saveButton');
+            if (!btn) return;
+            const count = pendingChanges.size;
+            btn.querySelector('.truncate').textContent = count > 0 ?
+                `${saveButtonBaseText} (${count})` :
+                saveButtonBaseText;
+        }
+
         async function saveChanges() {
             if (pendingChanges.size === 0) {
-                showStatus('No hay cambios para guardar.', 'yellow');
+                showToast('No hay cambios para guardar.', 'info');
                 return;
             }
 
-            const payload = {
-                updates: Array.from(pendingChanges.values())
-            };
-            const resp = await fetch('api/update_end_date.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload),
-            });
-            const result = await resp.json();
+            try {
+                const payload = {
+                    updates: Array.from(pendingChanges.values())
+                };
 
-            if (resp.ok) {
-                showStatus(`Cambios guardados (${result.updated} actualizaciones).`, 'green');
-                pendingChanges.clear();
-                await loadAndRender();
-            } else {
-                console.error(result);
-                showStatus('Error al guardar. Revisa la consola.', 'red');
+                for (const upd of payload.updates) {
+                    if (!upd.fecha_fin) continue;
+                    const emp = employees.find((e) => e.id === Number(upd.id));
+                    if (!emp) continue;
+                    const startKey = normalizeDateKey(emp.fecha_inicio);
+                    const endKey = normalizeDateKey(upd.fecha_fin);
+                    if (startKey && endKey && endKey <= startKey) {
+                        showToast('Hay una fecha fin igual o anterior al inicio. Corrígela antes de guardar.', 'error');
+                        return;
+                    }
+                }
+
+                const resp = await fetch('api/update_end_date.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(payload),
+                });
+                const result = await resp.json();
+
+                if (resp.ok) {
+                    const updatedCount = Number(result?.updated ?? payload.updates.length);
+                    showToast(`Cambios guardados (${updatedCount} actualizaciones).`, 'success');
+                    pendingChanges.clear();
+                    updateSaveButtonLabel();
+                    await loadAndRender();
+                } else {
+                    console.error(result);
+                    showToast(result?.error || 'Error al guardar. Revisa la consola.', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Error al guardar. Revisa la consola.', 'error');
             }
-        }
-
-        function showStatus(message, color) {
-            const saveStatus = document.getElementById('saveStatus');
-            saveStatus.textContent = message;
-            saveStatus.classList.remove('hidden', 'text-green-600', 'text-rose-600', 'text-yellow-600');
-            if (color === 'green') saveStatus.classList.add('text-green-600');
-            if (color === 'red') saveStatus.classList.add('text-rose-600');
-            if (color === 'yellow') saveStatus.classList.add('text-yellow-600');
-            setTimeout(() => saveStatus.classList.add('hidden'), 3500);
         }
 
         async function loadAndRender() {
@@ -300,6 +349,7 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('saveButton').addEventListener('click', saveChanges);
+            updateSaveButtonLabel();
             loadAndRender();
         });
     </script>
