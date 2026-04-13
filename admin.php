@@ -83,7 +83,20 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
                     <div id="groupManager"></div>
 
-                    <div id="groupsContainer" class="flex flex-col gap-8"></div>
+                    <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+                        <h2 class="text-lg font-bold text-primary">Usuarios activos</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Selecciona un grupo para ver y editar sus usuarios.</p>
+                        <div class="mt-4 flex items-center gap-2 mb-4">
+                            <select 
+                                id="groupFilterSelect" 
+                                class="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-primary focus:border-primary"
+                            >
+                                <option value="">— Selecciona un grupo —</option>
+                            </select>
+                            <span class="text-sm text-slate-500 dark:text-slate-400" id="groupUserCount"></span>
+                        </div>
+                        <div id="groupsContainer" class="flex flex-col gap-8"></div>
+                    </section>
 
                     <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
                         <h2 class="text-lg font-bold text-primary">Historial de estancias finalizadas</h2>
@@ -724,7 +737,11 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
         function render() {
             const container = document.getElementById('groupsContainer');
+            const filterSelect = document.getElementById('groupFilterSelect');
+            const userCount = document.getElementById('groupUserCount');
+            
             container.innerHTML = '';
+            if (userCount) userCount.textContent = '';
 
             const activeEmployees = employees.filter((e) => isContractActive(e.fecha_fin));
 
@@ -740,219 +757,245 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                     return ia - ib;
                 });
 
-            groups.forEach((group) => {
-                const currentLabel = resolveGroupName(group);
-                const groupSection = document.createElement('section');
-                groupSection.className = 'space-y-4';
+            // Llenar el selector de grupos
+            if (filterSelect) {
+                const currentValue = filterSelect.value;
+                filterSelect.innerHTML = '<option value="">— Selecciona un grupo —</option>';
+                groups.forEach((group) => {
+                    const option = document.createElement('option');
+                    option.value = group;
+                    option.textContent = group;
+                    filterSelect.appendChild(option);
+                });
+                // Restaurar el valor seleccionado si existe
+                filterSelect.value = currentValue;
+            }
 
-                const header = document.createElement('div');
-                header.className = 'flex items-center justify-between gap-3';
-                header.innerHTML = `
-                <h2 class="text-lg font-bold text-primary">Grupo ${currentLabel}</h2>
-                <span class="text-sm text-slate-500 dark:text-slate-400">${activeEmployees.filter(e => e.grupo === group).length} usuarios activos</span>
+            // Si no hay grupo seleccionado, no renderizar nada
+            const selectedGroup = filterSelect?.value;
+            if (!selectedGroup) {
+                container.innerHTML = `<p class="text-sm text-slate-500 dark:text-slate-400">Selecciona un grupo para ver a sus usuarios.</p>`;
+                return;
+            }
+
+            // Renderizar solo el grupo seleccionado
+            const groupEmployees = activeEmployees.filter(e => resolveGroupName(e.grupo) === selectedGroup);
+            
+            if (groupEmployees.length === 0) {
+                container.innerHTML = `<p class="text-sm text-slate-500 dark:text-slate-400">No hay usuarios en este grupo.</p>`;
+                return;
+            }
+
+            if (userCount) userCount.textContent = `${groupEmployees.length} usuario${groupEmployees.length !== 1 ? 's' : ''}`;
+
+            const groupSection = document.createElement('section');
+            groupSection.className = 'space-y-4';
+
+            const header = document.createElement('div');
+            header.className = 'flex items-center justify-between gap-3';
+            header.innerHTML = `
+                <h2 class="text-lg font-bold text-primary">Grupo ${selectedGroup}</h2>
+                <span class="text-sm text-slate-500 dark:text-slate-400">${groupEmployees.length} usuarios activos</span>
             `;
 
-                const list = document.createElement('div');
-                list.className = 'grid gap-6';
+            const list = document.createElement('div');
+            list.className = 'grid gap-6';
 
-                activeEmployees
-                    .filter(e => e.grupo === group)
-                    .forEach((emp) => {
-                        const card = document.createElement('div');
-                        card.className = 'bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 p-6';
+            groupEmployees.forEach((emp) => {
+                const card = document.createElement('div');
+                card.className = 'bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 p-6';
 
-                        const row = document.createElement('div');
-                        row.className = 'grid gap-5 md:grid-cols-[1fr_1.2fr]';
+                const row = document.createElement('div');
+                row.className = 'grid gap-5 md:grid-cols-[1fr_1.2fr]';
 
-                        const avatarSection = document.createElement('div');
-                        avatarSection.className = 'flex flex-col items-center gap-4';
-                        avatarSection.innerHTML = `
+                const avatarSection = document.createElement('div');
+                avatarSection.className = 'flex flex-col items-center gap-4';
+                avatarSection.innerHTML = `
                         <img class="h-20 w-20 rounded-full object-cover border border-slate-200 dark:border-slate-700" src="${emp.foto_url || emp.foto || 'https://i.pravatar.cc/160?u=' + encodeURIComponent(emp.email || emp.username || '')}" alt="${emp.nombre || ''} ${emp.apellidos || ''}" />
                         <label class="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Foto (subir archivo)</label>
                     `;
-                        const fotoInput = createInput({
-                            type: 'file',
-                            name: 'foto',
-                            className: ''
-                        });
-                        fotoInput.accept = 'image/*';
-                        fotoInput.addEventListener('change', (event) => {
-                            const file = event.target.files?.[0];
-                            if (!file) return;
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                                emp.foto = reader.result;
-                                card.querySelector('img').src = emp.foto;
-                                updateSaveButtonLabel();
-                            };
-                            reader.readAsDataURL(file);
-                        });
-                        avatarSection.appendChild(fotoInput);
+                const fotoInput = createInput({
+                    type: 'file',
+                    name: 'foto',
+                    className: ''
+                });
+                fotoInput.accept = 'image/*';
+                fotoInput.addEventListener('change', (event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        emp.foto = reader.result;
+                        card.querySelector('img').src = emp.foto;
+                        updateSaveButtonLabel();
+                    };
+                    reader.readAsDataURL(file);
+                });
+                avatarSection.appendChild(fotoInput);
 
-                        const fields = document.createElement('div');
-                        fields.className = 'grid gap-4 md:grid-cols-2';
+                const fields = document.createElement('div');
+                fields.className = 'grid gap-4 md:grid-cols-2';
 
-                        const groupValue = emp.group_id ? String(emp.group_id) : '';
-                        const groupOptionsForEmp = [...groupOptions];
-                        if (groupValue && !groupOptionsForEmp.some(o => o.value === groupValue)) {
-                            // add missing option with name if we have it
-                            groupOptionsForEmp.push({
-                                value: groupValue,
-                                label: resolveGroupName(emp.group_name || emp.grupo) || (emp.group_name || emp.grupo || groupValue),
-                                id: Number(groupValue)
-                            });
-                        }
-
-                        const fieldConfigs = [{
-                                label: 'Nombre',
-                                name: 'nombre',
-                                value: emp.nombre
-                            },
-                            {
-                                label: 'Apellidos',
-                                name: 'apellidos',
-                                value: emp.apellidos
-                            },
-                            {
-                                label: 'Email',
-                                name: 'email',
-                                value: emp.email,
-                                type: 'email'
-                            },
-                            {
-                                label: 'DNI / Pasaporte',
-                                name: 'dni',
-                                value: emp.dni,
-                                type: 'text'
-                            },
-                            {
-                                label: 'Grupo',
-                                name: 'group_id',
-                                value: groupValue,
-                                type: 'select',
-                                options: groupOptionsForEmp.sort((a, b) => a.label.localeCompare(b.label))
-                            },
-                            {
-                                label: 'Rol',
-                                name: 'rol',
-                                value: emp.rol,
-                                type: 'select',
-                                options: roles
-                            },
-                            {
-                                label: 'Horario',
-                                name: 'horario',
-                                value: String(emp.horario ?? 1),
-                                type: 'select',
-                                options: horarioOptions
-                            },
-                            {
-                                label: 'Inicio',
-                                name: 'fecha_inicio',
-                                value: emp.fecha_inicio,
-                                type: 'date'
-                            },
-                            {
-                                label: 'Fin',
-                                name: 'fecha_fin',
-                                value: emp.fecha_fin,
-                                type: 'date'
-                            },
-                        ];
-
-                        fieldConfigs.forEach(({
-                            label,
-                            name,
-                            value,
-                            type = 'text',
-                            options
-                        }) => {
-                            const wrapper = document.createElement('div');
-                            wrapper.className = 'space-y-1';
-                            wrapper.innerHTML = `<p class="text-[11px] uppercase tracking-widest font-semibold text-slate-500 dark:text-slate-400">${label}</p>`;
-
-                            if (type === 'maskedDni') {
-                                const masked = document.createElement('div');
-                                masked.className = 'mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200';
-                                masked.textContent = maskDni(value);
-                                wrapper.appendChild(masked);
-                            } else {
-                                const input = type === 'select' ?
-                                    createSelect({
-                                        value,
-                                        name,
-                                        options
-                                    }) :
-                                    createInput({
-                                        type,
-                                        value,
-                                        name
-                                    });
-
-                                input.addEventListener('input', (event) => {
-                                    const newValue = event.target.value;
-                                    if (name === 'horario') {
-                                        emp[name] = Number(newValue);
-                                    } else if (name === 'group_id') {
-                                        emp.group_id = newValue ? Number(newValue) : null;
-                                        const opt = event.target.selectedOptions?.[0];
-                                        if (opt) emp.group_name = opt.textContent;
-                                    } else {
-                                        emp[name] = newValue;
-                                    }
-                                    updateSaveButtonLabel();
-                                });
-
-                                wrapper.appendChild(input);
-                            }
-                            fields.appendChild(wrapper);
-                        });
-
-                        row.appendChild(avatarSection);
-                        row.appendChild(fields);
-                        card.appendChild(row);
-                        
-                        // Agregar botón de eliminar
-                        const deleteButton = document.createElement('button');
-                        deleteButton.type = 'button';
-                        deleteButton.className = 'mt-4 w-full px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors';
-                        deleteButton.textContent = 'Eliminar usuario';
-                        deleteButton.addEventListener('click', async () => {
-                            const confirmed = await uiConfirm(
-                                `¿Estás seguro que deseas borrar este usuario?\n${emp.nombre} ${emp.apellidos}\n\nLa acción será permanente.`
-                            );
-                            if (!confirmed) return;
-                            
-                            try {
-                                const resp = await fetch(apiUrl('api/delete_employee.php'), {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    credentials: 'same-origin',
-                                    body: JSON.stringify({ employee_id: emp.id })
-                                });
-                                const result = await parseJsonSafe(resp);
-                                if (!resp.ok || result.error) {
-                                    showToast(result.error || 'Error al eliminar el usuario', 'error');
-                                    return;
-                                }
-                                showToast('Usuario eliminado correctamente', 'success');
-                                // Eliminar del array y re-renderizar
-                                employees = employees.filter(e => e.id !== emp.id);
-                                render();
-                            } catch (error) {
-                                console.error('Error eliminando usuario:', error);
-                                showToast('No se pudo conectar con el servidor', 'error');
-                            }
-                        });
-                        card.appendChild(deleteButton);
-                        
-                        list.appendChild(card);
+                const groupValue = emp.group_id ? String(emp.group_id) : '';
+                const groupOptionsForEmp = [...groupOptions];
+                if (groupValue && !groupOptionsForEmp.some(o => o.value === groupValue)) {
+                    // add missing option with name if we have it
+                    groupOptionsForEmp.push({
+                        value: groupValue,
+                        label: resolveGroupName(emp.group_name || emp.grupo) || (emp.group_name || emp.grupo || groupValue),
+                        id: Number(groupValue)
                     });
+                }
 
-                groupSection.appendChild(header);
-                groupSection.appendChild(list);
-                container.appendChild(groupSection);
+                const fieldConfigs = [{
+                        label: 'Nombre',
+                        name: 'nombre',
+                        value: emp.nombre
+                    },
+                    {
+                        label: 'Apellidos',
+                        name: 'apellidos',
+                        value: emp.apellidos
+                    },
+                    {
+                        label: 'Email',
+                        name: 'email',
+                        value: emp.email,
+                        type: 'email'
+                    },
+                    {
+                        label: 'DNI / Pasaporte',
+                        name: 'dni',
+                        value: emp.dni,
+                        type: 'text'
+                    },
+                    {
+                        label: 'Grupo',
+                        name: 'group_id',
+                        value: groupValue,
+                        type: 'select',
+                        options: groupOptionsForEmp.sort((a, b) => a.label.localeCompare(b.label))
+                    },
+                    {
+                        label: 'Rol',
+                        name: 'rol',
+                        value: emp.rol,
+                        type: 'select',
+                        options: roles
+                    },
+                    {
+                        label: 'Horario',
+                        name: 'horario',
+                        value: String(emp.horario ?? 1),
+                        type: 'select',
+                        options: horarioOptions
+                    },
+                    {
+                        label: 'Inicio',
+                        name: 'fecha_inicio',
+                        value: emp.fecha_inicio,
+                        type: 'date'
+                    },
+                    {
+                        label: 'Fin',
+                        name: 'fecha_fin',
+                        value: emp.fecha_fin,
+                        type: 'date'
+                    },
+                ];
+
+                fieldConfigs.forEach(({
+                    label,
+                    name,
+                    value,
+                    type = 'text',
+                    options
+                }) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'space-y-1';
+                    wrapper.innerHTML = `<p class="text-[11px] uppercase tracking-widest font-semibold text-slate-500 dark:text-slate-400">${label}</p>`;
+
+                    if (type === 'maskedDni') {
+                        const masked = document.createElement('div');
+                        masked.className = 'mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200';
+                        masked.textContent = maskDni(value);
+                        wrapper.appendChild(masked);
+                    } else {
+                        const input = type === 'select' ?
+                            createSelect({
+                                value,
+                                name,
+                                options
+                            }) :
+                            createInput({
+                                type,
+                                value,
+                                name
+                            });
+
+                        input.addEventListener('input', (event) => {
+                            const newValue = event.target.value;
+                            if (name === 'horario') {
+                                emp[name] = Number(newValue);
+                            } else if (name === 'group_id') {
+                                emp.group_id = newValue ? Number(newValue) : null;
+                                const opt = event.target.selectedOptions?.[0];
+                                if (opt) emp.group_name = opt.textContent;
+                            } else {
+                                emp[name] = newValue;
+                            }
+                            updateSaveButtonLabel();
+                        });
+
+                        wrapper.appendChild(input);
+                    }
+                    fields.appendChild(wrapper);
+                });
+
+                row.appendChild(avatarSection);
+                row.appendChild(fields);
+                card.appendChild(row);
+                
+                // Agregar botón de eliminar
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'mt-4 w-full px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors';
+                deleteButton.textContent = 'Eliminar usuario';
+                deleteButton.addEventListener('click', async () => {
+                    const confirmed = await uiConfirm(
+                        `¿Estás seguro que deseas borrar este usuario?\n${emp.nombre} ${emp.apellidos}\n\nLa acción será permanente.`
+                    );
+                    if (!confirmed) return;
+                    
+                    try {
+                        const resp = await fetch(apiUrl('api/delete_employee.php'), {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({ employee_id: emp.id })
+                        });
+                        const result = await parseJsonSafe(resp);
+                        if (!resp.ok || result.error) {
+                            showToast(result.error || 'Error al eliminar el usuario', 'error');
+                            return;
+                        }
+                        showToast('Usuario eliminado correctamente', 'success');
+                        // Eliminar del array y re-renderizar
+                        employees = employees.filter(e => e.id !== emp.id);
+                        render();
+                    } catch (error) {
+                        console.error('Error eliminando usuario:', error);
+                        showToast('No se pudo conectar con el servidor', 'error');
+                    }
+                });
+                card.appendChild(deleteButton);
+                
+                list.appendChild(card);
             });
+
+            groupSection.appendChild(header);
+            groupSection.appendChild(list);
+            container.appendChild(groupSection);
 
             renderHistory();
         }
@@ -1043,11 +1086,18 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             renderGroupManager();
             updateSaveButtonLabel();
             
-            // Agregar event listener al buscador de historial
+            // Agregar event listeners
             const searchInput = document.getElementById('historySearchInput');
             if (searchInput) {
                 searchInput.addEventListener('input', () => {
                     renderHistory();
+                });
+            }
+            
+            const groupFilter = document.getElementById('groupFilterSelect');
+            if (groupFilter) {
+                groupFilter.addEventListener('change', () => {
+                    render();
                 });
             }
         }
