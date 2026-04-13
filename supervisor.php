@@ -94,6 +94,36 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
                         <div id="supervisorCard" class="bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 p-6"></div>
                     </div>
 
+                    <!-- Change password section -->
+                    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 p-8">
+                        <h3 class="text-primary text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">key</span>
+                            Actualizar contraseña
+                        </h3>
+                        <p class="text-sm text-slate-600 dark:text-slate-300 mb-4">Cambia tu contraseña de acceso. Debe tener al menos 6 caracteres.</p>
+                        <form id="pwdInlineForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="flex flex-col gap-2">
+                                <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">contraseña actual</label>
+                                <input id="pwdCurrent" type="password" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-3 focus:ring-primary focus:border-primary" required>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Nueva contraseña</label>
+                                <input id="pwdNew" type="password" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-3 focus:ring-primary focus:border-primary" required>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Confirmar nueva</label>
+                                <input id="pwdConfirm" type="password" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-3 focus:ring-primary focus:border-primary" required>
+                            </div>
+                            <div class="md:col-span-3 flex items-center gap-3">
+                                <button id="pwdSubmit" type="submit" class="h-11 px-5 rounded-lg border border-primary bg-white text-primary font-semibold hover:bg-primary hover:text-white transition-colors flex items-center gap-2">
+                                    <span id="pwdSubmitText">Guardar nueva contraseña</span>
+                                    <span class="material-symbols-outlined text-sm">check</span>
+                                </button>
+                                <span id="pwdMsg" class="text-sm"></span>
+                            </div>
+                        </form>
+                    </div>
+
                     <!-- Group members section -->
                     <div class="flex flex-col gap-4">
                         <div>
@@ -202,62 +232,178 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
                 return;
             }
 
-            const row = document.createElement('div');
-            row.className = 'flex flex-col md:flex-row md:items-center md:justify-between gap-4';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex flex-col gap-8';
 
-            const profile = document.createElement('div');
-            profile.className = 'flex items-center gap-4';
-            const foto = supervisorData.foto_url || 'https://via.placeholder.com/64';
-            const fullName = `${supervisorData.nombre} ${supervisorData.apellidos}`;
-            profile.innerHTML = `
-                <img class="h-20 w-20 rounded-full object-cover border-2 border-primary" src="${foto}" alt="${fullName}" />
-                <div>
-                    <p class="text-lg font-semibold text-slate-900 dark:text-slate-100">${fullName}</p>
-                    <p class="text-sm text-primary font-medium capitalize">${supervisorData.rol}</p>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">${supervisorData.email}</p>
-                </div>
-            `;
-
-            const details = document.createElement('div');
-            details.className = 'grid grid-cols-2 sm:grid-cols-4 gap-3';
+            // Section: Información Personal
+            const personalSection = document.createElement('section');
+            const personalTitle = document.createElement('h3');
+            personalTitle.className = 'text-primary text-sm font-bold uppercase tracking-wider mb-6 flex items-center gap-2';
+            personalTitle.innerHTML = '<span class="material-symbols-outlined text-sm">person</span> Información Personal / Personal Information';
             
-            const groupBadge = document.createElement('div');
-            groupBadge.className = 'rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800';
-            groupBadge.innerHTML = `
-                <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Grupo</p>
-                <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">${supervisorData.group_name || '—'}</p>
+            const personalGrid = document.createElement('div');
+            personalGrid.className = 'grid grid-cols-1 md:grid-cols-3 gap-6 items-start';
+            
+            const fotoDiv = document.createElement('div');
+            fotoDiv.className = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 flex flex-col items-center gap-3 md:row-span-2';
+            const fotoImg = document.createElement('img');
+            fotoImg.className = 'h-28 w-28 rounded-full object-cover border border-slate-200 dark:border-slate-700';
+            fotoImg.src = supervisorData.foto_url || 'https://via.placeholder.com/112';
+            fotoImg.alt = 'Foto del supervisor';
+            const fotoLabel = document.createElement('p');
+            fotoLabel.className = 'text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase';
+            fotoLabel.textContent = 'Foto / Photo';
+            fotoDiv.appendChild(fotoImg);
+            fotoDiv.appendChild(fotoLabel);
+
+            const nombreDiv = document.createElement('div');
+            nombreDiv.className = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5';
+            nombreDiv.innerHTML = `
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Nombre / Name</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">${supervisorData.nombre || '—'}</p>
             `;
 
-            const horarioBadge = document.createElement('div');
-            horarioBadge.className = 'rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800';
-            horarioBadge.innerHTML = `
-                <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Horario</p>
-                <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">${supervisorData.horario == 1 ? 'Completo' : 'Solo lectivo'}</p>
+            const apellidosDiv = document.createElement('div');
+            apellidosDiv.className = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5';
+            apellidosDiv.innerHTML = `
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Apellidos / Surnames</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">${supervisorData.apellidos || '—'}</p>
             `;
 
-            const inicioBadge = document.createElement('div');
-            inicioBadge.className = 'rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800';
-            inicioBadge.innerHTML = `
-                <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Inicio</p>
-                <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">${formatDate(supervisorData.fecha_inicio)}</p>
+            const dniDiv = document.createElement('div');
+            dniDiv.className = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 md:col-span-2';
+            dniDiv.innerHTML = `
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">DNI/Pasaporte / DNI/Passport</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">${supervisorData.dni_pasaporte || '—'}</p>
             `;
 
-            const finBadge = document.createElement('div');
-            finBadge.className = 'rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800';
-            finBadge.innerHTML = `
-                <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Fin</p>
-                <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">${formatDate(supervisorData.fecha_fin)}</p>
+            const fechaNacDiv = document.createElement('div');
+            fechaNacDiv.className = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5';
+            fechaNacDiv.innerHTML = `
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Fecha de Nacimiento / Date of Birth</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">${supervisorData.fecha_nacimiento || '—'}</p>
             `;
 
-            details.appendChild(groupBadge);
-            details.appendChild(horarioBadge);
-            details.appendChild(inicioBadge);
-            details.appendChild(finBadge);
+            const emailDiv = document.createElement('div');
+            emailDiv.className = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5';
+            emailDiv.innerHTML = `
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Email / Email</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">${supervisorData.email || '—'}</p>
+            `;
 
-            row.appendChild(profile);
-            row.appendChild(details);
+            personalGrid.appendChild(fotoDiv);
+            personalGrid.appendChild(nombreDiv);
+            personalGrid.appendChild(apellidosDiv);
+            personalGrid.appendChild(dniDiv);
+            personalGrid.appendChild(fechaNacDiv);
+            personalGrid.appendChild(emailDiv);
+
+            personalSection.appendChild(personalTitle);
+            personalSection.appendChild(personalGrid);
+
+            // Separator
+            const hr1 = document.createElement('hr');
+            hr1.className = 'border-slate-100 dark:border-slate-800';
+
+            // Section: Origen Académico
+            const academicSection = document.createElement('section');
+            const academicTitle = document.createElement('h3');
+            academicTitle.className = 'text-primary text-sm font-bold uppercase tracking-wider mb-6 flex items-center gap-2';
+            academicTitle.innerHTML = '<span class="material-symbols-outlined text-sm">school</span> Origen Académico / Academic Background';
+
+            const academicGrid = document.createElement('div');
+            academicGrid.className = 'grid grid-cols-1 md:grid-cols-2 gap-6';
+            
+            const institucionDiv = document.createElement('div');
+            institucionDiv.className = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5';
+            institucionDiv.innerHTML = `
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Institución / Institution</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">${supervisorData.institucion || '—'}</p>
+            `;
+
+            const paisDiv = document.createElement('div');
+            paisDiv.className = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5';
+            paisDiv.innerHTML = `
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">País / Country</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">${supervisorData.pais || '—'}</p>
+            `;
+
+            academicGrid.appendChild(institucionDiv);
+            academicGrid.appendChild(paisDiv);
+
+            academicSection.appendChild(academicTitle);
+            academicSection.appendChild(academicGrid);
+
+            // Separator
+            const hr2 = document.createElement('hr');
+            hr2.className = 'border-slate-100 dark:border-slate-800';
+
+            // Section: Detalles de Incorporación
+            const incorporationSection = document.createElement('section');
+            const incorporationTitle = document.createElement('h3');
+            incorporationTitle.className = 'text-primary text-sm font-bold uppercase tracking-wider mb-6 flex items-center gap-2';
+            incorporationTitle.innerHTML = '<span class="material-symbols-outlined text-sm">science</span> Detalles de la Incorporación / Incorporation Details';
+
+            const incorporationGrid = document.createElement('div');
+            incorporationGrid.className = 'grid grid-cols-1 md:grid-cols-3 gap-6';
+
+            const motivoDiv = document.createElement('div');
+            motivoDiv.className = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5';
+            motivoDiv.innerHTML = `
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Motivo / Purpose</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">${supervisorData.motivo || '—'}</p>
+            `;
+
+            const inicioDiv = document.createElement('div');
+            inicioDiv.className = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5';
+            inicioDiv.innerHTML = `
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Fecha de Inicio / Start Date</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">${formatDate(supervisorData.fecha_inicio) || '—'}</p>
+            `;
+
+            const finDiv = document.createElement('div');
+            finDiv.className = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5';
+            finDiv.innerHTML = `
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Fecha de Finalización / End Date</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">${formatDate(supervisorData.fecha_fin) || '—'}</p>
+            `;
+
+            incorporationGrid.appendChild(motivoDiv);
+            incorporationGrid.appendChild(inicioDiv);
+            incorporationGrid.appendChild(finDiv);
+
+            const incorporationGrid2 = document.createElement('div');
+            incorporationGrid2.className = 'mt-6 grid grid-cols-1 md:grid-cols-2 gap-6';
+
+            const grupoDiv = document.createElement('div');
+            grupoDiv.className = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5';
+            grupoDiv.innerHTML = `
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Grupo / Group</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">${supervisorData.group_name || '—'}</p>
+            `;
+
+            const horarioDiv = document.createElement('div');
+            horarioDiv.className = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5';
+            horarioDiv.innerHTML = `
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Horario / Schedule</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">${supervisorData.horario == 1 ? 'Completo' : 'Solo lectivo'}</p>
+            `;
+
+            incorporationGrid2.appendChild(grupoDiv);
+            incorporationGrid2.appendChild(horarioDiv);
+
+            incorporationSection.appendChild(incorporationTitle);
+            incorporationSection.appendChild(incorporationGrid);
+            incorporationSection.appendChild(incorporationGrid2);
+
+            wrapper.appendChild(personalSection);
+            wrapper.appendChild(hr1);
+            wrapper.appendChild(academicSection);
+            wrapper.appendChild(hr2);
+            wrapper.appendChild(incorporationSection);
+
             container.innerHTML = '';
-            container.appendChild(row);
+            container.appendChild(wrapper);
         }
 
         async function fetchEmployees() {
@@ -578,6 +724,64 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
         function logout() {
             window.location.href = 'api/logout.php';
         }
+
+        // Cambio de contraseña inline
+        (() => {
+            const form = document.getElementById('pwdInlineForm');
+            if (!form) return;
+            const msg = document.getElementById('pwdMsg');
+            const btn = document.getElementById('pwdSubmit');
+            const btnText = document.getElementById('pwdSubmitText');
+            const showMsg = (text, ok = false) => {
+                msg.textContent = text;
+                msg.className = ok ? 'text-sm text-emerald-600' : 'text-sm text-rose-600';
+            };
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const current = document.getElementById('pwdCurrent').value.trim();
+                const neu = document.getElementById('pwdNew').value.trim();
+                const confirm = document.getElementById('pwdConfirm').value.trim();
+                if (neu !== confirm) {
+                    showMsg('Las contraseñas no coinciden.');
+                    return;
+                }
+                if (neu.length < 6) {
+                    showMsg('La nueva contraseña debe tener al menos 6 caracteres.');
+                    return;
+                }
+                btn.disabled = true;
+                btn.classList.add('opacity-70');
+                btnText.textContent = 'Guardando...';
+                try {
+                    const resp = await fetch('api/change_password.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                            current,
+                            new: neu,
+                            confirm
+                        }),
+                    });
+                    const json = await resp.json();
+                    if (!resp.ok || json.error) {
+                        showMsg(json.error || 'No se pudo actualizar la contraseña.');
+                    } else {
+                        showMsg('contraseña actualizada correctamente.', true);
+                        form.reset();
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showMsg('Error de red al actualizar la contraseña.');
+                } finally {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-70');
+                    btnText.textContent = 'Guardar nueva contraseña';
+                }
+            });
+        })();
     </script>
 </body>
 

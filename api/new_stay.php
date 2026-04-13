@@ -65,10 +65,14 @@ foreach ($required as $field) {
         exit;
     }
 }
-$accepted = isset($payload['accept_terms']) ? (bool)$payload['accept_terms'] : false;
-if (!$accepted) {
+
+// Validar que acepte las políticas de privacidad y confidencialidad
+$acceptPrivacy = isset($payload['accept_privacy']) ? (bool)$payload['accept_privacy'] : false;
+$acceptConfidentiality = isset($payload['accept_confidentiality']) ? (bool)$payload['accept_confidentiality'] : false;
+
+if (!$acceptPrivacy || !$acceptConfidentiality) {
     http_response_code(400);
-    echo json_encode(['error' => 'Debes aceptar la política de privacidad y condiciones.']);
+    echo json_encode(['error' => 'Debes aceptar la política de privacidad y el compromiso de confidencialidad.']);
     exit;
 }
 $groupId = isset($payload['group_id']) ? (int)$payload['group_id'] : null;
@@ -170,48 +174,90 @@ if ($overRes && $overRes->num_rows > 0) {
 }
 $overlap->close();
 
+// Asegurar tabla group_join_requests para solicitudes de nuevas estancias
+$mysqli->query("
+CREATE TABLE IF NOT EXISTS group_join_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    group_id INT NOT NULL,
+    requested_by_email VARCHAR(255) NOT NULL,
+    requested_by_name VARCHAR(255) NOT NULL,
+    motivo VARCHAR(150) NULL,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    horario TINYINT(1) NOT NULL DEFAULT 1,
+    institucion VARCHAR(255) NULL,
+    pais VARCHAR(255) NULL,
+    approval_token VARCHAR(64) NOT NULL,
+    status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+    email_sent_at DATETIME NULL,
+    approved_at DATETIME NULL,
+    approved_by_employee_id INT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY ux_group_join_requests_token (approval_token),
+    INDEX idx_group_join_requests_employee (employee_id),
+    INDEX idx_group_join_requests_group (group_id),
+    INDEX idx_group_join_requests_status (status)
+)");
+
 $mysqli->begin_transaction();
 try {
-    // Obtener estancia activa actual
-    $activeStmt = $mysqli->prepare("SELECT id FROM stays WHERE employee_id = ? AND status = 'active' LIMIT 1");
-    $activeStmt->bind_param('i', $targetId);
-    $activeStmt->execute();
-    $activeRes = $activeStmt->get_result();
-    $activeStay = $activeRes ? $activeRes->fetch_assoc() : null;
-    $activeStmt->close();
+    // Obtener datos del usuario que solicita
+    $userStmt = $mysqli->prepare("SELECT nombre, apellidos, email FROM employees WHERE id = ? LIMIT 1");
+    $userStmt->bind_param('i', $targetId);
+    $userStmt->execute();
+    $userRes = $userStmt->get_result();
+    $userData = $userRes ? $userRes->fetch_assoc() : null;
+    $userStmt->close();
 
-    // Archivar estancia activa existente
-    if ($activeStay) {
-        $updActive = $mysqli->prepare("UPDATE stays SET status = 'archived', archived_at = NOW() WHERE id = ? LIMIT 1");
-        $updActive->bind_param('i', $activeStay['id']);
-        $updActive->execute();
-        $updActive->close();
+    if (!$userData) {
+        throw new RuntimeException('No se pudo obtener los datos del usuario');
     }
 
-    // Crear nueva estancia activa
-    $ins = $mysqli->prepare("INSERT INTO stays (employee_id, fecha_inicio, fecha_fin, motivo, group_id, horario, institucion, pais, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')");
+    // Generar token de aprobación único
+    $approvalToken = bin2hex(random_bytes(32));
+
+    // Crear solicitud de nueva estancia (pendiente de aprobación del coordinador)
+    $ins = $mysqli->prepare("
+        INSERT INTO group_join_requests 
+        (employee_id, group_id, requested_by_email, requested_by_name, motivo, fecha_inicio, fecha_fin, horario, institucion, pais, approval_token, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+    ");
+    
     $newGroupId = (int)$payload['group_id'];
     $newMotivo = $payload['motivo'];
     $newInstitucion = $payload['institucion'];
     $newPais = $payload['pais'];
     $newFechaInicio = $payload['fecha_inicio'];
     $newFechaFin = $payload['fecha_fin'];
+    $requestedByName = $userData['nombre'] . ' ' . $userData['apellidos'];
+    $requestedByEmail = $userData['email'];
+    
     $ins->bind_param(
-        'isssiiss',
+        'iisssssisss',
         $targetId,
+        $newGroupId,
+        $requestedByEmail,
+        $requestedByName,
+        $newMotivo,
         $newFechaInicio,
         $newFechaFin,
-        $newMotivo,
-        $newGroupId,
         $horario,
         $newInstitucion,
-        $newPais
+        $newPais,
+        $approvalToken
     );
     $ins->execute();
+    $requestId = $ins->insert_id;
     $ins->close();
 
     $mysqli->commit();
-    echo json_encode(['success' => true]);
+    echo json_encode([
+        'success' => true,
+        'message' => 'Solicitud de estancia creada y enviada al coordinador para aprobación.',
+        'request_id' => $requestId
+    ]);
 } catch (Throwable $e) {
     $mysqli->rollback();
     http_response_code(500);

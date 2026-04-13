@@ -689,7 +689,6 @@ try {
                 const formData = new FormData(form);
                 const data = Object.fromEntries(formData.entries());
                 if (isNewStay) {
-                    data.accept_terms = true;
                     delete data.password;
                     delete data.password_confirm;
                 }
