@@ -512,6 +512,85 @@ try {
                 });
             });
 
+            // Validación de disponibilidad de email y username (solo en registro nuevo, no en newstay)
+            const availabilityErrors = new Map();
+            const emailInput = form?.querySelector('input[name="email"]');
+            const usernameInput = form?.querySelector('input[name="username"]');
+            let checkTimeout;
+
+            const removeFieldError = (field) => {
+                if (!field) return;
+                field.classList.remove('input-error');
+                const helper = field.parentElement?.querySelector('.field-error');
+                if (helper) helper.remove();
+            };
+
+            const addFieldError = (field, message) => {
+                if (!field) return;
+                field.classList.add('input-error');
+                if (!field.parentElement) return;
+                removeFieldError(field);
+                const helper = document.createElement('p');
+                helper.className = 'field-error text-xs text-red-600 mt-1';
+                helper.textContent = message;
+                field.parentElement.appendChild(helper);
+            };
+
+            const checkAvailability = async (field, type) => {
+                const value = field?.value?.trim();
+                if (!value) {
+                    removeFieldError(field);
+                    availabilityErrors.delete(type);
+                    return;
+                }
+
+                try {
+                    const resp = await fetch(`api/check_availability.php?type=${type}&value=${encodeURIComponent(value)}`);
+                    const json = await resp.json();
+                    
+                    if (json.available) {
+                        removeFieldError(field);
+                        availabilityErrors.delete(type);
+                    } else {
+                        const msg = type === 'email' 
+                            ? 'Este email ya está registrado / This email is already registered'
+                            : 'Este usuario ya existe / This username already exists';
+                        addFieldError(field, msg);
+                        availabilityErrors.set(type, msg);
+                    }
+                } catch (error) {
+                    console.error(`Error checking ${type} availability:`, error);
+                }
+            };
+
+            // Validar disponibilidad de form en submit (antes de enviar)
+            const validateAvailability = async () => {
+                if (isNewStay) return; // No validar en modo newstay
+                const checks = [];
+                if (emailInput?.value?.trim()) {
+                    checks.push(checkAvailability(emailInput, 'email'));
+                }
+                if (usernameInput?.value?.trim()) {
+                    checks.push(checkAvailability(usernameInput, 'username'));
+                }
+                if (checks.length > 0) {
+                    await Promise.all(checks);
+                }
+            };
+
+            // Solo validar disponibilidad si NO es modo newstay
+            if (!isNewStay) {
+                emailInput?.addEventListener('blur', () => {
+                    clearTimeout(checkTimeout);
+                    checkTimeout = setTimeout(() => checkAvailability(emailInput, 'email'), 300);
+                });
+
+                usernameInput?.addEventListener('blur', () => {
+                    clearTimeout(checkTimeout);
+                    checkTimeout = setTimeout(() => checkAvailability(usernameInput, 'username'), 300);
+                });
+            }
+
             // Modal privacidad
             const privacyModal = document.getElementById('privacyModal');
             const privacyLinkEs = document.getElementById('privacyLinkEs');
@@ -632,6 +711,9 @@ try {
                 submitBtn?.classList.add('opacity-70', 'cursor-not-allowed');
                 clearErrors();
 
+                // IMPORTANTE: Validar disponibilidad de email/username ANTES de otras validaciones
+                await validateAvailability();
+
                 const fijo = personalFijo?.checked;
                 if (fijo) {
                     fechaInicio?.removeAttribute('required');
@@ -663,6 +745,16 @@ try {
                         if (!firstInvalid) firstInvalid = checkbox;
                     }
                 });
+
+                // Validar disponibilidad de email y username (después de haber ejecutado validateAvailability)
+                if (availabilityErrors.size > 0) {
+                    const errorMsg = Array.from(availabilityErrors.values()).join('. ');
+                    showToast(errorMsg, 'error');
+                    if (!firstInvalid) {
+                        firstInvalid = availabilityErrors.has('email') ? emailInput : usernameInput;
+                    }
+                }
+
                 if (firstInvalid) {
                     firstInvalid.focus();
                     firstInvalid.scrollIntoView({

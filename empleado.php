@@ -234,11 +234,11 @@ $hasPendingRequest = is_array($pendingRequest) && !empty($pendingRequest);
                 <div class="flex items-center gap-3 w-full md:w-auto justify-end">
                     <?php if ($hasActiveStay || $hasPendingRequest) : ?>
                         <button type="button" disabled class="flex shrink-0 cursor-not-allowed items-center justify-center overflow-hidden rounded-xl h-11 px-5 border border-slate-300 text-slate-400 text-sm font-bold leading-normal tracking-[0.015em] bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-500">
-                            <span class="truncate">Nueva estancia / New </span>
+                            <span class="truncate">Nueva estancia / New internship</span>
                         </button>
                     <?php else : ?>
                         <a href="Formulario.php?mode=newstay" class="flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 px-5 border border-primary text-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary hover:text-white transition-colors">
-                            <span class="truncate">Nueva estancia / New </span>
+                            <span class="truncate">Nueva estancia / New internship</span>
                         </a>
                     <?php endif; ?>
                     <a href="#" onclick="logout(); return false;" aria-label="Cerrar sesión" title="Cerrar sesión" class="flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 w-11 border border-primary bg-white dark:bg-slate-900 text-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary hover:text-white transition-colors">
