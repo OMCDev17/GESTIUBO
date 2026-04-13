@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $isNewStay = (isset($_GET['mode']) && $_GET['mode'] === 'newstay');
 $prefill = [];
 if ($isNewStay) {
@@ -166,7 +166,7 @@ try {
                                         </label>
                                         <label class="flex flex-col gap-2 md:col-span-2">
                                             <p class="text-slate-700 dark:text-slate-300 text-sm font-semibold">DNI/Pasaporte / DNI/Passport</p>
-                                            <input class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12 <?= $isNewStay ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : '' ?>" placeholder="DNI o número de pasaporte / ID or passport number" type="text" name="dni_pasaporte" value="<?= $isNewStay ? $prefillSafe('dni_pasaporte') : '' ?>" <?= $isNewStay ? 'readonly aria-readonly=\"true\"' : '' ?> required />
+                                            <input class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12 <?= $isNewStay ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : '' ?>" placeholder="77777777J" type="text" name="dni_pasaporte" value="<?= $isNewStay ? $prefillSafe('dni_pasaporte') : '' ?>" <?= $isNewStay ? 'readonly aria-readonly=\"true\"' : '' ?> required />
                                         </label>
                                         <label class="flex flex-col gap-2">
                                             <p class="text-slate-700 dark:text-slate-300 text-sm font-semibold">Fecha de Nacimiento / Date of Birth</p>
@@ -228,11 +228,11 @@ try {
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <label class="flex flex-col gap-2">
                                         <p class="text-slate-700 dark:text-slate-300 text-sm font-semibold">Institución de Origen / Origin Institution</p>
-                                        <input class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12" placeholder="Universidad o Centro de Investigación / University or Research Center" type="text" name="institucion" required />
+                                        <input class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12" placeholder="Chicago University" type="text" name="institucion" required />
                                     </label>
                                     <label class="flex flex-col gap-2">
                                         <p class="text-slate-700 dark:text-slate-300 text-sm font-semibold">País de la institución / Institution Country</p>
-                                        <input class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12" placeholder="País de la institución / Institution Country" type="text" name="pais" required />
+                                        <input class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12" placeholder="United States" type="text" name="pais" required />
                                     </label>
                                 </div>
                             </div>
@@ -287,11 +287,19 @@ try {
                             </div>
                             <!-- Submission -->
                             <div class="flex flex-col gap-4 mt-4">
+                                <!-- Privacy Policy Checkbox -->
                                 <div class="flex items-start gap-3 p-4 bg-primary/5 rounded-lg border border-primary/10">
-                                    <span class="material-symbols-outlined text-primary">info</span>
-                                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                                        Al enviar este formulario, usted confirma que los datos proporcionados son veraces y acepta la <a href="#" id="privacyLinkEs" class="font-semibold text-primary hover:underline">política de privacidad</a> y tratamiento de datos para fines académicos de la institución. / By submitting this form, you confirm that the data provided is truthful and accept the <a href="#" id="privacyLinkEn" class="font-semibold text-primary hover:underline">privacy policy</a> and data processing for academic purposes of the institution.
-                                    </p>
+                                    <input id="acceptPrivacy" type="checkbox" name="accept_privacy" required class="h-4 w-4 text-primary border-slate-300 dark:border-slate-700 rounded mt-0.5 flex-shrink-0">
+                                    <label for="acceptPrivacy" class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed cursor-pointer">
+                                        Acepto la <a href="#" id="privacyLinkEs" class="font-semibold text-primary hover:underline">política de privacidad</a> y el tratamiento de datos para fines académicos de la institución. / I accept the <a href="#" id="privacyLinkEn" class="font-semibold text-primary hover:underline">privacy policy</a> and data processing for academic purposes of the institution.
+                                    </label>
+                                </div>
+                                <!-- Confidentiality Commitment Checkbox -->
+                                <div class="flex items-start gap-3 p-4 bg-primary/5 rounded-lg border border-primary/10">
+                                    <input id="acceptConfidentiality" type="checkbox" name="accept_confidentiality" required class="h-4 w-4 text-primary border-slate-300 dark:border-slate-700 rounded mt-0.5 flex-shrink-0">
+                                    <label for="acceptConfidentiality" class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed cursor-pointer">
+                                        Acepto el <a href="#" id="confidentialityLinkEs" class="font-semibold text-primary hover:underline">compromiso de confidencialidad</a>. / I accept the <a href="#" id="confidentialityLinkEn" class="font-semibold text-primary hover:underline">confidentiality commitment</a>.
+                                    </label>
                                 </div>
                                 <button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.01] flex items-center justify-center gap-2" type="submit">
                                     <span class="material-symbols-outlined">how_to_reg</span>
@@ -530,6 +538,28 @@ try {
                 if (event.key === 'Escape') closePrivacyModal();
             });
 
+            // Clear errors on checkbox change
+            const acceptPrivacy = document.getElementById('acceptPrivacy');
+            const acceptConfidentiality = document.getElementById('acceptConfidentiality');
+            
+            acceptPrivacy?.addEventListener('change', () => {
+                const label = form?.querySelector('label[for="acceptPrivacy"]');
+                if (label) {
+                    label.classList.remove('input-error');
+                    const helper = label.querySelector('.field-error');
+                    if (helper) helper.remove();
+                }
+            });
+            
+            acceptConfidentiality?.addEventListener('change', () => {
+                const label = form?.querySelector('label[for="acceptConfidentiality"]');
+                if (label) {
+                    label.classList.remove('input-error');
+                    const helper = label.querySelector('.field-error');
+                    if (helper) helper.remove();
+                }
+            });
+
             // Fechas y personal fijo
             const fechaInicio = document.getElementById('fechaInicio');
             const fechaFin = document.getElementById('fechaFin');
@@ -571,6 +601,8 @@ try {
                 if (isNewStay && (el.name === 'password' || el.name === 'password_confirm')) return false;
                 return el.hasAttribute('required');
             });
+
+            const requiredCheckboxes = Array.from(form?.querySelectorAll('input[type="checkbox"][required]') || []);
 
             const clearErrors = () => {
                 requiredFields.forEach((field) => {
@@ -617,6 +649,18 @@ try {
                     if (!value) {
                         showFieldError(field, 'Campo obligatorio / Required field');
                         if (!firstInvalid) firstInvalid = field;
+                    }
+                });
+
+                // Validate required checkboxes
+                requiredCheckboxes.forEach((checkbox) => {
+                    if (!checkbox.checked) {
+                        const label = form?.querySelector(`label[for="${checkbox.id}"]`);
+                        if (label) {
+                            label.classList.add('input-error');
+                            showFieldError(label, 'Debe aceptar este término / You must accept this term');
+                        }
+                        if (!firstInvalid) firstInvalid = checkbox;
                     }
                 });
                 if (firstInvalid) {
@@ -756,11 +800,27 @@ try {
         <div class="relative w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
             <div class="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 p-5">
                 <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">Política de Privacidad / Privacy Policy</h3>
-                <button type="button" id="privacyClose" class="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100" aria-label="Cerrar">?</button>
+                <button type="button" id="privacyClose" class="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100" aria-label="Cerrar">X</button>
             </div>
             <div class="p-5 max-h-[60vh] overflow-y-auto text-sm text-slate-700 dark:text-slate-200 space-y-4">
-                <p><strong>Política de Privacidad</strong>  Esta política describe cómo se recopilan, usan y protegen los datos personales en este sistema académico. Los datos se utilizan únicamente para fines administrativos y de seguimiento académico, se almacenan de forma segura y no se comparten con terceros sin el consentimiento del titular, salvo requerimiento legal.</p>
-                <p><strong>Data Privacy Policy</strong>  This policy explains how personal data is collected, used and protected in this academic system. Data is used solely for administrative and academic tracking purposes, stored securely, and not shared with third parties without the data subjects consent, unless required by law.</p>
+                <p><strong>Política de Privacidad</strong>  Al registrarte en este sitio web y/o utilizar nuestros servicios, declaras haber leído, comprendido y aceptado los Términos y Condiciones de Uso, así como la Política de Privacidad.
+
+En cumplimiento de lo dispuesto en el Reglamento (UE) 2016/679 (Reglamento General de Protección de Datos – RGPD) y en la Ley Orgánica 3/2018 (LOPDGDD), te informamos de que los datos personales facilitados serán tratados de forma confidencial y se incorporarán a un fichero responsabilidad del titular de esta web.
+
+La finalidad del tratamiento de los datos es la gestión de la relación con el usuario, la prestación de los servicios solicitados y, en su caso, el envío de comunicaciones comerciales, siempre que se haya otorgado el consentimiento expreso.
+
+Asimismo, se informa al usuario de que puede ejercer sus derechos de acceso, rectificación, supresión, oposición, limitación del tratamiento y portabilidad de sus datos, mediante solicitud escrita dirigida al responsable del tratamiento.
+
+El usuario garantiza que los datos proporcionados son veraces y se compromete a comunicar cualquier modificación de los mismos.</p>
+                <p><strong>Data Privacy Policy</strong>  By registering on this website and/or using our services, you declare that you have read, understood, and accepted the Terms and Conditions of Use and the Privacy Policy.
+
+In accordance with the provisions of Regulation (EU) 2016/679 (General Data Protection Regulation – GDPR) and Organic Law 3/2018 (LOPDGDD), we inform you that the personal data provided will be processed confidentially and incorporated into a file under the responsibility of the website owner.
+
+The purpose of data processing is to manage the relationship with the user, provide the requested services, and, where applicable, send commercial communications, provided that explicit consent has been given.
+
+You are also informed that you may exercise your rights of access, rectification, erasure, objection, restriction of processing, and data portability by submitting a written request to the data controller.
+
+The user guarantees that the data provided is accurate and undertakes to notify any changes.</p>
                 <p>Para más detalles, consulte la normativa de protección de datos vigente en España (LOPDGDD y RGPD) o contacte con el administrador del sistema. / For more details, consult the current data protection regulations in Spain (LOPDGDD and GDPR) or contact the system administrator.</p>
             </div>
         </div>
