@@ -11,7 +11,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GESTIUBO - Seguridad</title>
+    <title>GestIUBO - Seguridad</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link rel="icon" href="../GESTIUBO/imagenes/icono_circulo.png" type="image/png">
     <link rel="icon" type="image/png" sizes="32x32" href="../GESTIUBO/imagenes/icono_circulo.png">
@@ -89,7 +89,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             </main>
 
             <footer class="text-center py-6 text-slate-500 text-sm">
-                © 2026 GESTIUBO. Todos los derechos reservados / All rights reserved.
+                © 2026 GestIUBO. Todos los derechos reservados / All rights reserved.
             </footer>
         </div>
     </div>

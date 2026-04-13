@@ -183,7 +183,7 @@ $hasPendingRequest = is_array($pendingRequest) && !empty($pendingRequest);
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>GESTIUBO - Usuario</title>
+    <title>GestIUBO - Usuario</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link rel="icon" href="../GESTIUBO/imagenes/icono_circulo.png" type="image/png">
     <link rel="icon" type="image/png" sizes="32x32" href="../GESTIUBO/imagenes/icono_circulo.png">
@@ -280,7 +280,7 @@ $hasPendingRequest = is_array($pendingRequest) && !empty($pendingRequest);
                                         <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100"><?= $safe('fecha_nacimiento') ?></p>
                                     </div>
                                     <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5">
-                                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Email / Email</p>
+                                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Email</p>
                                         <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100"><?= $safe('email') ?></p>
                                     </div>
                                 </div>
@@ -439,7 +439,7 @@ $hasPendingRequest = is_array($pendingRequest) && !empty($pendingRequest);
             </main>
 
             <footer class="text-center py-6 text-slate-500 text-sm">
-                © 2026 GESTIUBO. Todos los derechos reservados / All rights reserved.
+                © 2026 GestIUBO. Todos los derechos reservados / All rights reserved.
             </footer>
         </div>
     </div>

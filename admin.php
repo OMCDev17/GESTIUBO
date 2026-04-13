@@ -13,8 +13,12 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>GESTIUBO - Admin</title>
+    <title>GestIUBO - Admin</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="icon" href="../GESTIUBO/imagenes/icono_circulo.png" type="image/png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="apple-touch-icon" href="../GESTIUBO/imagenes/icono_circulo.png">
     <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
@@ -173,6 +177,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         }
 
         let groupOptions = [];
+        let allGroups = [];
 
         const legacyLetterToName = {
             'A': 'AFM-NANO',
@@ -338,7 +343,14 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 createBtn.onclick = async () => {
                     const name = (input.value || '').trim();
                     if (!name) return showToast('Introduce un nombre de grupo', 'error');
-                    const ok = await uiConfirm(`Se creará el nuevo grupo: "${name}".\n¿Deseas continuar?`);
+                    const deletedMatch = allGroups.find((g) =>
+                        g.deleted_at &&
+                        String(g.name || '').trim().toLowerCase() === name.toLowerCase()
+                    );
+                    const confirmMessage = deletedMatch ?
+                        `Este grupo ya existía y está eliminado: "${name}".\nSe va a REACTIVAR ese grupo.\n¿Deseas continuar?` :
+                        `Se creará el nuevo grupo: "${name}".\n¿Deseas continuar?`;
+                    const ok = await uiConfirm(confirmMessage);
                     if (!ok) return;
                     const resp = await fetch(apiUrl('api/groups.php'), {
                         method: 'POST',
@@ -362,7 +374,11 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         return;
                     }
                     input.value = '';
-                    showToast(`Grupo "${name}" creado`, 'success');
+                    if (json.reactivated) {
+                        showToast(`Grupo "${name}" reactivado`, 'success');
+                    } else {
+                        showToast(`Grupo "${name}" creado`, 'success');
+                    }
                     await fetchGroups();
                     renderGroupManager();
                     render();
@@ -594,6 +610,11 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const json = await parseJsonSafe(resp);
                 if (!Array.isArray(json.groups)) throw new Error('Respuesta inválida');
+                allGroups = json.groups.map(g => ({
+                    id: Number(g.id),
+                    name: String(g.name || '').trim(),
+                    deleted_at: g.deleted_at || null,
+                }));
                 groupOptions = json.groups
                     .filter(g => !g.deleted_at)
                     .map(g => {
@@ -609,6 +630,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             } catch (error) {
                 console.error('No se pudieron cargar los grupos:', error);
                 groupOptions = [];
+                allGroups = [];
             }
         }
 
@@ -632,11 +654,19 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             } catch (e) {
                 console.error(e);
                 showToast(e.message, 'error');
+                await loadAndRender();
                 return;
             }
             if (!resp.ok) {
                 console.error(result);
                 showToast(result.error || 'Hubo un error al guardar. Revisa la consola.', 'error');
+                await loadAndRender();
+                return;
+            }
+            if (Array.isArray(result.errors) && result.errors.length > 0) {
+                const firstErr = result.errors[0]?.error;
+                showToast(firstErr || 'Algunos cambios no se guardaron.', 'error');
+                await loadAndRender();
                 return;
             }
 
@@ -665,11 +695,13 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 if (!respStays.ok || jsonStays.error) {
                     const firstErr = (jsonStays.errors && jsonStays.errors[0]?.error) || jsonStays.error;
                     showToast(firstErr || 'Error al guardar fechas de estancias finalizadas.', 'error');
+                    await loadAndRender();
                     return;
                 }
                 if (jsonStays.errors && jsonStays.errors.length > 0) {
                     const firstErr = jsonStays.errors[0]?.error;
                     showToast(firstErr || 'Algunos cambios no se guardaron por solapamientos.', 'error');
+                    await loadAndRender();
                     return;
                 }
             }
@@ -962,4 +994,5 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 </body>
 
 </html>
+
 

@@ -180,7 +180,7 @@ try {
                                             <p class="text-slate-700 dark:text-slate-300 text-sm font-semibold">Usuario / Username</p>
                                             <input class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12 <?= $isNewStay ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : '' ?>" placeholder="ej: francisco.garcia" type="text" name="username" value="<?= $isNewStay ? $prefillSafe('username') : '' ?>" <?= $isNewStay ? 'readonly aria-readonly=\"true\"' : '' ?> required />
                                         </label>
-                                        <label class="flex flex-col gap-2">
+                                        <label class="flex flex-col gap-2 md:col-span-2">
                                             <p class="text-slate-700 dark:text-slate-300 text-sm font-semibold flex items-center justify-between">
                                                 <span>Contraseña / Password</span>
                                                 <button type="button" class="toggle-pass text-sm text-primary hover:text-primary/80 flex items-center gap-1" data-target="password" aria-label="Mostrar u ocultar contraseña">
@@ -189,7 +189,7 @@ try {
                                             </p>
                                             <input id="password" class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12" placeholder="*******" type="password" name="password" <?= $isNewStay ? "disabled aria-disabled=\"true\"" : "required" ?> />
                                         </label>
-                                        <label class="flex flex-col gap-2">
+                                        <label class="flex flex-col gap-2 md:col-span-2">
                                             <p class="text-slate-700 dark:text-slate-300 text-sm font-semibold flex items-center justify-between">
                                                 <span>Repetir contraseña / Confirm Password</span>
                                                 <button type="button" class="toggle-pass text-sm text-primary hover:text-primary/80 flex items-center gap-1" data-target="password_confirm" aria-label="Mostrar u ocultar contraseña">
@@ -313,7 +313,7 @@ try {
                     </div>
                     <!-- Footer -->
                     <footer class="text-center py-6 text-slate-500 text-sm">
-                        © 2026 GESTIUBO. Todos los derechos reservados / All rights reserved.
+                        © 2026 GestIUBO. Todos los derechos reservados / All rights reserved.
                     </footer>
                 </div>
             </main>
@@ -682,6 +682,38 @@ try {
             });
 
             const requiredCheckboxes = Array.from(form?.querySelectorAll('input[type="checkbox"][required]') || []);
+            const titleCaseFieldNames = ['nombre', 'apellidos', 'institucion', 'pais'];
+            const titleCaseFields = titleCaseFieldNames
+                .map((name) => form?.querySelector(`[name="${name}"]`))
+                .filter(Boolean);
+
+            const normalizeTitleCase = (value) => {
+                const clean = String(value ?? '').trim().replace(/\s+/g, ' ');
+                if (!clean) return '';
+                const lower = clean.toLocaleLowerCase('es-ES');
+                const particles = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'e', 'o', 'u', 'da', 'das', 'do', 'dos', 'di', 'van', 'von']);
+                const capitalizeWord = (word) => {
+                    if (!word) return word;
+                    return word
+                        .split('-')
+                        .map((part) => part ? part.charAt(0).toLocaleUpperCase('es-ES') + part.slice(1) : part)
+                        .join('-')
+                        .split("'")
+                        .map((part) => part ? part.charAt(0).toLocaleUpperCase('es-ES') + part.slice(1) : part)
+                        .join("'");
+                };
+
+                return lower
+                    .split(' ')
+                    .map((word, index) => (index > 0 && particles.has(word) ? word : capitalizeWord(word)))
+                    .join(' ');
+            };
+
+            titleCaseFields.forEach((field) => {
+                field.addEventListener('blur', () => {
+                    field.value = normalizeTitleCase(field.value);
+                });
+            });
 
             const clearErrors = () => {
                 requiredFields.forEach((field) => {
@@ -780,6 +812,14 @@ try {
 
                 const formData = new FormData(form);
                 const data = Object.fromEntries(formData.entries());
+                titleCaseFieldNames.forEach((name) => {
+                    if (Object.prototype.hasOwnProperty.call(data, name)) {
+                        const normalized = normalizeTitleCase(data[name]);
+                        data[name] = normalized;
+                        const field = form.querySelector(`[name="${name}"]`);
+                        if (field) field.value = normalized;
+                    }
+                });
                 if (isNewStay) {
                     delete data.password;
                     delete data.password_confirm;

@@ -3,6 +3,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 require __DIR__ . '/auth.php';
 requireRole(['supervisor', 'coordinador', 'admin']);
+require_once __DIR__ . '/email_templates.php';
 
 $config = require __DIR__ . '/config.php';
 $method = $_SERVER['REQUEST_METHOD'];
@@ -150,6 +151,7 @@ if ($method === 'POST') {
         $mysqli->begin_transaction();
 
         try {
+            $welcomeEmailSent = null;
             if ($action === 'approve') {
                 // Verificar que no hay estancia activa
                 $checkActive = $mysqli->prepare("
@@ -216,7 +218,34 @@ if ($method === 'POST') {
             }
 
             $mysqli->commit();
-            echo json_encode(['success' => true, 'message' => $resultMsg]);
+            if ($action === 'approve') {
+                $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                $basePath = rtrim(dirname(dirname($_SERVER['PHP_SELF'])), '/\\');
+                $loginUrl = "{$scheme}://{$host}{$basePath}/Loggin.php";
+
+                $stayData = [
+                    'group_name' => $request['group_name'] ?? '',
+                    'motivo' => $request['motivo'] ?? '',
+                    'fecha_inicio' => $request['fecha_inicio'] ?? '',
+                    'fecha_fin' => $request['fecha_fin'] ?? '',
+                    'institucion' => $request['institucion'] ?? '',
+                    'pais' => $request['pais'] ?? '',
+                ];
+                $welcomeEmailSent = @sendNewStayWelcomeEmail(
+                    (string)($request['email'] ?? ''),
+                    (string)($request['nombre'] ?? ''),
+                    $stayData,
+                    $loginUrl,
+                    $config
+                );
+            }
+
+            echo json_encode([
+                'success' => true,
+                'message' => $resultMsg,
+                'welcome_email_sent' => $welcomeEmailSent
+            ]);
             exit;
         } catch (Throwable $e) {
             $mysqli->rollback();

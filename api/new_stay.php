@@ -47,6 +47,36 @@ if (!is_array($payload)) {
     exit;
 }
 
+$normalizeTitleCase = static function ($value): string {
+    $text = trim((string)$value);
+    if ($text === '') {
+        return '';
+    }
+    $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
+    $lowerText = function_exists('mb_strtolower') ? mb_strtolower($text, 'UTF-8') : strtolower($text);
+    $particles = ['de', 'del', 'la', 'las', 'los', 'y', 'e', 'o', 'u', 'da', 'das', 'do', 'dos', 'di', 'van', 'von'];
+    $words = preg_split('/\s+/u', $lowerText) ?: [];
+    $result = [];
+    foreach ($words as $i => $word) {
+        if ($i > 0 && in_array($word, $particles, true)) {
+            $result[] = $word;
+            continue;
+        }
+        if (function_exists('mb_convert_case')) {
+            $result[] = mb_convert_case($word, MB_CASE_TITLE, 'UTF-8');
+        } else {
+            $result[] = ucwords($word);
+        }
+    }
+    return implode(' ', $result);
+};
+
+foreach (['institucion', 'pais'] as $key) {
+    if (isset($payload[$key])) {
+        $payload[$key] = $normalizeTitleCase($payload[$key]);
+    }
+}
+
 $targetId = isset($payload['user_id']) ? (int)$payload['user_id'] : $sessionId;
 
 // Solo admin puede crear estancias para otros
@@ -263,4 +293,3 @@ try {
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
 }
-

@@ -20,7 +20,11 @@ function sendPasswordResetEmail($email, $userName, $code, $config) {
     require_once __DIR__ . '/../vendor/autoload.php';
 
     $htmlBody = getPasswordResetTemplate($userName, $code);
-    $textBody = "Código de restablecimiento de contraseña: $code\n\nEste código expira en 15 minutos.";
+    $textBody = "Restablecimiento de contrasena / Password reset\n\n"
+        . "Hola {$userName} / Hello {$userName},\n\n"
+        . "Tu codigo de verificacion / Your verification code: {$code}\n"
+        . "Este codigo expira en 15 minutos / This code expires in 15 minutes.\n\n"
+        . "Si no solicitaste este cambio, ignora este correo / If you did not request this, ignore this email.";
 
     try {
         $mailer = new PHPMailer(true);
@@ -34,7 +38,7 @@ function sendPasswordResetEmail($email, $userName, $code, $config) {
         $mailer->Port = $config['smtp']['port'];
         $mailer->setFrom($config['smtp']['from_email'], 'Instituto de Bio-Orgánica Antonio González');
         $mailer->addAddress($email);
-        $mailer->Subject = 'Restablecimiento de contraseña - Instituto de Bio-Orgánica Antonio González';
+        $mailer->Subject = 'Restablecimiento de contrasena / Password reset - Instituto de Bio-Organica Antonio Gonzalez';
         $mailer->isHTML(true);
         $mailer->Body = $htmlBody;
         $mailer->AltBody = $textBody;
@@ -60,7 +64,11 @@ function sendWelcomeEmail($email, $userName, $firstName, $loginUrl, $config) {
     require_once __DIR__ . '/../vendor/autoload.php';
 
     $htmlBody = getWelcomeTemplate($firstName, $userName, $loginUrl);
-    $textBody = "Bienvenido a Instituto de Bio-Orgánica Antonio González\n\nTu cuenta ha sido creada exitosamente.\nUsuario: $userName\n\nPuedes iniciar sesión en: $loginUrl";
+    $textBody = "Bienvenido/a / Welcome\n\n"
+        . "Hola {$firstName} / Hello {$firstName},\n\n"
+        . "Tu cuenta ha sido creada correctamente / Your account has been created successfully.\n"
+        . "Usuario / Username: {$userName}\n"
+        . "Acceso / Login: {$loginUrl}";
 
     try {
         $mailer = new PHPMailer(true);
@@ -74,7 +82,7 @@ function sendWelcomeEmail($email, $userName, $firstName, $loginUrl, $config) {
         $mailer->Port = $config['smtp']['port'];
         $mailer->setFrom($config['smtp']['from_email'], 'Instituto de Bio-Orgánica Antonio González');
         $mailer->addAddress($email);
-        $mailer->Subject = 'Bienvenido/a al Instituto de Bio-Orgánica Antonio González';
+        $mailer->Subject = 'Bienvenido/a / Welcome - Instituto de Bio-Organica Antonio Gonzalez';
         $mailer->isHTML(true);
         $mailer->Body = $htmlBody;
         $mailer->AltBody = $textBody;
@@ -86,15 +94,21 @@ function sendWelcomeEmail($email, $userName, $firstName, $loginUrl, $config) {
     }
 }
 
-function sendGroupApprovalRequestEmail($email, $supervisorName, $requestData, $config) {
+function sendNewStayWelcomeEmail($email, $firstName, $stayData, $loginUrl, $config) {
     require_once __DIR__ . '/../vendor/autoload.php';
 
-    $htmlBody = getGroupApprovalRequestTemplate($supervisorName, $requestData);
-    $textBody = "Solicitud de aprobacion de grupo\n\n"
-        . "Empleado: " . ($requestData['employee_name'] ?? '') . "\n"
-        . "Email: " . ($requestData['employee_email'] ?? '') . "\n"
-        . "Grupo: " . ($requestData['group_name'] ?? '') . "\n"
-        . "Por favor accede a la aplicacion para aprobar o rechazar la solicitud.";
+    $htmlBody = getNewStayWelcomeTemplate($firstName, $stayData, $loginUrl);
+    $textBody = "Bienvenido/a de nuevo / Welcome back\n\n"
+        . "Hola {$firstName} / Hello {$firstName},\n\n"
+        . "Tu nueva estancia ha sido aprobada.\n"
+        . "Your new stay has been approved.\n\n"
+        . "Grupo / Group: " . ($stayData['group_name'] ?? '-') . "\n"
+        . "Motivo / Purpose: " . ($stayData['motivo'] ?? '-') . "\n"
+        . "Inicio / Start: " . ($stayData['fecha_inicio'] ?? '-') . "\n"
+        . "Fin / End: " . ($stayData['fecha_fin'] ?? '-') . "\n"
+        . "Institucion / Institution: " . ($stayData['institucion'] ?? '-') . "\n"
+        . "Pais / Country: " . ($stayData['pais'] ?? '-') . "\n\n"
+        . "Accede a tu cuenta / Access your account: {$loginUrl}";
 
     try {
         $mailer = new PHPMailer(true);
@@ -108,7 +122,42 @@ function sendGroupApprovalRequestEmail($email, $supervisorName, $requestData, $c
         $mailer->Port = $config['smtp']['port'];
         $mailer->setFrom($config['smtp']['from_email'], 'Instituto de Bio-Organica Antonio Gonzalez');
         $mailer->addAddress($email);
-        $mailer->Subject = 'Nueva solicitud de miembro para tu grupo';
+        $mailer->Subject = 'Bienvenido/a de nuevo / Welcome back - Nueva estancia aprobada';
+        $mailer->isHTML(true);
+        $mailer->Body = $htmlBody;
+        $mailer->AltBody = $textBody;
+        $mailer->send();
+        return true;
+    } catch (Exception $e) {
+        error_log("Error enviando correo de nueva estancia: " . $e->getMessage());
+        return false;
+    }
+}
+
+function sendGroupApprovalRequestEmail($email, $supervisorName, $requestData, $config) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+
+    $htmlBody = getGroupApprovalRequestTemplate($supervisorName, $requestData);
+    $textBody = "Solicitud de aprobacion de grupo / Group approval request\n\n"
+        . "Empleado / Employee: " . ($requestData['employee_name'] ?? '') . "\n"
+        . "Email: " . ($requestData['employee_email'] ?? '') . "\n"
+        . "Grupo / Group: " . ($requestData['group_name'] ?? '') . "\n"
+        . "Por favor accede a la aplicacion para aprobar o rechazar la solicitud.\n"
+        . "Please access the application to approve or reject this request.";
+
+    try {
+        $mailer = new PHPMailer(true);
+        $mailer->isSMTP();
+        $mailer->CharSet = 'UTF-8';
+        $mailer->Host = $config['smtp']['host'];
+        $mailer->SMTPAuth = true;
+        $mailer->Username = $config['smtp']['username'];
+        $mailer->Password = $config['smtp']['password'];
+        $mailer->SMTPSecure = $config['smtp']['secure'];
+        $mailer->Port = $config['smtp']['port'];
+        $mailer->setFrom($config['smtp']['from_email'], 'Instituto de Bio-Organica Antonio Gonzalez');
+        $mailer->addAddress($email);
+        $mailer->Subject = 'Nueva solicitud de miembro / New group member request';
         $mailer->isHTML(true);
         $mailer->Body = $htmlBody;
         $mailer->AltBody = $textBody;
@@ -154,30 +203,30 @@ function getGroupApprovalRequestTemplate($supervisorName, $requestData) {
     <body>
         <div class="container">
             <div class="header">
-                <h1 style="margin:0;font-size:26px;">Nueva solicitud de miembro</h1>
-                <p style="margin:10px 0 0 0;font-size:14px;color:#ede9fe;">Hay una nueva solicitud pendiente de aprobacion</p>
+                <h1 style="margin:0;font-size:26px;">Nueva solicitud de miembro / New member request</h1>
+                <p style="margin:10px 0 0 0;font-size:14px;color:#ede9fe;">Hay una nueva solicitud pendiente de aprobacion / A new request is pending approval</p>
             </div>
             <div class="content">
-                <p>Hola {$supervisorName},</p>
-                <p>Un nuevo usuario se ha registrado y solicita incorporarse al grupo <strong>{$groupName}</strong>.</p>
+                <p>Hola {$supervisorName},<br>Hello {$supervisorName},</p>
+                <p>Un nuevo usuario se ha registrado y solicita incorporarse al grupo <strong>{$groupName}</strong>.<br>A new user has registered and requested to join group <strong>{$groupName}</strong>.</p>
                 <div class="card">
-                    <div class="label">Empleado</div>
+                    <div class="label">Empleado / Employee</div>
                     <div class="value">{$employeeName}</div>
                     <div class="label">Email</div>
                     <div class="value">{$employeeEmail}</div>
-                    <div class="label">Motivo</div>
+                    <div class="label">Motivo / Purpose</div>
                     <div class="value">{$motivo}</div>
-                    <div class="label">Fechas</div>
+                    <div class="label">Fechas / Dates</div>
                     <div class="value">{$fechaInicio} - {$fechaFin}</div>
-                    <div class="label">Institucion</div>
+                    <div class="label">Institucion / Institution</div>
                     <div class="value">{$institucion}</div>
-                    <div class="label">Pais</div>
+                    <div class="label">Pais / Country</div>
                     <div class="value">{$pais}</div>
                 </div>
-                <p class="note"><strong>Accede a la aplicacion GESTIUBO</strong> para revisar y tomar una decision sobre esta solicitud desde el panel de supervisor. Podras aprobar o rechazar la solicitud directamente en el sistema.</p>
+                <p class="note"><strong>Accede a la aplicacion GestIUBO / Access GestIUBO</strong> para revisar y tomar una decision sobre esta solicitud desde el panel de coordinador. Podras aprobar o rechazarla directamente en el sistema.<br>Review this request in the coordinator panel and approve or reject it directly in the system.</p>
             </div>
             <div class="footer">
-                <p style="margin:0;">Correo automatico de GESTIUBO.</p>
+                <p style="margin:0;">Correo automatico de GestIUBO / Automated email from GestIUBO.</p>
                 <p style="margin:8px 0 0 0;">&copy; {$year} Instituto de Bio-Organica Antonio Gonzalez</p>
             </div>
         </div>
@@ -349,7 +398,7 @@ function getPasswordResetTemplate($userName, $code) {
             <!-- Header -->
             <div class="header">
                 <h1>Restablecimiento de contraseña / Password reset</h1>
-                <p style="font-size:14px; margin-top: 8px; color: #e5e7eb;">Instituto de Bio-Orgánica Antonio González - Gestiubo</p>
+                <p style="font-size:14px; margin-top: 8px; color: #e5e7eb;">Instituto de Bio-Orgánica Antonio González - GestIUBO</p>
             </div>
             
             <!-- Main Content -->
@@ -383,8 +432,9 @@ function getPasswordResetTemplate($userName, $code) {
                 
                 <!-- Info Box -->
                 <div class="info-box">
-                    <strong>⏱️ Nota importante:</strong> Este código es válido únicamente por 15 minutos. 
-                    Si no lo utilizas en este tiempo, deberás solicitar un nuevo código de restablecimiento.
+                    <strong>Nota importante / Important note:</strong> Este código es válido únicamente por 15 minutos. Si no lo utilizas en este tiempo, deberás solicitar un nuevo código.
+                    <br>
+                    This code is valid for only 15 minutes. If you do not use it in time, you will need to request a new code.
                 </div>
                 
                 <!-- Security Warning -->
@@ -397,12 +447,12 @@ function getPasswordResetTemplate($userName, $code) {
             
             <!-- Footer -->
             <div class="footer">
-                <p>Este es un correo automático. Por favor, no responda a este mensaje.</p>
-                <p>© {$year} Instituto de Bio-Orgánica Antonio González - Todos los derechos reservados</p>
+                <p>Este es un correo automático. Por favor, no responda a este mensaje. / This is an automated email. Please do not reply.</p>
+                <p>© {$year} Instituto de Bio-Orgánica Antonio González - Todos los derechos reservados / All rights reserved.</p>
                 <div class="footer-links">
-                    <a href="#">Centro de Ayuda</a> | 
-                    <a href="#">Política de Privacidad</a> | 
-                    <a href="#">Términos de Servicio</a>
+                    <a href="#">Centro de Ayuda / Help Center</a> | 
+                    <a href="#">Política de Privacidad / Privacy Policy</a> | 
+                    <a href="#">Términos de Servicio / Terms of Service</a>
                 </div>
             </div>
         </div>
@@ -633,13 +683,13 @@ function getWelcomeTemplate($firstName, $userName, $loginUrl) {
             <!-- Header -->
             <div class="header">
                 <img alt="Logo Instituto de Bio-Orgánica Antonio González" class="logo" src="https://localhost/GESTIUBO/imagenes/instituto-biorganica-agonzalez-original.png" />
-                <h1>Bienvenido al Instituto de Bio-Orgánica Antonio González</h1>
-                <p>Tu cuenta ha sido creada exitosamente</p>
+                <h1>Bienvenido/a al Instituto de Bio-Orgánica Antonio González / Welcome to Instituto de Bio-Orgánica Antonio González</h1>
+                <p>Tu cuenta ha sido creada exitosamente / Your account has been created successfully</p>
             </div>
             
             <!-- Main Content -->
             <div class="content">
-                <p class="greeting">Hola <strong>{$firstName}</strong>,</p>
+                <p class="greeting">Hola <strong>{$firstName}</strong> / Hello <strong>{$firstName}</strong>,</p>
                 
                 <div class="welcome-box">
                     <div class="welcome-text">Tu cuenta está lista para usar / Your account is ready</div>
@@ -648,56 +698,57 @@ function getWelcomeTemplate($firstName, $userName, $loginUrl) {
                 
                 <p class="greeting">
                     Nos complace recibirte en nuestra comunidad. Tu registro ha sido completado exitosamente 
-                    y ya puedes acceder a todas las funcionalidades de Gestiubo.
+                    y ya puedes acceder a todas las funcionalidades de GestIUBO.
                     <br>
-                    We are pleased to welcome you. Your registration is complete and you can now access all Gestiubo features.
+                    We are pleased to welcome you. Your registration is complete and you can now access all GestIUBO features.
                 </p>
                 
                 <!-- Credentials -->
                 <div class="credentials-box">
-                    <strong>Tus credenciales de acceso:</strong>
+                    <strong>Tus credenciales de acceso / Your access credentials:</strong>
                     <div class="credential-item">
-                        <span class="label">Usuario:</span>
+                        <span class="label">Usuario / Username:</span>
                         <span class="value">{$userName}</span>
                     </div>
                     <div class="credential-item">
-                        <span class="label">Contraseña:</span>
-                        <span class="value">La que estableciste en el registro</span>
+                        <span class="label">Contraseña / Password:</span>
+                        <span class="value">La que estableciste en el registro / The one you set during registration</span>
                     </div>
                 </div>
                 
                 <!-- Login Button -->
                 <div style="text-align: center;">
-                    <a href="{$loginUrl}" class="login-button">Iniciar Sesión en Gestiubo</a>
+                    <a href="{$loginUrl}" class="login-button">Iniciar Sesión en GestIUBO / Sign in to GestIUBO</a>
                 </div>
                 
                 <!-- Features -->
                 <div class="features">
-                    <strong>Lo que puedes hacer ahora:</strong>
+                    <strong>Lo que puedes hacer ahora / What you can do now:</strong>
                     <ul class="feature-list">
-                        <li>Acceso a tu perfil personal y datos académicos</li>
-                        <li>Gestionar tu información de incorporación</li>
-                        <li>Actualizar tu contraseña en cualquier momento</li>
-                        <li>Acceder a documentación y recursos del laboratorio</li>
-                        <li>Colaborar con otros miembros del equipo</li>
+                        <li>Acceso a tu perfil personal y datos académicos / Access your personal profile and academic data</li>
+                        <li>Gestionar tu información de incorporación / Manage your onboarding information</li>
+                        <li>Actualizar tu contraseña en cualquier momento / Update your password at any time</li>
+                        <li>Acceder a documentación y recursos del laboratorio / Access lab documentation and resources</li>
+                        <li>Colaborar con otros miembros del equipo / Collaborate with other team members</li>
                     </ul>
                 </div>
                 
                 <!-- Info Box -->
                 <div class="info-box">
-                    <strong>Consejo:</strong> Guarda este correo en un lugar seguro. Contiene tu nombre de usuario 
-                    que necesitarás para iniciar sesión. Nunca compartas tu contraseña con nadie.
+                    <strong>Consejo / Tip:</strong> Guarda este correo en un lugar seguro. Contiene tu nombre de usuario que necesitarás para iniciar sesión.
+                    <br>
+                    Save this email in a safe place. It contains your username and useful account details. Never share your password with anyone.
                 </div>
             </div>
             
             <!-- Footer -->
             <div class="footer">
-                <p>Este es un correo automático. Por favor, no responda a este mensaje.</p>
-                <p>© {$year} Instituto de Bio-Orgánica Antonio González - Todos los derechos reservados</p>
+                <p>Este es un correo automático. Por favor, no responda a este mensaje. / This is an automated email. Please do not reply.</p>
+                <p>© {$year} Instituto de Bio-Orgánica Antonio González - Todos los derechos reservados / All rights reserved.</p>
                 <div class="footer-links">
-                    <a href="#">Centro de Ayuda</a> | 
-                    <a href="#">Política de Privacidad</a> | 
-                    <a href="#">Términos de Servicio</a>
+                    <a href="#">Centro de Ayuda / Help Center</a> | 
+                    <a href="#">Política de Privacidad / Privacy Policy</a> | 
+                    <a href="#">Términos de Servicio / Terms of Service</a>
                 </div>
             </div>
         </div>
@@ -705,4 +756,73 @@ function getWelcomeTemplate($firstName, $userName, $loginUrl) {
     </html>
     HTML;
 }
+
+function getNewStayWelcomeTemplate($firstName, $stayData, $loginUrl) {
+    $year = date('Y');
+    $firstName = htmlspecialchars((string)$firstName, ENT_QUOTES, 'UTF-8');
+    $groupName = htmlspecialchars((string)($stayData['group_name'] ?? '-'), ENT_QUOTES, 'UTF-8');
+    $motivo = htmlspecialchars((string)($stayData['motivo'] ?? '-'), ENT_QUOTES, 'UTF-8');
+    $fechaInicio = htmlspecialchars((string)($stayData['fecha_inicio'] ?? '-'), ENT_QUOTES, 'UTF-8');
+    $fechaFin = htmlspecialchars((string)($stayData['fecha_fin'] ?? '-'), ENT_QUOTES, 'UTF-8');
+    $institucion = htmlspecialchars((string)($stayData['institucion'] ?? '-'), ENT_QUOTES, 'UTF-8');
+    $pais = htmlspecialchars((string)($stayData['pais'] ?? '-'), ENT_QUOTES, 'UTF-8');
+    $loginUrl = htmlspecialchars((string)$loginUrl, ENT_QUOTES, 'UTF-8');
+
+    return <<<HTML
+    <!DOCTYPE html>
+    <html lang="es" style="margin:0;padding:0;">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Bienvenido/a de nuevo / Welcome back</title>
+        <style>
+            body { margin:0; padding:0; font-family:Arial,sans-serif; background:#f8fafc; color:#0f172a; }
+            .container { max-width:620px; margin:32px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(15,23,42,.08); }
+            .header { background:linear-gradient(135deg,#5c068c 0%,#7c1fa8 100%); color:#fff; padding:32px 24px; }
+            .content { padding:32px 24px; }
+            .card { background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin:24px 0; }
+            .label { font-size:12px; text-transform:uppercase; color:#64748b; margin-bottom:4px; }
+            .value { font-size:15px; font-weight:600; color:#0f172a; margin-bottom:14px; }
+            .button { display:inline-block; background:#5c068c; color:#fff !important; text-decoration:none; padding:12px 24px; border-radius:8px; font-weight:700; }
+            .footer { padding:24px; background:#f8fafc; border-top:1px solid #e2e8f0; color:#64748b; font-size:12px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1 style="margin:0;font-size:26px;">Bienvenido/a de nuevo / Welcome back</h1>
+                <p style="margin:10px 0 0 0;font-size:14px;color:#ede9fe;">Tu nueva estancia fue aprobada / Your new stay has been approved</p>
+            </div>
+            <div class="content">
+                <p>Hola <strong>{$firstName}</strong>,<br>Hello <strong>{$firstName}</strong>,</p>
+                <p>Tu solicitud de nueva estancia ha sido aprobada. Aquí tienes el detalle:<br>Your new stay request has been approved. Here are the details:</p>
+                <div class="card">
+                    <div class="label">Grupo / Group</div>
+                    <div class="value">{$groupName}</div>
+                    <div class="label">Motivo / Purpose</div>
+                    <div class="value">{$motivo}</div>
+                    <div class="label">Inicio / Start</div>
+                    <div class="value">{$fechaInicio}</div>
+                    <div class="label">Fin / End</div>
+                    <div class="value">{$fechaFin}</div>
+                    <div class="label">Institucion / Institution</div>
+                    <div class="value">{$institucion}</div>
+                    <div class="label">Pais / Country</div>
+                    <div class="value">{$pais}</div>
+                </div>
+                <p>
+                    <a class="button" href="{$loginUrl}">Entrar en GestIUBO / Sign in to GestIUBO</a>
+                </p>
+            </div>
+            <div class="footer">
+                <p style="margin:0;">Este es un correo automatico / This is an automated email.</p>
+                <p style="margin:8px 0 0 0;">&copy; {$year} Instituto de Bio-Organica Antonio Gonzalez</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    HTML;
+}
+
+
 

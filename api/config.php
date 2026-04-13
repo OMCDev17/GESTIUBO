@@ -22,7 +22,7 @@ return [
         'password' => 'dqbe lydf ypbj kwaz',
         // Opcional - cambiar a tu dominio
         'from_email' => 'jairilicious@gmail.com',
-        'from_name' => 'GESTIUBO - Recuperación',
+        'from_name' => 'GestIUBO - Recuperación',
     ],
 ];
 

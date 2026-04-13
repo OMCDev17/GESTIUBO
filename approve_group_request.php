@@ -1,5 +1,6 @@
 <?php
 $config = require __DIR__ . '/api/config.php';
+require_once __DIR__ . '/api/email_templates.php';
 $mysqli = new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
 if ($mysqli->connect_errno) {
     http_response_code(500);
@@ -84,6 +85,7 @@ if (($request['status'] ?? '') === 'approved') {
 } elseif (($request['status'] ?? '') !== 'pending') {
     $message = 'Esta solicitud ya no se encuentra pendiente.';
 } else {
+    $welcomeEmailSent = null;
     $mysqli->begin_transaction();
     try {
         $checkActive = $mysqli->prepare("SELECT id FROM stays WHERE employee_id = ? AND status = 'active' LIMIT 1");
@@ -139,6 +141,29 @@ if (($request['status'] ?? '') === 'approved') {
 
         $mysqli->commit();
         $message = 'Solicitud aprobada correctamente. El empleado ya pertenece al grupo.';
+
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $basePath = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
+        $loginUrl = "{$scheme}://{$host}{$basePath}/Loggin.php";
+        $stayData = [
+            'group_name' => $request['group_name'] ?? '',
+            'motivo' => $request['motivo'] ?? '',
+            'fecha_inicio' => $request['fecha_inicio'] ?? '',
+            'fecha_fin' => $request['fecha_fin'] ?? '',
+            'institucion' => $request['institucion'] ?? '',
+            'pais' => $request['pais'] ?? '',
+        ];
+        $welcomeEmailSent = @sendNewStayWelcomeEmail(
+            (string)($request['email'] ?? ''),
+            (string)($request['nombre'] ?? ''),
+            $stayData,
+            $loginUrl,
+            $config
+        );
+        if ($welcomeEmailSent === false) {
+            $message .= ' No se pudo enviar el correo de bienvenida de nueva estancia.';
+        }
     } catch (Throwable $e) {
         $mysqli->rollback();
         http_response_code(500);

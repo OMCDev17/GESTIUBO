@@ -131,6 +131,25 @@ foreach ($data['employees'] as $emp) {
             continue;
         }
 
+        // Validar formato y coherencia de fechas
+        try {
+            $startDt = new DateTime((string)$fechaInicio);
+            $endDt = new DateTime((string)$fechaFin);
+            if ($endDt < $startDt) {
+                $errors[] = [
+                    'id' => (int)$emp['id'],
+                    'error' => 'La fecha de fin no puede ser anterior a la fecha de inicio'
+                ];
+                continue;
+            }
+        } catch (Throwable $e) {
+            $errors[] = [
+                'id' => (int)$emp['id'],
+                'error' => 'Formato de fecha inválido'
+            ];
+            continue;
+        }
+
         $status = 'active';
         if ($fechaFin && $fechaFin !== '2100-01-01' && strtotime($fechaFin) < $todayTs) {
             $status = 'archived';

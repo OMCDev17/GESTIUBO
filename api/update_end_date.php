@@ -91,7 +91,7 @@ foreach ($data['updates'] as $row) {
     }
 
     // Obtener estancia activa
-    $sel = $mysqli->prepare("SELECT id FROM stays WHERE employee_id = ? AND status = 'active' LIMIT 1");
+    $sel = $mysqli->prepare("SELECT id, fecha_inicio FROM stays WHERE employee_id = ? AND status = 'active' LIMIT 1");
     $sel->bind_param('i', $id);
     $sel->execute();
     $resSel = $sel->get_result();
@@ -100,8 +100,25 @@ foreach ($data['updates'] as $row) {
         $sel->close();
         continue;
     }
-    $stayId = (int)$resSel->fetch_assoc()['id'];
+    $stay = $resSel->fetch_assoc();
+    $stayId = (int)$stay['id'];
+    $stayStart = (string)($stay['fecha_inicio'] ?? '');
     $sel->close();
+
+    // Validar fecha_fin contra fecha_inicio de la estancia activa
+    if (isset($row['fecha_fin'])) {
+        try {
+            $endDt = new DateTime((string)$row['fecha_fin']);
+            $startDt = new DateTime($stayStart);
+            if ($endDt < $startDt) {
+                $errors[] = ['id' => $id, 'error' => 'La fecha de fin no puede ser anterior a la fecha de inicio'];
+                continue;
+            }
+        } catch (Throwable $e) {
+            $errors[] = ['id' => $id, 'error' => 'Formato de fecha inválido'];
+            continue;
+        }
+    }
 
     // Armar update
     $types .= 'si'; // status + id
