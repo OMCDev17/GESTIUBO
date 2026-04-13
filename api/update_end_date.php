@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 header('Content-Type: application/json; charset=utf-8');
 
 require __DIR__ . '/auth.php';
@@ -139,3 +139,4 @@ foreach ($data['updates'] as $row) {
 $resp = ['updated' => $updated];
 if ($errors) $resp['errors'] = $errors;
 echo json_encode($resp);
+

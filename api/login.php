@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 header('Content-Type: application/json; charset=utf-8');
 
 $config = require __DIR__ . '/config.php';
@@ -118,3 +118,4 @@ echo json_encode([
     'user' => $user,
     'redirect' => $redirect,
 ]);
+

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 header('Content-Type: application/json; charset=utf-8');
 
 require __DIR__ . '/auth.php';
@@ -154,3 +154,4 @@ try {
     }
     $sendError(500, $ex->getMessage());
 }
+

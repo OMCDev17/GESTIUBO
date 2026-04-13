@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require __DIR__ . '/api/auth.php';
 
 // If already logged in, redirect to the correct dashboard.

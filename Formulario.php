@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $isNewStay = (isset($_GET['mode']) && $_GET['mode'] === 'newstay');
 $prefill = [];
 if ($isNewStay) {
@@ -57,6 +57,21 @@ $prefillDate = function ($key) use ($prefill) {
         return htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
     }
 };
+$groupOptions = [];
+try {
+    $config = require __DIR__ . '/api/config.php';
+    $mysqli = @new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
+    if (!$mysqli->connect_errno) {
+        $mysqli->set_charset($config['charset']);
+        $res = $mysqli->query("SELECT id, name FROM groups WHERE deleted_at IS NULL ORDER BY name");
+        while ($row = $res->fetch_assoc()) {
+            $groupOptions[] = $row;
+        }
+        $res->free();
+    }
+} catch (Throwable $e) {
+    // Mantener $groupOptions vacío; el frontend intentará cargar vía fetch
+}
 ?>
 <!DOCTYPE html>
 
@@ -260,7 +275,12 @@ $prefillDate = function ($key) use ($prefill) {
                                     <label class="flex flex-col gap-2 mb-4">
                                         <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">Grupo / Group</p>
                                         <select name="group_id" required class="form-select rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary h-12 text-slate-700 dark:text-slate-300">
-                                            <option disabled selected value="">Cargando grupos...</option>
+                                            <option disabled selected value="">Seleccione grupo / Select group</option>
+                                            <?php foreach ($groupOptions as $g): ?>
+                                                <option value="<?= htmlspecialchars($g['id']) ?>" <?= ($isNewStay && isset($prefill['group_id']) && (string)$prefill['group_id'] === (string)$g['id']) ? 'selected' : '' ?>>
+                                                    <?= htmlspecialchars($g['name']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
                                         </select>
                                     </label>
                                 </div>
@@ -360,7 +380,10 @@ $prefillDate = function ($key) use ($prefill) {
                 opt.textContent = text;
                 groupSelect.appendChild(opt);
             };
-            renderGroupPlaceholder('Cargando grupos...');
+            const hasServerRenderedGroups = groupSelect && groupSelect.options.length > 1;
+            if (!hasServerRenderedGroups) {
+                renderGroupPlaceholder('Cargando grupos...');
+            }
 
             const loadGroups = async () => {
                 if (!groupSelect) return;
@@ -394,7 +417,9 @@ $prefillDate = function ($key) use ($prefill) {
                         });
                 } catch (error) {
                     console.error('No se pudieron cargar los grupos', error);
-                    renderGroupPlaceholder('No se pudieron cargar los grupos');
+                    if (!hasServerRenderedGroups) {
+                        renderGroupPlaceholder('No se pudieron cargar los grupos');
+                    }
                 }
             };
 

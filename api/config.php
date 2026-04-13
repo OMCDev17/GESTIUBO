@@ -2,7 +2,6 @@
 // ============================================================================
 // CONFIGURACIÓN DE BASE DE DATOS Y SMTP (Gmail)
 // ============================================================================
-// IMPORTANTE: Reemplaza los valores placeholder con tus valores REALES
 
 return [
     'host' => '127.0.0.1',
@@ -26,3 +25,4 @@ return [
         'from_name' => 'GESTIUBO - Recuperación',
     ],
 ];
+

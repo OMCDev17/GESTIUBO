@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require __DIR__ . '/api/auth.php';
 requireRole(['supervisor', 'coordinador', 'admin']);
 
@@ -77,20 +77,40 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
             </header>
 
             <main class="flex-1 flex justify-center pt-36 md:pt-28 pb-10 px-4 md:px-0">
-                <div class="w-full max-w-[980px] flex flex-col gap-6">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div>
-                            <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Usuarios del grupo <?php echo $groupLabel; ?></h1>
-                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Como supervisor, puedes revisar los perfiles y actualizar la fecha de finalización y el horario (completo o solo lectivo).</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Grupo</span>
-                            <span class="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-primary font-semibold"><?php echo $groupLabel; ?></span>
-                        </div>
+                <div class="w-full max-w-[980px] flex flex-col gap-8">
+                    
+                    <!-- Header section -->
+                    <div class="flex flex-col gap-2">
+                        <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Panel del supervisor</h1>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Administra tu grupo y aprueba nuevas solicitudes de incorporación</p>
                     </div>
 
-                    <!-- Employee list -->
-                    <div id="employeesContainer" class="grid gap-6"></div>
+                    <!-- Supervisor profile section -->
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100">Tu perfil</h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Información de tu estancia en el grupo</p>
+                        </div>
+                        <div id="supervisorCard" class="bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 p-6"></div>
+                    </div>
+
+                    <!-- Group members section -->
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100">Miembros del grupo</h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Usuarios activos en <?php echo $groupLabel; ?></p>
+                        </div>
+                        <div id="employeesContainer" class="grid gap-6"></div>
+                    </div>
+
+                    <!-- Pending requests section -->
+                    <div id="requestsSection" style="display: none;" class="flex flex-col gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100">Solicitudes pendientes</h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Nuevas solicitudes de incorporación al grupo</p>
+                        </div>
+                        <div id="requestsContainer" class="grid gap-4"></div>
+                    </div>
 
                 </div>
             </main>
@@ -127,6 +147,7 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
         }
 
         let employees = [];
+        let supervisorData = <?php echo json_encode($user ?? []); ?>;
         const groupToShow = '<?php echo $groupLabel; ?>';
         const pendingChanges = new Map();
         const saveButtonBaseText = 'Guardar cambios';
@@ -172,6 +193,71 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
             const m = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
             return `${y}-${m}-${day}`;
+        }
+
+        function renderSupervisorCard() {
+            const container = document.getElementById('supervisorCard');
+            if (!supervisorData || !supervisorData.id) {
+                container.innerHTML = '<p class="text-slate-500 dark:text-slate-400">No hay datos disponibles</p>';
+                return;
+            }
+
+            const row = document.createElement('div');
+            row.className = 'flex flex-col md:flex-row md:items-center md:justify-between gap-4';
+
+            const profile = document.createElement('div');
+            profile.className = 'flex items-center gap-4';
+            const foto = supervisorData.foto_url || 'https://via.placeholder.com/64';
+            const fullName = `${supervisorData.nombre} ${supervisorData.apellidos}`;
+            profile.innerHTML = `
+                <img class="h-20 w-20 rounded-full object-cover border-2 border-primary" src="${foto}" alt="${fullName}" />
+                <div>
+                    <p class="text-lg font-semibold text-slate-900 dark:text-slate-100">${fullName}</p>
+                    <p class="text-sm text-primary font-medium capitalize">${supervisorData.rol}</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">${supervisorData.email}</p>
+                </div>
+            `;
+
+            const details = document.createElement('div');
+            details.className = 'grid grid-cols-2 sm:grid-cols-4 gap-3';
+            
+            const groupBadge = document.createElement('div');
+            groupBadge.className = 'rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800';
+            groupBadge.innerHTML = `
+                <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Grupo</p>
+                <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">${supervisorData.group_name || '—'}</p>
+            `;
+
+            const horarioBadge = document.createElement('div');
+            horarioBadge.className = 'rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800';
+            horarioBadge.innerHTML = `
+                <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Horario</p>
+                <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">${supervisorData.horario == 1 ? 'Completo' : 'Solo lectivo'}</p>
+            `;
+
+            const inicioBadge = document.createElement('div');
+            inicioBadge.className = 'rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800';
+            inicioBadge.innerHTML = `
+                <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Inicio</p>
+                <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">${formatDate(supervisorData.fecha_inicio)}</p>
+            `;
+
+            const finBadge = document.createElement('div');
+            finBadge.className = 'rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800';
+            finBadge.innerHTML = `
+                <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Fin</p>
+                <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">${formatDate(supervisorData.fecha_fin)}</p>
+            `;
+
+            details.appendChild(groupBadge);
+            details.appendChild(horarioBadge);
+            details.appendChild(inicioBadge);
+            details.appendChild(finBadge);
+
+            row.appendChild(profile);
+            row.appendChild(details);
+            container.innerHTML = '';
+            container.appendChild(row);
         }
 
         async function fetchEmployees() {
@@ -344,7 +430,141 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
 
         async function loadAndRender() {
             await fetchEmployees();
+            await fetchRequests();
+            renderSupervisorCard();
             render();
+            renderRequests();
+        }
+
+        let pendingRequests = [];
+
+        async function fetchRequests() {
+            try {
+                const resp = await fetch('api/group_requests.php');
+                const json = await resp.json();
+                if (!Array.isArray(json.requests)) throw new Error('Respuesta inválida');
+                pendingRequests = json.requests.map((req) => ({
+                    ...req,
+                    id: Number(req.id),
+                    employee_id: Number(req.employee_id),
+                    group_id: Number(req.group_id),
+                    horario: Number(req.horario),
+                }));
+            } catch (error) {
+                console.error('No se pudieron cargar las solicitudes:', error);
+                pendingRequests = [];
+            }
+        }
+
+        function renderRequests() {
+            const section = document.getElementById('requestsSection');
+            const container = document.getElementById('requestsContainer');
+            
+            if (pendingRequests.length === 0) {
+                section.style.display = 'none';
+                container.innerHTML = '';
+                return;
+            }
+
+            section.style.display = 'block';
+            container.innerHTML = '';
+
+            pendingRequests.forEach((req) => {
+                const card = document.createElement('div');
+                card.className = 'bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 p-6';
+
+                const header = document.createElement('div');
+                header.className = 'flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4';
+
+                const info = document.createElement('div');
+                info.className = 'flex-1';
+                info.innerHTML = `
+                    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">${req.nombre} ${req.apellidos}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">${req.requested_by_email}</p>
+                `;
+
+                const badge = document.createElement('div');
+                badge.className = 'inline-flex items-center gap-1 rounded-full bg-yellow-100 dark:bg-yellow-900/30 px-3 py-1 text-yellow-700 dark:text-yellow-400 text-xs font-semibold';
+                badge.textContent = 'Pendiente';
+
+                header.appendChild(info);
+                header.appendChild(badge);
+                card.appendChild(header);
+
+                const details = document.createElement('div');
+                details.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4';
+                details.innerHTML = `
+                    <div class="rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
+                        <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Grupo</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">${req.group_name}</p>
+                    </div>
+                    <div class="rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
+                        <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Motivo</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">${req.motivo || '—'}</p>
+                    </div>
+                    <div class="rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
+                        <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Periodo</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">${formatDate(req.fecha_inicio)} - ${formatDate(req.fecha_fin)}</p>
+                    </div>
+                    <div class="rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
+                        <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Institución</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">${req.institucion || '—'}</p>
+                    </div>
+                    <div class="rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
+                        <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">País</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">${req.pais || '—'}</p>
+                    </div>
+                    <div class="rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
+                        <p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Horario</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">${Number(req.horario) === 1 ? 'Completo' : 'Solo lectivo'}</p>
+                    </div>
+                `;
+                card.appendChild(details);
+
+                const actions = document.createElement('div');
+                actions.className = 'flex gap-3';
+                
+                const approveBtn = document.createElement('button');
+                approveBtn.className = 'flex-1 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 transition-colors';
+                approveBtn.textContent = 'Aprobar';
+                approveBtn.onclick = () => handleRequest(req.id, 'approve');
+
+                const rejectBtn = document.createElement('button');
+                rejectBtn.className = 'flex-1 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 transition-colors';
+                rejectBtn.textContent = 'Rechazar';
+                rejectBtn.onclick = () => handleRequest(req.id, 'reject');
+
+                actions.appendChild(approveBtn);
+                actions.appendChild(rejectBtn);
+                card.appendChild(actions);
+
+                container.appendChild(card);
+            });
+        }
+
+        async function handleRequest(requestId, action) {
+            try {
+                const resp = await fetch('api/group_requests.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ request_id: requestId, action }),
+                });
+                const result = await resp.json();
+
+                if (resp.ok) {
+                    const msg = action === 'approve' ? 'Solicitud aprobada correctamente' : 'Solicitud rechazada';
+                    showToast(msg, 'success');
+                    await loadAndRender();
+                } else {
+                    showToast(result?.error || `Error al ${action === 'approve' ? 'aprobar' : 'rechazar'} la solicitud`, 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Error procesando solicitud', 'error');
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -362,3 +582,4 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
 </body>
 
 </html>
+

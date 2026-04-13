@@ -1,33 +1,55 @@
-﻿<?php
+<?php
 header('Content-Type: application/json; charset=utf-8');
-
-// Registration endpoint for new employees. This endpoint is intentionally open so that
-// users can request an account without requiring an existing session.
-// NOTE: For production, consider adding CAPTCHA, email verification, or admin approval.
 
 $config = require __DIR__ . '/config.php';
 $mysqli = new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
 if ($mysqli->connect_errno) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión con la base de datos']);
+    echo json_encode(['error' => 'Error de conexion con la base de datos']);
     exit;
 }
 $mysqli->set_charset($config['charset']);
-// Desactivar autocommit para poder hacer rollback si algo falla
 $mysqli->autocommit(false);
+
+$mysqli->query("
+CREATE TABLE IF NOT EXISTS group_join_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    group_id INT NOT NULL,
+    requested_by_email VARCHAR(255) NOT NULL,
+    requested_by_name VARCHAR(255) NOT NULL,
+    motivo VARCHAR(150) NULL,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    horario TINYINT(1) NOT NULL DEFAULT 1,
+    institucion VARCHAR(255) NULL,
+    pais VARCHAR(255) NULL,
+    approval_token VARCHAR(64) NOT NULL,
+    status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+    email_sent_at DATETIME NULL,
+    approved_at DATETIME NULL,
+    approved_by_employee_id INT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY ux_group_join_requests_token (approval_token),
+    INDEX idx_group_join_requests_employee (employee_id),
+    INDEX idx_group_join_requests_group (group_id),
+    INDEX idx_group_join_requests_status (status),
+    CONSTRAINT fk_group_join_requests_employee FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+    CONSTRAINT fk_group_join_requests_group FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE
+)");
 
 $body = file_get_contents('php://input');
 $data = json_decode($body, true);
 if (!is_array($data)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Payload inválido']);
+    echo json_encode(['error' => 'Payload invalido']);
     exit;
 }
 
-// Normalizar entradas para evitar duplicados por espacios o mayúsculas
-foreach (['nombre', 'apellidos', 'dni_pasaporte', 'username', 'email'] as $k) {
-    if (isset($data[$k]) && is_string($data[$k])) {
-        $data[$k] = trim($data[$k]);
+foreach (['nombre', 'apellidos', 'dni_pasaporte', 'username', 'email'] as $key) {
+    if (isset($data[$key]) && is_string($data[$key])) {
+        $data[$key] = trim($data[$key]);
     }
 }
 
@@ -38,30 +60,34 @@ foreach ($required as $field) {
         $missing[] = $field;
     }
 }
-if (!empty($missing)) {
+if ($missing) {
     http_response_code(400);
     echo json_encode(['error' => 'Faltan campos obligatorios', 'missing' => $missing]);
     exit;
 }
 
-// Validar y hashear la contraseña antes de seguir
-if (strlen((string)$data['password']) < 6) {
+if (strlen((string) $data['password']) < 6) {
     http_response_code(400);
-    echo json_encode(['error' => 'La contraseña debe tener al menos 6 caracteres']);
+    echo json_encode(['error' => 'La contrasena debe tener al menos 6 caracteres']);
     exit;
 }
-$data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
-$data['horario'] = isset($data['horario']) ? (int) !!$data['horario'] : 1; // Completo por defecto
 
-// Validar fechas de estancia: no se permiten inicios anteriores a hoy y fin debe ser posterior o igual al inicio
 $today = new DateTime('today');
 $startDate = null;
 $endDate = null;
 if (!empty($data['fecha_inicio'])) {
-    try { $startDate = new DateTime($data['fecha_inicio']); } catch (Exception $e) {}
+    try {
+        $startDate = new DateTime($data['fecha_inicio']);
+    } catch (Exception $e) {
+        $startDate = null;
+    }
 }
 if (!empty($data['fecha_fin'])) {
-    try { $endDate = new DateTime($data['fecha_fin']); } catch (Exception $e) {}
+    try {
+        $endDate = new DateTime($data['fecha_fin']);
+    } catch (Exception $e) {
+        $endDate = null;
+    }
 }
 if ($startDate && $startDate < $today) {
     http_response_code(400);
@@ -74,16 +100,73 @@ if ($startDate && $endDate && $endDate < $startDate) {
     exit;
 }
 
-// Check for existing user by username, email or DNI/passport before inserting
-$username = $data['username'];
-$email = $data['email'];
-$dni = $data['dni_pasaporte'];
+$ensureGroupId = function (mysqli $db, string $name): ?int {
+    $name = trim($name);
+    if ($name === '') {
+        return null;
+    }
+
+    $stmt = $db->prepare('SELECT id FROM groups WHERE LOWER(name) = LOWER(?) LIMIT 1');
+    if ($stmt) {
+        $stmt->bind_param('s', $name);
+        $stmt->execute();
+        $stmt->bind_result($gid);
+        if ($stmt->fetch()) {
+            $stmt->close();
+            return (int) $gid;
+        }
+        $stmt->close();
+    }
+
+    $ins = $db->prepare('INSERT INTO groups (name) VALUES (?)');
+    if ($ins) {
+        $ins->bind_param('s', $name);
+        if ($ins->execute()) {
+            $gid = (int) $ins->insert_id;
+            $ins->close();
+            return $gid;
+        }
+        $ins->close();
+    }
+
+    return null;
+};
+
+if (!isset($data['group_id']) && !empty($data['grupo'])) {
+    $gid = $ensureGroupId($mysqli, (string) $data['grupo']);
+    if ($gid) {
+        $data['group_id'] = $gid;
+    }
+}
+if (isset($data['group_id']) && empty($data['grupo'])) {
+    $gid = (int) $data['group_id'];
+    $stmtGroup = $mysqli->prepare('SELECT name FROM groups WHERE id = ? LIMIT 1');
+    if ($stmtGroup) {
+        $stmtGroup->bind_param('i', $gid);
+        $stmtGroup->execute();
+        $stmtGroup->bind_result($groupName);
+        if ($stmtGroup->fetch()) {
+            $data['grupo'] = $groupName;
+        }
+        $stmtGroup->close();
+    }
+}
+
+if (empty($data['group_id'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Debes seleccionar un grupo', 'field' => 'group_id']);
+    exit;
+}
+
+$username = (string) $data['username'];
+$email = (string) $data['email'];
+$dni = (string) $data['dni_pasaporte'];
 
 $dupStmt = $mysqli->prepare('SELECT id, username, email, dni_pasaporte FROM employees WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR dni_pasaporte = ? LIMIT 1');
 if (!$dupStmt) {
     $mysqli->rollback();
     http_response_code(500);
-    echo json_encode(['error' => 'Error al preparar comprobación de duplicados']);
+    echo json_encode(['error' => 'Error al preparar comprobacion de duplicados']);
     exit;
 }
 $dupStmt->bind_param('sss', $username, $email, $dni);
@@ -95,13 +178,14 @@ if ($dupStmt->num_rows > 0) {
     $dupStmt->free_result();
     $dupStmt->close();
     $mysqli->rollback();
-    // Respuesta idempotente: si ya existe, devolvemos éxito sin insertar
+
     $field = 'username';
-    if (strcasecmp($existingEmail, $email) === 0) {
+    if (strcasecmp((string) $existingEmail, $email) === 0) {
         $field = 'email';
-    } elseif ($existingDni === $dni) {
+    } elseif ((string) $existingDni === $dni) {
         $field = 'dni_pasaporte';
     }
+
     echo json_encode([
         'success' => true,
         'id' => $existingId,
@@ -114,65 +198,13 @@ if ($dupStmt->num_rows > 0) {
 $dupStmt->free_result();
 $dupStmt->close();
 
-// Default role for self-registration
+$data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
 $data['rol'] = 'empleado';
-
-// Helper: ensure group id from name
-$ensureGroupId = function (mysqli $db, string $name): ?int {
-    $name = trim($name);
-    if ($name === '') return null;
-    $stmt = $db->prepare('SELECT id FROM groups WHERE LOWER(name) = LOWER(?) LIMIT 1');
-    if ($stmt) {
-        $stmt->bind_param('s', $name);
-        $stmt->execute();
-        $stmt->bind_result($gid);
-        if ($stmt->fetch()) {
-            $stmt->close();
-            return (int)$gid;
-        }
-        $stmt->close();
-    }
-    $ins = $db->prepare('INSERT INTO groups (name) VALUES (?)');
-    if ($ins) {
-        $ins->bind_param('s', $name);
-        if ($ins->execute()) {
-            $gid = $ins->insert_id;
-            $ins->close();
-            return (int)$gid;
-        }
-        $ins->close();
-    }
-    return null;
-};
-
-// Resolver group_id a partir de grupo (nombre) si no llega explícito
-if (!isset($data['group_id']) && !empty($data['grupo'])) {
-    $gid = $ensureGroupId($mysqli, (string)$data['grupo']);
-    if ($gid) {
-        $data['group_id'] = $gid;
-    }
-}
-if (isset($data['group_id']) && empty($data['grupo'])) {
-    $gid = (int)$data['group_id'];
-    $stmtGroup = $mysqli->prepare('SELECT name FROM groups WHERE id = ? LIMIT 1');
-    if ($stmtGroup) {
-        $stmtGroup->bind_param('i', $gid);
-        $stmtGroup->execute();
-        $stmtGroup->bind_result($gname);
-        if ($stmtGroup->fetch()) {
-            $data['grupo'] = $gname;
-        }
-        $stmtGroup->close();
-    }
-}
+$data['horario'] = isset($data['horario']) ? (int) !!$data['horario'] : 1;
 
 $allowedEmployee = [
     'nombre', 'apellidos', 'dni_pasaporte', 'username', 'password', 'email',
     'fecha_nacimiento', 'foto_url', 'rol'
-];
-
-$stayFields = [
-    'motivo', 'fecha_inicio', 'fecha_fin', 'group_id', 'horario', 'institucion', 'pais'
 ];
 
 $fields = [];
@@ -186,16 +218,14 @@ foreach ($allowedEmployee as $col) {
     }
 }
 
-if (count($fields) === 0) {
+if (!$fields) {
     http_response_code(400);
-    echo json_encode(['error' => 'No se proporcionaron campos válidos']);
+    echo json_encode(['error' => 'No se proporcionaron campos validos']);
     exit;
 }
 
 $placeholders = implode(', ', array_fill(0, count($fields), '?'));
 $columns = implode(', ', $fields);
-
-// Atomic insert that only runs if no duplicate exists (prevents race conditions)
 $sql = "
 INSERT INTO employees ($columns)
 SELECT $placeholders
@@ -212,27 +242,18 @@ if (!$stmt) {
     exit;
 }
 
-// Bind params twice: values, then duplicate checks
 $bindParams = array_merge($params, [$username, $email, $dni]);
-$typesWithDup = $types . 'sss';
-$stmt->bind_param($typesWithDup, ...$bindParams);
+$stmt->bind_param($types . 'sss', ...$bindParams);
 $stmt->execute();
 
 if ($stmt->errno) {
     $mysqli->rollback();
-    $field = 'username';
-    if (strpos($stmt->error, 'email') !== false) {
-        $field = 'email';
-    } elseif (strpos($stmt->error, 'dni') !== false) {
-        $field = 'dni_pasaporte';
-    }
-    // Idempotente en caso de duplicado
     if ($stmt->errno === 1062) {
         echo json_encode([
             'success' => true,
             'existing' => true,
-            'field' => $field,
-            'message' => "El {$field} ya estaba registrado.",
+            'field' => 'username',
+            'message' => 'El usuario ya estaba registrado.',
         ]);
         exit;
     }
@@ -241,7 +262,6 @@ if ($stmt->errno) {
     exit;
 }
 
-// Si no se insertó ninguna fila, asumimos duplicado y devolvemos 409
 if ($stmt->affected_rows === 0) {
     $mysqli->rollback();
     http_response_code(409);
@@ -252,50 +272,140 @@ if ($stmt->affected_rows === 0) {
     exit;
 }
 
-$newUserId = $mysqli->insert_id;
+$newUserId = (int) $mysqli->insert_id;
+$stayMotivo = (string) ($data['motivo'] ?? '');
+$stayInicio = (string) ($data['fecha_inicio'] ?? '');
+$stayFin = (string) ($data['fecha_fin'] ?? '');
+$stayGroup = (int) ($data['group_id'] ?? 0);
+$stayHorario = (int) ($data['horario'] ?? 1);
+$stayInst = (string) ($data['institucion'] ?? '');
+$stayPais = (string) ($data['pais'] ?? '');
+$approvalToken = bin2hex(random_bytes(32));
+$requestName = trim(($data['nombre'] ?? '') . ' ' . ($data['apellidos'] ?? ''));
 
-// Insertar estancia activa con institución y país
-$stayMotivo = $data['motivo'] ?? '';
-$stayInicio = $data['fecha_inicio'] ?? '';
-$stayFin = $data['fecha_fin'] ?? '';
-$stayGroup = isset($data['group_id']) ? (int)$data['group_id'] : null;
-$stayHorario = isset($data['horario']) ? (int) !!$data['horario'] : 1;
-$stayInst = $data['institucion'] ?? '';
-$stayPais = $data['pais'] ?? '';
-
-$stayStmt = $mysqli->prepare("INSERT INTO stays (employee_id, fecha_inicio, fecha_fin, motivo, group_id, horario, institucion, pais, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')");
-if ($stayStmt) {
-    $stayStmt->bind_param(
-        'isssiiss',
-        $newUserId,
-        $stayInicio,
-        $stayFin,
-        $stayMotivo,
-        $stayGroup,
-        $stayHorario,
-        $stayInst,
-        $stayPais
-    );
-    $stayStmt->execute();
-    $stayStmt->close();
+$requestStmt = $mysqli->prepare("
+    INSERT INTO group_join_requests (
+        employee_id, group_id, requested_by_email, requested_by_name, motivo,
+        fecha_inicio, fecha_fin, horario, institucion, pais, approval_token, status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+");
+if (!$requestStmt) {
+    $mysqli->rollback();
+    http_response_code(500);
+    echo json_encode(['error' => 'No se pudo crear la solicitud de aprobacion']);
+    exit;
 }
+$requestStmt->bind_param(
+    'iisssssisss',
+    $newUserId,
+    $stayGroup,
+    $email,
+    $requestName,
+    $stayMotivo,
+    $stayInicio,
+    $stayFin,
+    $stayHorario,
+    $stayInst,
+    $stayPais,
+    $approvalToken
+);
+$requestStmt->execute();
+$requestId = (int) $mysqli->insert_id;
+$requestStmt->close();
 
 $mysqli->commit();
 
-// Enviar correo de bienvenida
 require_once __DIR__ . '/email_templates.php';
 
-$firstName = trim($data['nombre'] ?? '');
-$userName = trim($data['username'] ?? '');
-$email = trim($data['email'] ?? '');
-
-$host = $_SERVER['HTTP_HOST'];
+$firstName = trim((string) ($data['nombre'] ?? ''));
+$userName = trim((string) ($data['username'] ?? ''));
+$groupName = trim((string) ($data['grupo'] ?? ''));
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$basePath = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
+$basePath = rtrim(dirname(dirname($_SERVER['PHP_SELF'])), '/\\');
 $loginUrl = "{$scheme}://{$host}{$basePath}/Loggin.php";
+$approveUrl = "{$scheme}://{$host}{$basePath}/approve_group_request.php?token={$approvalToken}";
 
-// Enviar correo de bienvenida (no es crítico si falla)
+$approverQuery = $mysqli->prepare("
+    SELECT DISTINCT e.id, e.nombre, e.apellidos, e.email
+    FROM employees e
+    INNER JOIN stays s ON s.employee_id = e.id AND s.status = 'active'
+    WHERE s.group_id = ?
+      AND e.rol IN ('supervisor', 'coordinador')
+      AND e.email IS NOT NULL
+      AND e.email <> ''
+    ORDER BY FIELD(e.rol, 'supervisor', 'coordinador'), e.nombre, e.apellidos
+");
+$approvers = [];
+if ($approverQuery) {
+    $approverQuery->bind_param('i', $stayGroup);
+    $approverQuery->execute();
+    $approverRes = $approverQuery->get_result();
+    while ($approverRes && ($row = $approverRes->fetch_assoc())) {
+        $approvers[] = $row;
+    }
+    $approverQuery->close();
+}
+
+if (!$approvers) {
+    $adminQuery = $mysqli->prepare("
+        SELECT e.id, e.nombre, e.apellidos, e.email
+        FROM employees e
+        WHERE e.rol = 'admin'
+          AND e.email IS NOT NULL
+          AND e.email <> ''
+        ORDER BY e.nombre, e.apellidos
+    ");
+    if ($adminQuery) {
+        $adminQuery->execute();
+        $adminRes = $adminQuery->get_result();
+        while ($adminRes && ($row = $adminRes->fetch_assoc())) {
+            $approvers[] = $row;
+        }
+        $adminQuery->close();
+    }
+}
+
+$sentApprovalEmail = false;
+foreach ($approvers as $approver) {
+    $supervisorName = trim(($approver['nombre'] ?? '') . ' ' . ($approver['apellidos'] ?? ''));
+    $targetEmail = trim((string) ($approver['email'] ?? ''));
+    if ($targetEmail === '') {
+        continue;
+    }
+    $ok = @sendGroupApprovalRequestEmail(
+        $targetEmail,
+        $supervisorName,
+        [
+            'employee_name' => $requestName,
+            'employee_email' => $email,
+            'group_name' => $groupName,
+            'motivo' => $stayMotivo,
+            'fecha_inicio' => $stayInicio,
+            'fecha_fin' => $stayFin,
+            'institucion' => $stayInst,
+            'pais' => $stayPais,
+            'approve_url' => $approveUrl,
+        ],
+        $config
+    );
+    $sentApprovalEmail = $sentApprovalEmail || $ok;
+}
+
+if ($sentApprovalEmail) {
+    $markSentStmt = $mysqli->prepare('UPDATE group_join_requests SET email_sent_at = NOW() WHERE id = ? LIMIT 1');
+    if ($markSentStmt) {
+        $markSentStmt->bind_param('i', $requestId);
+        $markSentStmt->execute();
+        $markSentStmt->close();
+    }
+}
+
 @sendWelcomeEmail($email, $userName, $firstName, $loginUrl, $config);
 
-echo json_encode(['success' => true, 'id' => $newUserId]);
-
+echo json_encode([
+    'success' => true,
+    'id' => $newUserId,
+    'pending_approval' => true,
+    'approval_email_sent' => $sentApprovalEmail,
+]);

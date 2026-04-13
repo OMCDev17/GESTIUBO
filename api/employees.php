@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 header('Content-Type: application/json; charset=utf-8');
 
 require __DIR__ . '/auth.php';
@@ -84,3 +84,4 @@ if (isset($_GET['include_history']) && $_GET['include_history'] === '1') {
 }
 
 echo json_encode(['employees' => $employees, 'history' => $history]);
+

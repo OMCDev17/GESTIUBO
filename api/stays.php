@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 header('Content-Type: application/json; charset=utf-8');
 
 require __DIR__ . '/auth.php';
@@ -86,3 +86,4 @@ if ($active) {
 $mysqli->close();
 
 echo json_encode(['history' => $history, 'active' => $active]);
+

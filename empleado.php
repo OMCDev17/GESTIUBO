@@ -6,6 +6,7 @@ requireRole(['empleado', 'supervisor', 'coordinador', 'admin']);
 $employee = getSessionUser();
 $activeStay = null;
 $stayHistory = [];
+$pendingRequest = null;
 $config = require __DIR__ . '/api/config.php';
 $mysqli = @new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
 if (!$mysqli->connect_errno) {
@@ -31,6 +32,32 @@ if (!$mysqli->connect_errno) {
                 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 INDEX idx_stays_employee (employee_id),
                 INDEX idx_stays_status (status)
+            )
+        ");
+        $mysqli->query("
+            CREATE TABLE IF NOT EXISTS group_join_requests (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                employee_id INT NOT NULL,
+                group_id INT NOT NULL,
+                requested_by_email VARCHAR(255) NOT NULL,
+                requested_by_name VARCHAR(255) NOT NULL,
+                motivo VARCHAR(150) NULL,
+                fecha_inicio DATE NOT NULL,
+                fecha_fin DATE NOT NULL,
+                horario TINYINT(1) NOT NULL DEFAULT 1,
+                institucion VARCHAR(255) NULL,
+                pais VARCHAR(255) NULL,
+                approval_token VARCHAR(64) NOT NULL,
+                status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+                email_sent_at DATETIME NULL,
+                approved_at DATETIME NULL,
+                approved_by_employee_id INT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY ux_group_join_requests_token (approval_token),
+                INDEX idx_group_join_requests_employee (employee_id),
+                INDEX idx_group_join_requests_group (group_id),
+                INDEX idx_group_join_requests_status (status)
             )
         ");
 
@@ -88,11 +115,28 @@ if (!$mysqli->connect_errno) {
                 }
                 $histStmt->close();
             }
+
+            $pendingStmt = $mysqli->prepare("SELECT r.id, r.fecha_inicio, r.fecha_fin, r.motivo, r.horario, r.institucion, r.pais, r.status, g.name AS group_name
+                FROM group_join_requests r
+                LEFT JOIN groups g ON g.id = r.group_id
+                WHERE r.employee_id = ? AND r.status = 'pending'
+                ORDER BY r.created_at DESC
+                LIMIT 1");
+            if ($pendingStmt) {
+                $pendingStmt->bind_param('i', $targetId);
+                $pendingStmt->execute();
+                $pendingRes = $pendingStmt->get_result();
+                if ($pendingRes && $pendingRes->num_rows === 1) {
+                    $pendingRequest = $pendingRes->fetch_assoc();
+                }
+                $pendingStmt->close();
+            }
         }
     } catch (Throwable $e) {
         // Si falla la consulta (schema incompleto, etc), mantener datos de sesion.
         $activeStay = null;
         $stayHistory = [];
+        $pendingRequest = null;
     } finally {
         $mysqli->close();
     }
@@ -129,6 +173,7 @@ $formatHorario = function ($value) {
 };
 
 $hasActiveStay = is_array($activeStay) && !empty($activeStay);
+$hasPendingRequest = is_array($pendingRequest) && !empty($pendingRequest);
 ?>
 
 <!DOCTYPE html>
@@ -187,13 +232,13 @@ $hasActiveStay = is_array($activeStay) && !empty($activeStay);
                     <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] border-l border-slate-300 dark:border-slate-700 pl-4">Bienvenido/a / Welcome <?= $safe('nombre') ?> <?= $safe('apellidos') ?></h2>
                 </div>
                 <div class="flex items-center gap-3 w-full md:w-auto justify-end">
-                    <?php if ($hasActiveStay) : ?>
+                    <?php if ($hasActiveStay || $hasPendingRequest) : ?>
                         <button type="button" disabled class="flex shrink-0 cursor-not-allowed items-center justify-center overflow-hidden rounded-xl h-11 px-5 border border-slate-300 text-slate-400 text-sm font-bold leading-normal tracking-[0.015em] bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-500">
-                            <span class="truncate">Nueva estancia / New stay</span>
+                            <span class="truncate">Nueva estancia / New </span>
                         </button>
                     <?php else : ?>
                         <a href="Formulario.php?mode=newstay" class="flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 px-5 border border-primary text-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary hover:text-white transition-colors">
-                            <span class="truncate">Nueva estancia / New stay</span>
+                            <span class="truncate">Nueva estancia / New </span>
                         </a>
                     <?php endif; ?>
                     <a href="#" onclick="logout(); return false;" aria-label="Cerrar sesión" title="Cerrar sesión" class="flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 w-11 border border-primary bg-white dark:bg-slate-900 text-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary hover:text-white transition-colors">
@@ -287,7 +332,13 @@ $hasActiveStay = is_array($activeStay) && !empty($activeStay);
                                 <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5">
                                         <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Grupo / Group</p>
-                                        <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100"><?= $safe('group_name') ?></p>
+                                        <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">
+                                            <?php if ($hasPendingRequest && !$hasActiveStay) : ?>
+                                                <?= htmlspecialchars(($pendingRequest['group_name'] ?? '-') . ' - Pendiente de aprobacion', ENT_QUOTES, 'UTF-8') ?>
+                                            <?php else : ?>
+                                                <?= $safe('group_name') ?>
+                                            <?php endif; ?>
+                                        </p>
                                     </div>
                                 </div>
 
@@ -298,13 +349,29 @@ $hasActiveStay = is_array($activeStay) && !empty($activeStay);
                     <div class="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 p-8 mt-6">
                         <h3 class="text-primary text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
                             <span class="material-symbols-outlined text-sm">history</span>
-                            Historial de estancias / Stay History
+                            Historial de estancias / Internship History
                         </h3>
 
-                        <?php if (!$hasActiveStay && empty($stayHistory)) : ?>
+                        <?php if (!$hasActiveStay && !$hasPendingRequest && empty($stayHistory)) : ?>
                             <p class="text-sm text-slate-600 dark:text-slate-300">No hay estancias registradas aun.</p>
                         <?php else : ?>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <?php if ($hasPendingRequest) : ?>
+                                    <article class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-5">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <p class="text-xs uppercase tracking-wider text-amber-700 dark:text-amber-300">Solicitud pendiente</p>
+                                            <p class="text-xs font-semibold text-amber-900 dark:text-amber-100"><?= htmlspecialchars($pendingRequest['group_name'] ?? '-', ENT_QUOTES, 'UTF-8') ?></p>
+                                        </div>
+                                        <p class="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100"><?= htmlspecialchars($pendingRequest['institucion'] ?? '-', ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars($pendingRequest['pais'] ?? '-', ENT_QUOTES, 'UTF-8') ?></p>
+                                        <p class="mt-3 text-xs text-slate-700 dark:text-slate-200">
+                                            <span class="font-semibold">Inicio:</span> <?= htmlspecialchars($pendingRequest['fecha_inicio'] ?? '-', ENT_QUOTES, 'UTF-8') ?>
+                                            <span class="ml-3 font-semibold">Fin:</span> <?= $formatFechaFin($pendingRequest['fecha_fin'] ?? '') ?>
+                                        </p>
+                                        <p class="mt-2 text-xs text-slate-700 dark:text-slate-200"><span class="font-semibold">Motivo:</span> <?= htmlspecialchars($pendingRequest['motivo'] ?? '-', ENT_QUOTES, 'UTF-8') ?></p>
+                                        <p class="mt-1 text-xs text-slate-700 dark:text-slate-200"><span class="font-semibold">Horario:</span> <?= htmlspecialchars($formatHorario($pendingRequest['horario'] ?? 1), ENT_QUOTES, 'UTF-8') ?></p>
+                                        <p class="mt-3 inline-flex rounded-full bg-amber-200 dark:bg-amber-900 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-amber-900 dark:text-amber-100">Pendiente de aprobacion</p>
+                                    </article>
+                                <?php endif; ?>
                                 <?php if ($hasActiveStay) : ?>
                                     <article class="rounded-xl border border-primary/40 bg-primary/5 dark:bg-primary/10 p-5">
                                         <div class="flex items-start justify-between gap-3">

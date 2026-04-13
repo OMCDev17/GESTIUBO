@@ -7,3 +7,4 @@ if ($m->connect_errno) {
 }
 $m->set_charset($c['charset']);
 echo 'OK';
+

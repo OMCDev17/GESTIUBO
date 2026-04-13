@@ -16,3 +16,4 @@ session_destroy();
 
 header('Location: ../loggout2.html');
 exit;
+

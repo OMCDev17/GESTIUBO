@@ -74,3 +74,4 @@ function requireRole($roles, bool $isApi = false): void
         exit;
     }
 }
+

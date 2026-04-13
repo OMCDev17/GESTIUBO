@@ -86,6 +86,106 @@ function sendWelcomeEmail($email, $userName, $firstName, $loginUrl, $config) {
     }
 }
 
+function sendGroupApprovalRequestEmail($email, $supervisorName, $requestData, $config) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+
+    $htmlBody = getGroupApprovalRequestTemplate($supervisorName, $requestData);
+    $textBody = "Solicitud de aprobacion de grupo\n\n"
+        . "Empleado: " . ($requestData['employee_name'] ?? '') . "\n"
+        . "Email: " . ($requestData['employee_email'] ?? '') . "\n"
+        . "Grupo: " . ($requestData['group_name'] ?? '') . "\n"
+        . "Por favor accede a la aplicacion para aprobar o rechazar la solicitud.";
+
+    try {
+        $mailer = new PHPMailer(true);
+        $mailer->isSMTP();
+        $mailer->CharSet = 'UTF-8';
+        $mailer->Host = $config['smtp']['host'];
+        $mailer->SMTPAuth = true;
+        $mailer->Username = $config['smtp']['username'];
+        $mailer->Password = $config['smtp']['password'];
+        $mailer->SMTPSecure = $config['smtp']['secure'];
+        $mailer->Port = $config['smtp']['port'];
+        $mailer->setFrom($config['smtp']['from_email'], 'Instituto de Bio-Organica Antonio Gonzalez');
+        $mailer->addAddress($email);
+        $mailer->Subject = 'Nueva solicitud de miembro para tu grupo';
+        $mailer->isHTML(true);
+        $mailer->Body = $htmlBody;
+        $mailer->AltBody = $textBody;
+        $mailer->send();
+        return true;
+    } catch (Exception $e) {
+        error_log("Error enviando correo de aprobacion de grupo: " . $e->getMessage());
+        return false;
+    }
+}
+
+function getGroupApprovalRequestTemplate($supervisorName, $requestData) {
+    $year = date('Y');
+    $employeeName = htmlspecialchars((string)($requestData['employee_name'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $employeeEmail = htmlspecialchars((string)($requestData['employee_email'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $groupName = htmlspecialchars((string)($requestData['group_name'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $motivo = htmlspecialchars((string)($requestData['motivo'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $fechaInicio = htmlspecialchars((string)($requestData['fecha_inicio'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $fechaFin = htmlspecialchars((string)($requestData['fecha_fin'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $institucion = htmlspecialchars((string)($requestData['institucion'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $pais = htmlspecialchars((string)($requestData['pais'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $supervisorName = htmlspecialchars((string)$supervisorName, ENT_QUOTES, 'UTF-8');
+
+    return <<<HTML
+    <!DOCTYPE html>
+    <html lang="es" style="margin:0;padding:0;">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Nueva solicitud de grupo</title>
+        <style>
+            body { margin:0; padding:0; font-family:Arial,sans-serif; background:#f8fafc; color:#0f172a; }
+            .container { max-width:620px; margin:32px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(15,23,42,.08); }
+            .header { background:linear-gradient(135deg,#5c068c 0%,#7c1fa8 100%); color:#fff; padding:32px 24px; }
+            .content { padding:32px 24px; }
+            .card { background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin:24px 0; }
+            .label { font-size:12px; text-transform:uppercase; color:#64748b; margin-bottom:4px; }
+            .value { font-size:15px; font-weight:600; color:#0f172a; margin-bottom:14px; }
+            .note { margin-top:20px; font-size:13px; color:#475569; line-height:1.6; }
+            .footer { padding:24px; background:#f8fafc; border-top:1px solid #e2e8f0; color:#64748b; font-size:12px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1 style="margin:0;font-size:26px;">Nueva solicitud de miembro</h1>
+                <p style="margin:10px 0 0 0;font-size:14px;color:#ede9fe;">Hay una nueva solicitud pendiente de aprobacion</p>
+            </div>
+            <div class="content">
+                <p>Hola {$supervisorName},</p>
+                <p>Un nuevo usuario se ha registrado y solicita incorporarse al grupo <strong>{$groupName}</strong>.</p>
+                <div class="card">
+                    <div class="label">Empleado</div>
+                    <div class="value">{$employeeName}</div>
+                    <div class="label">Email</div>
+                    <div class="value">{$employeeEmail}</div>
+                    <div class="label">Motivo</div>
+                    <div class="value">{$motivo}</div>
+                    <div class="label">Fechas</div>
+                    <div class="value">{$fechaInicio} - {$fechaFin}</div>
+                    <div class="label">Institucion</div>
+                    <div class="value">{$institucion}</div>
+                    <div class="label">Pais</div>
+                    <div class="value">{$pais}</div>
+                </div>
+                <p class="note"><strong>Accede a la aplicacion GESTIUBO</strong> para revisar y tomar una decision sobre esta solicitud desde el panel de supervisor. Podras aprobar o rechazar la solicitud directamente en el sistema.</p>
+            </div>
+            <div class="footer">
+                <p style="margin:0;">Correo automatico de GESTIUBO.</p>
+                <p style="margin:8px 0 0 0;">&copy; {$year} Instituto de Bio-Organica Antonio Gonzalez</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    HTML;
+}
+
 /**
  * Obtiene la plantilla HTML para correo de restablecimiento de contraseña
  * 
@@ -605,3 +705,4 @@ function getWelcomeTemplate($firstName, $userName, $loginUrl) {
     </html>
     HTML;
 }
+

@@ -97,3 +97,4 @@ unset($_SESSION['user_id']);
 unset($_SESSION['reset_code']);
 
 echo json_encode(['success' => true, 'message' => 'Contraseña restablecida exitosamente']);
+

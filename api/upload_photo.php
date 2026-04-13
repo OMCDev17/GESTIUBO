@@ -55,3 +55,4 @@ if (!move_uploaded_file($file['tmp_name'], $target)) {
 
 $relativeUrl = 'uploads/' . $filename;
 echo json_encode(['success' => true, 'url' => $relativeUrl]);
+

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require __DIR__ . '/api/auth.php';
 requireRole(['seguridad', 'admin']);
 
@@ -320,3 +320,4 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 </body>
 
 </html>
+
