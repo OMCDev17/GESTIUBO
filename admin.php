@@ -88,6 +88,15 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                     <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
                         <h2 class="text-lg font-bold text-primary">Historial de estancias finalizadas</h2>
                         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Aquí puedes ver ejemplos de usuarios que ya no tienen estancia activa.</p>
+                        <div class="mt-4 flex items-center gap-2 mb-4">
+                            <input 
+                                type="text" 
+                                id="historySearchInput" 
+                                placeholder="Buscar por nombre..." 
+                                class="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-primary focus:border-primary"
+                            />
+                            <span class="text-sm text-slate-500 dark:text-slate-400" id="historyResultCount"></span>
+                        </div>
                         <div id="historyContainer" class="mt-4 grid gap-4"></div>
                     </section>
 
@@ -902,6 +911,41 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         row.appendChild(avatarSection);
                         row.appendChild(fields);
                         card.appendChild(row);
+                        
+                        // Agregar botón de eliminar
+                        const deleteButton = document.createElement('button');
+                        deleteButton.type = 'button';
+                        deleteButton.className = 'mt-4 w-full px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors';
+                        deleteButton.textContent = 'Eliminar usuario';
+                        deleteButton.addEventListener('click', async () => {
+                            const confirmed = await uiConfirm(
+                                `¿Estás seguro que deseas borrar este usuario?\n${emp.nombre} ${emp.apellidos}\n\nLa acción será permanente.`
+                            );
+                            if (!confirmed) return;
+                            
+                            try {
+                                const resp = await fetch(apiUrl('api/delete_employee.php'), {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    credentials: 'same-origin',
+                                    body: JSON.stringify({ employee_id: emp.id })
+                                });
+                                const result = await parseJsonSafe(resp);
+                                if (!resp.ok || result.error) {
+                                    showToast(result.error || 'Error al eliminar el usuario', 'error');
+                                    return;
+                                }
+                                showToast('Usuario eliminado correctamente', 'success');
+                                // Eliminar del array y re-renderizar
+                                employees = employees.filter(e => e.id !== emp.id);
+                                render();
+                            } catch (error) {
+                                console.error('Error eliminando usuario:', error);
+                                showToast('No se pudo conectar con el servidor', 'error');
+                            }
+                        });
+                        card.appendChild(deleteButton);
+                        
                         list.appendChild(card);
                     });
 
@@ -915,16 +959,35 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
         function renderHistory() {
             const historyContainer = document.getElementById('historyContainer');
+            const resultCount = document.getElementById('historyResultCount');
+            const searchInput = document.getElementById('historySearchInput');
+            
             historyContainer.innerHTML = '';
+            if (resultCount) resultCount.textContent = '';
+
+            const searchTerm = (searchInput?.value?.trim() || '').toLowerCase();
+
+            // Si no hay término de búsqueda, no renderizar nada
+            if (!searchTerm) {
+                historyContainer.innerHTML = `<p class="text-sm text-slate-500 dark:text-slate-400">Usa el buscador para encontrar estancias finalizadas.</p>`;
+                return;
+            }
 
             const expired = historyStays
                 .slice()
+                .filter((stay) => {
+                    const fullName = `${(stay.nombre || '').toLowerCase()} ${(stay.apellidos || '').toLowerCase()}`;
+                    return fullName.includes(searchTerm);
+                })
                 .sort((a, b) => new Date(b.fecha_fin) - new Date(a.fecha_fin));
 
             if (expired.length === 0) {
-                historyContainer.innerHTML = `<p class="text-sm text-slate-500 dark:text-slate-400">No hay estancias finalizadas aún.</p>`;
+                historyContainer.innerHTML = `<p class="text-sm text-slate-500 dark:text-slate-400">No se encontraron resultados para "${searchInput.value}"</p>`;
+                resultCount.textContent = '0 resultados';
                 return;
             }
+
+            resultCount.textContent = `${expired.length} resultado${expired.length !== 1 ? 's' : ''}`;
 
             expired.forEach((emp) => {
                 const item = document.createElement('div');
@@ -979,6 +1042,14 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             render();
             renderGroupManager();
             updateSaveButtonLabel();
+            
+            // Agregar event listener al buscador de historial
+            const searchInput = document.getElementById('historySearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', () => {
+                    renderHistory();
+                });
+            }
         }
 
         document.getElementById('saveAll').addEventListener('click', saveAll);
