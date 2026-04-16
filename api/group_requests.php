@@ -22,39 +22,16 @@ try {
     $sendError(500, 'Error de conexión con la base de datos');
 }
 
-// GET: Obtener solicitudes pendientes para el supervisor del grupo actual
+// GET: Obtener solicitudes pendientes para el supervisor del grupo actual o todas para admin
 if ($method === 'GET') {
     try {
-        // Obtener el grupo del supervisor actual
-        $supervisorId = (int)($user['id'] ?? 0);
-        if (!$supervisorId) {
+        $userId = (int)($user['id'] ?? 0);
+        $userRole = strtolower(trim($user['rol'] ?? ''));
+        if (!$userId) {
             $sendError(401, 'Usuario no autenticado');
         }
 
-        // Obtener el grupo activo del supervisor
-        $stayStmt = $mysqli->prepare("
-            SELECT DISTINCT group_id
-            FROM stays
-            WHERE employee_id = ?
-              AND status = 'active'
-            LIMIT 1
-        ");
-        $stayStmt->bind_param('i', $supervisorId);
-        $stayStmt->execute();
-        $stayRes = $stayStmt->get_result();
-        $stayRow = $stayRes ? $stayRes->fetch_assoc() : null;
-        $stayStmt->close();
-
-        if (!$stayRow) {
-            // Si no tiene grupo activo, retornar array vacío
-            echo json_encode(['requests' => []]);
-            exit;
-        }
-
-        $groupId = (int)$stayRow['group_id'];
-
-        // Obtener solicitudes pendientes para este grupo
-        $reqStmt = $mysqli->prepare("
+        $query = "
             SELECT 
                 gjr.id,
                 gjr.employee_id,
@@ -76,13 +53,41 @@ if ($method === 'GET') {
             FROM group_join_requests gjr
             INNER JOIN employees e ON e.id = gjr.employee_id
             INNER JOIN groups g ON g.id = gjr.group_id
-            WHERE gjr.group_id = ? AND gjr.status = 'pending'
-            ORDER BY gjr.created_at DESC
-        ");
+            WHERE gjr.status = 'pending'
+        ";
+        
+        // Si no es admin, filtrar solo por el grupo del coordinador
+        if ($userRole !== 'admin') {
+            // Obtener el grupo activo del supervisor
+            $stayStmt = $mysqli->prepare("
+                SELECT DISTINCT group_id
+                FROM stays
+                WHERE employee_id = ?
+                  AND status = 'active'
+                LIMIT 1
+            ");
+            $stayStmt->bind_param('i', $userId);
+            $stayStmt->execute();
+            $stayRes = $stayStmt->get_result();
+            $stayRow = $stayRes ? $stayRes->fetch_assoc() : null;
+            $stayStmt->close();
+
+            if (!$stayRow) {
+                // Si no tiene grupo activo, retornar array vacío
+                echo json_encode(['requests' => []]);
+                exit;
+            }
+
+            $groupId = (int)$stayRow['group_id'];
+            $query .= " AND gjr.group_id = " . (int)$groupId;
+        }
+
+        $query .= " ORDER BY gjr.created_at DESC";
+
+        $reqStmt = $mysqli->prepare($query);
         if (!$reqStmt) {
             $sendError(500, 'Error preparando consulta');
         }
-        $reqStmt->bind_param('i', $groupId);
         $reqStmt->execute();
         $reqRes = $reqStmt->get_result();
         $requests = [];
@@ -132,21 +137,26 @@ if ($method === 'POST') {
             $sendError(404, 'Solicitud no encontrada o ya procesada');
         }
 
-        // Verificar que el usuario pertenece al grupo
+        // Verificar permisos: admin puede procesar cualquier solicitud, coordinador solo su grupo
         $supervisorId = (int)($user['id'] ?? 0);
+        $userRole = strtolower(trim($user['rol'] ?? ''));
         $groupId = (int)($request['group_id'] ?? 0);
-        $checkSuper = $mysqli->prepare("
-            SELECT 1 FROM stays
-            WHERE employee_id = ? AND group_id = ? AND status = 'active'
-            LIMIT 1
-        ");
-        $checkSuper->bind_param('ii', $supervisorId, $groupId);
-        $checkSuper->execute();
-        $checkSuperRes = $checkSuper->get_result();
-        if (!$checkSuperRes || $checkSuperRes->num_rows === 0) {
-            $sendError(403, 'No tienes permiso para procesar esta solicitud');
+        
+        if ($userRole !== 'admin') {
+            // Si no es admin, verificar que el usuario pertenece al grupo
+            $checkSuper = $mysqli->prepare("
+                SELECT 1 FROM stays
+                WHERE employee_id = ? AND group_id = ? AND status = 'active'
+                LIMIT 1
+            ");
+            $checkSuper->bind_param('ii', $supervisorId, $groupId);
+            $checkSuper->execute();
+            $checkSuperRes = $checkSuper->get_result();
+            if (!$checkSuperRes || $checkSuperRes->num_rows === 0) {
+                $sendError(403, 'No tienes permiso para procesar esta solicitud');
+            }
+            $checkSuper->close();
         }
-        $checkSuper->close();
 
         $mysqli->begin_transaction();
 
