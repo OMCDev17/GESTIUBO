@@ -32,6 +32,7 @@ if ($securityView) {
     // Vista de seguridad: usar la estancia real más relevante por empleado
     // (prioriza activa; si no hay activa, toma la más reciente archivada).
     $query = "SELECT e.id, e.nombre, e.apellidos, e.dni_pasaporte, e.fecha_nacimiento, e.email,
+                     e.phone_prefix, e.phone_number,
                      s.motivo, s.fecha_inicio, s.fecha_fin, s.group_id, g.name AS group_name, e.foto_url, e.rol, s.horario, s.institucion, s.pais,
                      (
                          SELECT CONCAT(TRIM(c.nombre), ' ', TRIM(c.apellidos))
@@ -42,7 +43,26 @@ if ($securityView) {
                          ORDER BY FIELD(LOWER(c.rol), 'coordinador', 'supervisor'), c.nombre, c.apellidos
                          LIMIT 1
                      ) AS coordinator_name,
-                     '' AS coordinator_phone,
+                     (
+                         SELECT CONCAT(c.phone_prefix, ' ', c.phone_number)
+                         FROM employees c
+                         INNER JOIN stays sc ON sc.employee_id = c.id AND sc.status = 'active'
+                         WHERE sc.group_id = s.group_id
+                           AND LOWER(c.rol) IN ('coordinador', 'supervisor')
+                         ORDER BY FIELD(LOWER(c.rol), 'coordinador', 'supervisor'), c.nombre, c.apellidos
+                         LIMIT 1
+                     ) AS coordinator_phone,
+                     CASE
+                         WHEN LOWER(e.rol) IN ('coordinador', 'supervisor') AND EXISTS (
+                             SELECT 1
+                             FROM stays sc
+                             WHERE sc.employee_id = e.id
+                               AND sc.group_id = s.group_id
+                               AND sc.status = 'active'
+                               AND LOWER(e.rol) IN ('coordinador', 'supervisor')
+                         ) THEN 1
+                         ELSE 0
+                     END AS is_group_coordinator,
                      EXISTS(
                          SELECT 1
                          FROM group_join_requests gjr
@@ -63,6 +83,7 @@ if ($securityView) {
 } else {
     // Vista general (supervisión/edición): solo estancia activa.
     $query = "SELECT e.id, e.nombre, e.apellidos, e.dni_pasaporte, e.fecha_nacimiento, e.email,
+                     e.phone_prefix, e.phone_number,
                      s.motivo, s.fecha_inicio, s.fecha_fin, s.group_id, g.name AS group_name, e.foto_url, e.rol, s.horario, s.institucion, s.pais,
                      (
                          SELECT CONCAT(TRIM(c.nombre), ' ', TRIM(c.apellidos))
@@ -73,7 +94,26 @@ if ($securityView) {
                          ORDER BY FIELD(LOWER(c.rol), 'coordinador', 'supervisor'), c.nombre, c.apellidos
                          LIMIT 1
                      ) AS coordinator_name,
-                     '' AS coordinator_phone,
+                     (
+                         SELECT CONCAT(c.phone_prefix, ' ', c.phone_number)
+                         FROM employees c
+                         INNER JOIN stays sc ON sc.employee_id = c.id AND sc.status = 'active'
+                         WHERE sc.group_id = s.group_id
+                           AND LOWER(c.rol) IN ('coordinador', 'supervisor')
+                         ORDER BY FIELD(LOWER(c.rol), 'coordinador', 'supervisor'), c.nombre, c.apellidos
+                         LIMIT 1
+                     ) AS coordinator_phone,
+                     CASE
+                         WHEN LOWER(e.rol) IN ('coordinador', 'supervisor') AND EXISTS (
+                             SELECT 1
+                             FROM stays sc
+                             WHERE sc.employee_id = e.id
+                               AND sc.group_id = s.group_id
+                               AND sc.status = 'active'
+                               AND LOWER(e.rol) IN ('coordinador', 'supervisor')
+                         ) THEN 1
+                         ELSE 0
+                     END AS is_group_coordinator,
                      EXISTS(
                          SELECT 1
                          FROM group_join_requests gjr

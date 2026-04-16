@@ -230,10 +230,12 @@ $dupStmt->close();
 $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
 $data['rol'] = 'empleado';
 $data['horario'] = isset($data['horario']) ? (int) !!$data['horario'] : 1;
+$data['phone_prefix'] = isset($data['phone_prefix']) && !empty($data['phone_prefix']) ? trim($data['phone_prefix']) : '+34';
+$data['phone_number'] = isset($data['phone_number']) && !empty($data['phone_number']) ? trim($data['phone_number']) : '000000000';
 
 $allowedEmployee = [
     'nombre', 'apellidos', 'dni_pasaporte', 'username', 'password', 'email',
-    'fecha_nacimiento', 'foto_url', 'rol'
+    'fecha_nacimiento', 'foto_url', 'rol', 'phone_prefix', 'phone_number'
 ];
 
 $fields = [];

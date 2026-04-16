@@ -45,7 +45,7 @@ if (!is_array($data) || !isset($data['employees']) || !is_array($data['employees
 
 $allowedEmployee = [
     'nombre', 'apellidos', 'dni_pasaporte', 'fecha_nacimiento', 'email',
-    'foto_url', 'rol'
+    'foto_url', 'rol', 'phone_prefix', 'phone_number'
 ];
 $allowedStay = ['motivo', 'fecha_inicio', 'fecha_fin', 'group_id', 'horario', 'institucion', 'pais'];
 

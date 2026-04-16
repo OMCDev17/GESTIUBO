@@ -13,7 +13,7 @@ if ($isNewStay) {
         if (!$mysqli->connect_errno) {
             $mysqli->set_charset($config['charset']);
             if (isset($u['id'])) {
-                $stmt = $mysqli->prepare('SELECT e.nombre, e.apellidos, e.dni_pasaporte, e.fecha_nacimiento, e.email, e.username, s.group_id, g.name AS grupo, e.foto_url FROM employees e LEFT JOIN stays s ON s.employee_id = e.id AND s.status = "active" LEFT JOIN groups g ON g.id = s.group_id WHERE e.id = ? LIMIT 1');
+                $stmt = $mysqli->prepare('SELECT e.nombre, e.apellidos, e.dni_pasaporte, e.fecha_nacimiento, e.email, e.username, e.phone_prefix, e.phone_number, s.group_id, g.name AS grupo, e.foto_url FROM employees e LEFT JOIN stays s ON s.employee_id = e.id AND s.status = "active" LEFT JOIN groups g ON g.id = s.group_id WHERE e.id = ? LIMIT 1');
                 if ($stmt) {
                     $id = (int)$u['id'];
                     $stmt->bind_param('i', $id);
@@ -32,7 +32,7 @@ if ($isNewStay) {
         // Silencioso: si falla, usamos los datos de sesi?n
     }
 
-    $prefill = [
+        $prefill = [
         'nombre' => $u['nombre'] ?? '',
         'apellidos' => $u['apellidos'] ?? '',
         'dni_pasaporte' => $u['dni_pasaporte'] ?? '',
@@ -42,6 +42,8 @@ if ($isNewStay) {
         'grupo' => $u['grupo'] ?? '',
         'group_id' => $u['group_id'] ?? '',
         'foto_url' => $u['foto_url'] ?? '',
+        'phone_prefix' => $u['phone_prefix'] ?? '+34',
+        'phone_number' => $u['phone_number'] ?? '',
     ];
 }
 $prefillSafe = function ($key) use ($prefill) {
@@ -175,6 +177,54 @@ try {
                                         <label class="flex flex-col gap-2">
                                             <p class="text-slate-700 dark:text-slate-300 text-sm font-semibold">Email / Email</p>
                                             <input class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12 <?= $isNewStay ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : '' ?>" placeholder="ejemplo@universidad.es / example@university.edu" type="email" name="email" value="<?= $isNewStay ? $prefillSafe('email') : '' ?>" <?= $isNewStay ? 'readonly aria-readonly=\"true\"' : '' ?> required />
+                                        </label>
+                                        <label class="flex flex-col gap-2">
+                                            <p class="text-slate-700 dark:text-slate-300 text-sm font-semibold">Teléfono - Prefijo / Phone - Country Code</p>
+                                            <select class="form-select rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary h-12" name="phone_prefix" required>
+                                                <option value="+34" selected>🇪🇸 España / Spain (+34)</option>
+                                                <option value="+1">🇺🇸 Estados Unidos / USA (+1)</option>
+                                                <option value="+44">🇬🇧 Reino Unido / UK (+44)</option>
+                                                <option value="+33">🇫🇷 Francia / France (+33)</option>
+                                                <option value="+49">🇩🇪 Alemania / Germany (+49)</option>
+                                                <option value="+39">🇮🇹 Italia / Italy (+39)</option>
+                                                <option value="+81">🇯🇵 Japón / Japan (+81)</option>
+                                                <option value="+86">🇨🇳 China (+86)</option>
+                                                <option value="+91">🇮🇳 India (+91)</option>
+                                                <option value="+55">🇧🇷 Brasil / Brazil (+55)</option>
+                                                <option value="+52">🇲🇽 México / Mexico (+52)</option>
+                                                <option value="+54">🇦🇷 Argentina (+54)</option>
+                                                <option value="+56">🇨🇱 Chile (+56)</option>
+                                                <option value="+506">🇨🇷 Costa Rica (+506)</option>
+                                                <option value="+57">🇨🇴 Colombia (+57)</option>
+                                                <option value="+51">🇵🇪 Perú / Peru (+51)</option>
+                                                <option value="+58">🇻🇪 Venezuela (+58)</option>
+                                                <option value="+36">🇭🇺 Hungría / Hungary (+36)</option>
+                                                <option value="+48">🇵🇱 Polonia / Poland (+48)</option>
+                                                <option value="+31">🇳🇱 Países Bajos / Netherlands (+31)</option>
+                                                <option value="+32">🇧🇪 Bélgica / Belgium (+32)</option>
+                                                <option value="+43">🇦🇹 Austria (+43)</option>
+                                                <option value="+41">🇨🇭 Suiza / Switzerland (+41)</option>
+                                                <option value="+46">🇸🇪 Suecia / Sweden (+46)</option>
+                                                <option value="+47">🇳🇴 Noruega / Norway (+47)</option>
+                                                <option value="+45">🇩🇰 Dinamarca / Denmark (+45)</option>
+                                                <option value="+358">🇫🇮 Finlandia / Finland (+358)</option>
+                                                <option value="+30">🇬🇷 Grecia / Greece (+30)</option>
+                                                <option value="+60">🇲🇾 Malasia / Malaysia (+60)</option>
+                                                <option value="+65">🇸🇬 Singapur / Singapore (+65)</option>
+                                                <option value="+62">🇮🇩 Indonesia (+62)</option>
+                                                <option value="+66">🇹🇭 Tailandia / Thailand (+66)</option>
+                                                <option value="+84">🇻🇳 Vietnam (+84)</option>
+                                                <option value="+82">🇰🇷 Corea del Sur / South Korea (+82)</option>
+                                                <option value="+61">🇦🇺 Australia (+61)</option>
+                                                <option value="+64">🇳🇿 Nueva Zelanda / New Zealand (+64)</option>
+                                                <option value="+27">🇿🇦 Sudáfrica / South Africa (+27)</option>
+                                                <option value="+20">🇪🇬 Egipto / Egypt (+20)</option>
+                                                <option value="+212">🇲🇦 Marruecos / Morocco (+212)</option>
+                                            </select>
+                                        </label>
+                                        <label class="flex flex-col gap-2">
+                                            <p class="text-slate-700 dark:text-slate-300 text-sm font-semibold">Teléfono - Número / Phone - Number <span class="text-red-500">*</span></p>
+                                            <input class="form-input rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 h-12" placeholder="ej: 612345678 / e.g., 612345678" type="tel" name="phone_number" value="<?= $isNewStay ? $prefillSafe('phone_number') : '' ?>" <?= $isNewStay ? 'readonly aria-readonly=\"true\"' : '' ?> required />
                                         </label>
                                         <label class="flex flex-col gap-2">
                                             <p class="text-slate-700 dark:text-slate-300 text-sm font-semibold">Usuario / Username</p>

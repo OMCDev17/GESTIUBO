@@ -61,7 +61,7 @@ if (!$mysqli->connect_errno) {
             )
         ");
 
-        $stmt = $mysqli->prepare('SELECT id, nombre, apellidos, dni_pasaporte, username, fecha_nacimiento, email, foto_url, rol FROM employees WHERE id = ? LIMIT 1');
+        $stmt = $mysqli->prepare('SELECT id, nombre, apellidos, dni_pasaporte, username, fecha_nacimiento, email, phone_prefix, phone_number, foto_url, rol FROM employees WHERE id = ? LIMIT 1');
         if ($stmt && isset($employee['id'])) {
             $id = (int) $employee['id'];
             $stmt->bind_param('i', $id);
@@ -282,6 +282,10 @@ $hasPendingRequest = is_array($pendingRequest) && !empty($pendingRequest);
                                     <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5">
                                         <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Email</p>
                                         <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100"><?= $safe('email') ?></p>
+                                    </div>
+                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5">
+                                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Teléfono / Phone</p>
+                                        <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100"><?= $safe('phone_prefix') ?> <?= $safe('phone_number') ?></p>
                                     </div>
                                 </div>
                             </section>

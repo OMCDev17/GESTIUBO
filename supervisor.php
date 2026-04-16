@@ -178,6 +178,7 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
 
         let employees = [];
         let supervisorData = <?php echo json_encode($user ?? []); ?>;
+        const supervisorId = supervisorData?.id ? Number(supervisorData.id) : null;
         const groupToShow = '<?php echo $groupLabel; ?>';
         const pendingChanges = new Map();
         const saveButtonBaseText = 'Guardar cambios';
@@ -291,12 +292,20 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
                 <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">${supervisorData.email || '—'}</p>
             `;
 
+            const phoneDiv = document.createElement('div');
+            phoneDiv.className = 'rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5';
+            phoneDiv.innerHTML = `
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Teléfono / Phone</p>
+                <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">${supervisorData.phone_prefix || '+34'} ${supervisorData.phone_number || '000000000'}</p>
+            `;
+
             personalGrid.appendChild(fotoDiv);
             personalGrid.appendChild(nombreDiv);
             personalGrid.appendChild(apellidosDiv);
             personalGrid.appendChild(dniDiv);
             personalGrid.appendChild(fechaNacDiv);
             personalGrid.appendChild(emailDiv);
+            personalGrid.appendChild(phoneDiv);
 
             personalSection.appendChild(personalTitle);
             personalSection.appendChild(personalGrid);
@@ -431,8 +440,8 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
             container.innerHTML = '';
 
             const groupEmployees = groupToShow ?
-                employees.filter((e) => (e.grupo || '').toUpperCase() === groupToShow.toUpperCase()) :
-                employees;
+                employees.filter((e) => (e.grupo || '').toUpperCase() === groupToShow.toUpperCase() && e.id !== supervisorId) :
+                employees.filter((e) => e.id !== supervisorId);
 
             if (groupEmployees.length === 0) {
                 container.innerHTML = `<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center"><p class="text-lg font-semibold text-slate-900 dark:text-slate-100">No hay usuarios en el grupo ${groupToShow}.</p></div>`;
@@ -457,6 +466,7 @@ $groupLabel = htmlspecialchars(trim($user['group_name'] ?? $user['grupo'] ?? '')
                     <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">${emp.nombre} ${emp.apellidos}</p>
                     <p class="text-xs text-slate-500 dark:text-slate-400">${emp.email}</p>
                     <p class="text-xs text-slate-500 dark:text-slate-400">DNI: ${maskDni(emp.dni)}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Teléfono: ${emp.phone_prefix || '+34'} ${emp.phone_number || '000000000'}</p>
                 </div>
             `;
 

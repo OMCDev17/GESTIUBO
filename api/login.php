@@ -53,7 +53,8 @@ if (session_status() === PHP_SESSION_NONE) {
 $user = null;
 if ($usingMysqli) {
 $sql = 'SELECT e.id, e.nombre, e.apellidos, e.email, e.username, e.dni_pasaporte, e.fecha_nacimiento, e.rol, e.password,
-                   s.group_id, g.name AS group_name, s.horario, s.fecha_inicio, s.fecha_fin, s.motivo, s.institucion, s.pais, e.foto_url
+                   s.group_id, g.name AS group_name, s.horario, s.fecha_inicio, s.fecha_fin, s.motivo, s.institucion, s.pais, e.foto_url,
+                   e.phone_prefix, e.phone_number
             FROM employees e
             LEFT JOIN stays s ON s.employee_id = e.id AND s.status = "active"
             LEFT JOIN groups g ON g.id = s.group_id
@@ -69,7 +70,8 @@ $sql = 'SELECT e.id, e.nombre, e.apellidos, e.email, e.username, e.dni_pasaporte
     $stmt->close();
 } else { // PDO
     $stmt = $db->prepare('SELECT e.id, e.nombre, e.apellidos, e.email, e.username, e.dni_pasaporte, e.fecha_nacimiento, e.rol, e.password,
-                                 s.group_id, g.name AS group_name, s.horario, s.fecha_inicio, s.fecha_fin, s.motivo, s.institucion, s.pais, e.foto_url
+                                 s.group_id, g.name AS group_name, s.horario, s.fecha_inicio, s.fecha_fin, s.motivo, s.institucion, s.pais, e.foto_url,
+                                 e.phone_prefix, e.phone_number
                           FROM employees e
                           LEFT JOIN stays s ON s.employee_id = e.id AND s.status = "active"
                           LEFT JOIN groups g ON g.id = s.group_id

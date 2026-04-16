@@ -158,6 +158,48 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 label: 'Solo lectivo'
             },
         ];
+        const phonePrefixOptions = [
+            { value: '+34', label: '🇪🇸 España (+34)' },
+            { value: '+1', label: '🇺🇸 Estados Unidos (+1)' },
+            { value: '+44', label: '🇬🇧 Reino Unido (+44)' },
+            { value: '+33', label: '🇫🇷 Francia (+33)' },
+            { value: '+49', label: '🇩🇪 Alemania (+49)' },
+            { value: '+39', label: '🇮🇹 Italia (+39)' },
+            { value: '+81', label: '🇯🇵 Japón (+81)' },
+            { value: '+86', label: '🇨🇳 China (+86)' },
+            { value: '+91', label: '🇮🇳 India (+91)' },
+            { value: '+55', label: '🇧🇷 Brasil (+55)' },
+            { value: '+52', label: '🇲🇽 México (+52)' },
+            { value: '+54', label: '🇦🇷 Argentina (+54)' },
+            { value: '+56', label: '🇨🇱 Chile (+56)' },
+            { value: '+506', label: '🇨🇷 Costa Rica (+506)' },
+            { value: '+57', label: '🇨🇴 Colombia (+57)' },
+            { value: '+51', label: '🇵🇪 Perú (+51)' },
+            { value: '+58', label: '🇻🇪 Venezuela (+58)' },
+            { value: '+36', label: '🇭🇺 Hungría (+36)' },
+            { value: '+48', label: '🇵🇱 Polonia (+48)' },
+            { value: '+31', label: '🇳🇱 Países Bajos (+31)' },
+            { value: '+32', label: '🇧🇪 Bélgica (+32)' },
+            { value: '+43', label: '🇦🇹 Austria (+43)' },
+            { value: '+41', label: '🇨🇭 Suiza (+41)' },
+            { value: '+46', label: '🇸🇪 Suecia (+46)' },
+            { value: '+47', label: '🇳🇴 Noruega (+47)' },
+            { value: '+45', label: '🇩🇰 Dinamarca (+45)' },
+            { value: '+358', label: '🇫🇮 Finlandia (+358)' },
+            { value: '+30', label: '🇬🇷 Grecia (+30)' },
+            { value: '+60', label: '🇲🇾 Malasia (+60)' },
+            { value: '+65', label: '🇸🇬 Singapur (+65)' },
+            { value: '+62', label: '🇮🇩 Indonesia (+62)' },
+            { value: '+66', label: '🇹🇭 Tailandia (+66)' },
+            { value: '+84', label: '🇻🇳 Vietnam (+84)' },
+            { value: '+82', label: '🇰🇷 Corea del Sur (+82)' },
+            { value: '+61', label: '🇦🇺 Australia (+61)' },
+            { value: '+64', label: '🇳🇿 Nueva Zelanda (+64)' },
+            { value: '+27', label: '🇿🇦 Sudáfrica (+27)' },
+            { value: '+20', label: '🇪🇬 Egipto (+20)' },
+            { value: '+212', label: '🇲🇦 Marruecos (+212)' },
+            { value: '+1', label: '🇨🇦 Canadá (+1)' },
+        ];
 
         let employees = [];
         let historyStays = [];
@@ -505,6 +547,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 horario: typeof emp.horario !== 'undefined' ? Number(emp.horario) : 1,
                 group_id: emp.group_id || null,
                 grupo: resolveGroupName(emp.group_name || emp.grupo),
+                phone_prefix: emp.phone_prefix || '+34',
+                phone_number: emp.phone_number || '000000000',
             };
         }
 
@@ -516,6 +560,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 dni_pasaporte: emp.dni,
                 fecha_nacimiento: emp.fecha_nacimiento || null,
                 email: emp.email,
+                phone_prefix: emp.phone_prefix || '+34',
+                phone_number: emp.phone_number || '000000000',
                 institucion: emp.institucion || null,
                 pais: emp.pais || null,
                 motivo: emp.motivo || null,
@@ -538,6 +584,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 dni_pasaporte: db.dni_pasaporte || '',
                 fecha_nacimiento: db.fecha_nacimiento || null,
                 email: db.email || '',
+                phone_prefix: db.phone_prefix || '+34',
+                phone_number: db.phone_number || '000000000',
                 institucion: db.institucion || null,
                 pais: db.pais || null,
                 motivo: db.motivo || null,
@@ -588,12 +636,14 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             type = 'text',
             value = '',
             name,
-            className = ''
+            className = '',
+            required = false
         }) {
             const input = document.createElement('input');
             input.type = type;
             input.name = name;
             if (type !== 'file') input.value = value;
+            if (required) input.required = true;
             input.className = `mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm px-3 py-2 focus:outline-none focus:ring-primary focus:border-primary ${className}`;
             return input;
         }
@@ -864,6 +914,20 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         type: 'email'
                     },
                     {
+                        label: 'Teléfono (Prefijo)',
+                        name: 'phone_prefix',
+                        value: emp.phone_prefix || '+34',
+                        type: 'select',
+                        options: phonePrefixOptions
+                    },
+                    {
+                        label: 'Teléfono (Número)',
+                        name: 'phone_number',
+                        value: emp.phone_number,
+                        type: 'tel',
+                        required: true
+                    },
+                    {
                         label: 'DNI / Pasaporte',
                         name: 'dni',
                         value: emp.dni,
@@ -909,11 +973,12 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                     name,
                     value,
                     type = 'text',
-                    options
+                    options,
+                    required = false
                 }) => {
                     const wrapper = document.createElement('div');
                     wrapper.className = 'space-y-1';
-                    wrapper.innerHTML = `<p class="text-[11px] uppercase tracking-widest font-semibold text-slate-500 dark:text-slate-400">${label}</p>`;
+                    wrapper.innerHTML = `<p class="text-[11px] uppercase tracking-widest font-semibold text-slate-500 dark:text-slate-400">${label}${required ? ' <span class="text-red-500">*</span>' : ''}</p>`;
 
                     if (type === 'maskedDni') {
                         const masked = document.createElement('div');
@@ -930,7 +995,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                             createInput({
                                 type,
                                 value,
-                                name
+                                name,
+                                required
                             });
 
                         input.addEventListener('input', (event) => {

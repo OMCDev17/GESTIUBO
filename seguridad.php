@@ -203,6 +203,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 grupo: e.group_name || e.grupo || '-',
                 coordinador_grupo: e.coordinator_name || '-',
                 coordinador_telefono: e.coordinator_phone || '',
+                user_phone: (e.phone_prefix || '+34') + ' ' + (e.phone_number || '000000000'),
+                is_group_coordinator: Number(e.is_group_coordinator) === 1,
                 pendiente_aprobacion: Number(e.pending_approval) === 1,
                 foto: e.foto_url || 'https://i.pravatar.cc/160?u=' + encodeURIComponent(e.email || e.username || e.id || Math.random()),
             }));
@@ -243,8 +245,11 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                     <div class="min-w-0">
                         <p class="text-lg font-semibold text-slate-900 dark:text-slate-100 truncate">${emp.nombre} ${emp.apellidos}</p>
                         <p class="text-sm text-slate-500 dark:text-slate-400">Grupo: ${emp.grupo || '-'}</p>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">Coordinador de grupo: ${emp.coordinador_grupo || '-'}</p>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">Tel. coordinador: ${emp.coordinador_telefono || ''}</p>
+                        ${emp.is_group_coordinator ? 
+                            `<p class="text-sm text-primary font-semibold">📞 Coordinador del grupo: ${emp.user_phone}</p>` :
+                            `<p class="text-sm text-slate-500 dark:text-slate-400">📞 Teléfono: ${emp.user_phone}</p>
+                             <p class="text-sm text-slate-500 dark:text-slate-400">📞 Tel. Coordinador: ${emp.coordinador_telefono || '-'}</p>`
+                        }
                         <p class="text-sm text-slate-500 dark:text-slate-400">DNI/Pasaporte: ${maskDni(emp.dni_pasaporte)}</p>
                         ${isSoloLectivo ? `<p class="mt-1 inline-flex items-center gap-2 text-xs font-semibold ${soloLectivoBadgeClass} px-2 py-1 rounded-full">
                             <span class="material-symbols-outlined text-base">schedule</span>${formatHorario(emp.horario)}
