@@ -200,7 +200,10 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             employees = (json.employees || []).map((e) => ({
                 ...e,
                 horario: typeof e.horario !== 'undefined' ? Number(e.horario) : 1,
-                grupo: e.group_name || e.grupo || '—',
+                grupo: e.group_name || e.grupo || '-',
+                coordinador_grupo: e.coordinator_name || '-',
+                coordinador_telefono: e.coordinator_phone || '',
+                pendiente_aprobacion: Number(e.pending_approval) === 1,
                 foto: e.foto_url || 'https://i.pravatar.cc/160?u=' + encodeURIComponent(e.email || e.username || e.id || Math.random()),
             }));
         }
@@ -208,7 +211,6 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         function formatHorario(value) {
             return Number(value) === 0 ? 'Solo lectivo' : 'Completo';
         }
-
         function normalizeSearchText(value) {
             return String(value ?? '')
                 .toLowerCase()
@@ -216,7 +218,6 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 .replace(/[\u0301\u0300\u0308\u0302]/g, '')
                 .trim();
         }
-
         function renderResults(results) {
             const container = document.getElementById('resultsContainer');
             container.innerHTML = '';
@@ -232,9 +233,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
             results.forEach((emp) => {
                 const isSoloLectivo = Number(emp.horario) === 0;
-                const badgeClass = isSoloLectivo ?
-                    'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40' :
-                    'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30';
+                const soloLectivoBadgeClass = 'text-sky-700 dark:text-sky-200 bg-sky-100 dark:bg-sky-900/35';
                 const stayStatus = getStayStatus(emp);
                 const card = document.createElement('div');
                 card.className = 'bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5';
@@ -243,11 +242,16 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                     <img class="h-16 w-16 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-sm" src="${emp.foto}" alt="${emp.nombre} ${emp.apellidos}" />
                     <div class="min-w-0">
                         <p class="text-lg font-semibold text-slate-900 dark:text-slate-100 truncate">${emp.nombre} ${emp.apellidos}</p>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">Grupo: ${emp.grupo || '—'}</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Grupo: ${emp.grupo || '-'}</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Coordinador de grupo: ${emp.coordinador_grupo || '-'}</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Tel. coordinador: ${emp.coordinador_telefono || ''}</p>
                         <p class="text-sm text-slate-500 dark:text-slate-400">DNI/Pasaporte: ${maskDni(emp.dni_pasaporte)}</p>
-                        <p class="mt-1 inline-flex items-center gap-2 text-xs font-semibold ${badgeClass} px-2 py-1 rounded-full">
+                        ${isSoloLectivo ? `<p class="mt-1 inline-flex items-center gap-2 text-xs font-semibold ${soloLectivoBadgeClass} px-2 py-1 rounded-full">
                             <span class="material-symbols-outlined text-base">schedule</span>${formatHorario(emp.horario)}
-                        </p>
+                        </p>` : ''}
+                        ${emp.pendiente_aprobacion ? `<p class="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-100 bg-amber-200 dark:bg-amber-900/45 px-2 py-1 rounded-full">
+                            <span class="material-symbols-outlined text-base">pending</span>Pendiente de aprobacion
+                        </p>` : ''}
                         <p class="mt-2 inline-flex items-center gap-2 text-xs font-semibold ${stayStatus.toneClass} px-2 py-1 rounded-full">
                             <span class="material-symbols-outlined text-base">${stayStatus.icon}</span>Estancia ${stayStatus.label}
                         </p>

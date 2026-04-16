@@ -32,7 +32,23 @@ if ($securityView) {
     // Vista de seguridad: usar la estancia real más relevante por empleado
     // (prioriza activa; si no hay activa, toma la más reciente archivada).
     $query = "SELECT e.id, e.nombre, e.apellidos, e.dni_pasaporte, e.fecha_nacimiento, e.email,
-                     s.motivo, s.fecha_inicio, s.fecha_fin, s.group_id, g.name AS group_name, e.foto_url, e.rol, s.horario, s.institucion, s.pais
+                     s.motivo, s.fecha_inicio, s.fecha_fin, s.group_id, g.name AS group_name, e.foto_url, e.rol, s.horario, s.institucion, s.pais,
+                     (
+                         SELECT CONCAT(TRIM(c.nombre), ' ', TRIM(c.apellidos))
+                         FROM employees c
+                         INNER JOIN stays sc ON sc.employee_id = c.id AND sc.status = 'active'
+                         WHERE sc.group_id = s.group_id
+                           AND LOWER(c.rol) IN ('coordinador', 'supervisor')
+                         ORDER BY FIELD(LOWER(c.rol), 'coordinador', 'supervisor'), c.nombre, c.apellidos
+                         LIMIT 1
+                     ) AS coordinator_name,
+                     '' AS coordinator_phone,
+                     EXISTS(
+                         SELECT 1
+                         FROM group_join_requests gjr
+                         WHERE gjr.employee_id = e.id
+                           AND gjr.status = 'pending'
+                     ) AS pending_approval
               FROM employees e
               LEFT JOIN stays s ON s.id = (
                   SELECT s1.id
@@ -47,7 +63,23 @@ if ($securityView) {
 } else {
     // Vista general (supervisión/edición): solo estancia activa.
     $query = "SELECT e.id, e.nombre, e.apellidos, e.dni_pasaporte, e.fecha_nacimiento, e.email,
-                     s.motivo, s.fecha_inicio, s.fecha_fin, s.group_id, g.name AS group_name, e.foto_url, e.rol, s.horario, s.institucion, s.pais
+                     s.motivo, s.fecha_inicio, s.fecha_fin, s.group_id, g.name AS group_name, e.foto_url, e.rol, s.horario, s.institucion, s.pais,
+                     (
+                         SELECT CONCAT(TRIM(c.nombre), ' ', TRIM(c.apellidos))
+                         FROM employees c
+                         INNER JOIN stays sc ON sc.employee_id = c.id AND sc.status = 'active'
+                         WHERE sc.group_id = s.group_id
+                           AND LOWER(c.rol) IN ('coordinador', 'supervisor')
+                         ORDER BY FIELD(LOWER(c.rol), 'coordinador', 'supervisor'), c.nombre, c.apellidos
+                         LIMIT 1
+                     ) AS coordinator_name,
+                     '' AS coordinator_phone,
+                     EXISTS(
+                         SELECT 1
+                         FROM group_join_requests gjr
+                         WHERE gjr.employee_id = e.id
+                           AND gjr.status = 'pending'
+                     ) AS pending_approval
               FROM employees e
               LEFT JOIN stays s ON s.employee_id = e.id AND s.status = 'active'
               LEFT JOIN groups g ON g.id = s.group_id
