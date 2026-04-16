@@ -15,13 +15,13 @@ return [
         'port' => 587,
         'secure' => 'tls',
         // IMPORTANTE: Tu email REAL de Gmail
-        'username' => 'jairilicious@gmail.com',
+        'username' => 'incidencias.gestiubo@gmail.com',
         // IMPORTANTE: Tu App Password (NO la contraseña de Google)
         // Obtén aquí: https://myaccount.google.com/apppasswords
         // (Requiere 2FA activado en Google Account)
-        'password' => 'dqbe lydf ypbj kwaz',
+        'password' => 'zzqg wavn qjea pyct',
         // Opcional - cambiar a tu dominio
-        'from_email' => 'jairilicious@gmail.com',
+        'from_email' => 'incidencias.gestiubo@gmail.com',
         'from_name' => 'GestIUBO - Recuperación',
     ],
 ];
