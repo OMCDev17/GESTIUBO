@@ -113,6 +113,15 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         <div id="historyContainer" class="mt-4 grid gap-4"></div>
                     </section>
 
+                    <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+                        <h2 class="text-lg font-bold text-primary">Solicitudes de estancias pendientes</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Revisa y aprueba o rechaza todas las solicitudes de estancias de los usuarios.</p>
+                        <div class="mt-4 flex items-center gap-2 mb-4">
+                            <span class="text-sm text-slate-500 dark:text-slate-400" id="stayRequestsCount">Cargando solicitudes...</span>
+                        </div>
+                        <div id="stayRequestsContainer" class="mt-4 grid gap-4"></div>
+                    </section>
+
                 </div>
             </main>
 
@@ -745,28 +754,19 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
             const activeEmployees = employees.filter((e) => isContractActive(e.fecha_fin));
 
-            // Solo estancias activas en la vista principal
-            const groups = Array.from(new Set(activeEmployees.map(e => resolveGroupName(e.grupo)).filter(Boolean)))
-                .sort((a, b) => {
-                    const order = groupOptions.map(o => o.value);
-                    const ia = order.indexOf(resolveGroupName(a));
-                    const ib = order.indexOf(resolveGroupName(b));
-                    if (ia === -1 && ib === -1) return String(a).localeCompare(String(b));
-                    if (ia === -1) return 1;
-                    if (ib === -1) return -1;
-                    return ia - ib;
-                });
-
-            // Llenar el selector de grupos
+            // Llenar el selector de grupos con todas las opciones disponibles
             if (filterSelect) {
                 const currentValue = filterSelect.value;
                 filterSelect.innerHTML = '<option value="">— Selecciona un grupo —</option>';
-                groups.forEach((group) => {
+                
+                // Usar groupOptions para llenar el selector (dinámicamente desde BD)
+                groupOptions.forEach((group) => {
                     const option = document.createElement('option');
-                    option.value = group;
-                    option.textContent = group;
+                    option.value = group.label;
+                    option.textContent = group.label;
                     filterSelect.appendChild(option);
                 });
+                
                 // Restaurar el valor seleccionado si existe
                 filterSelect.value = currentValue;
             }
@@ -1078,6 +1078,171 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             });
         }
 
+        async function fetchStayRequests() {
+            try {
+                const resp = await fetch(apiUrl('api/group_requests.php'), {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                });
+                const json = await parseJsonSafe(resp);
+                if (resp.ok && json.requests) {
+                    return json.requests;
+                }
+                return [];
+            } catch (error) {
+                console.error('Error fetching stay requests:', error);
+                return [];
+            }
+        }
+
+        function renderStayRequests(requests) {
+            const container = document.getElementById('stayRequestsContainer');
+            const countEl = document.getElementById('stayRequestsCount');
+            
+            if (!container) return;
+
+            container.innerHTML = '';
+            
+            if (!requests || requests.length === 0) {
+                container.innerHTML = '<p class="text-sm text-slate-500 dark:text-slate-400">No hay solicitudes de estancias pendientes.</p>';
+                if (countEl) countEl.textContent = '0 solicitudes pendientes';
+                return;
+            }
+
+            if (countEl) countEl.textContent = `${requests.length} solicitud${requests.length !== 1 ? 'es' : ''} pendiente${requests.length !== 1 ? 's' : ''}`;
+
+            requests.forEach((req) => {
+                const card = document.createElement('div');
+                card.className = 'flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5';
+                
+                const headerRow = document.createElement('div');
+                headerRow.className = 'flex items-center justify-between gap-3';
+                headerRow.innerHTML = `
+                    <div class="flex items-center gap-3 flex-1">
+                        <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center text-lg font-bold">
+                            ${((req.nombre || '')[0] || 'U').toUpperCase()}
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-slate-900 dark:text-slate-100">${req.nombre || ''} ${req.apellidos || ''}</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">${req.email || ''}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-primary">${req.group_name || ''}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Solicitado el ${formatDate(req.created_at || '')}</p>
+                    </div>
+                `;
+                
+                const detailsRow = document.createElement('div');
+                detailsRow.className = 'grid grid-cols-2 md:grid-cols-4 gap-3 text-xs';
+                detailsRow.innerHTML = `
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">Motivo</p>
+                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.motivo || '—'}</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">Inicio</p>
+                        <p class="text-slate-700 dark:text-slate-200 font-medium">${formatDate(req.fecha_inicio || '')}</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">Fin</p>
+                        <p class="text-slate-700 dark:text-slate-200 font-medium">${formatDate(req.fecha_fin || '')}</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">Horario</p>
+                        <p class="text-slate-700 dark:text-slate-200 font-medium">${parseInt(req.horario) === 1 ? 'Completo' : 'Solo lectivo'}</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">Institución</p>
+                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.institucion || '—'}</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">País</p>
+                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.pais || '—'}</p>
+                    </div>
+                `;
+                
+                const actionsRow = document.createElement('div');
+                actionsRow.className = 'flex gap-3 pt-3 border-t border-slate-200 dark:border-slate-700';
+                
+                const rejectBtn = document.createElement('button');
+                rejectBtn.className = 'flex-1 px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold transition-colors';
+                rejectBtn.innerHTML = '<span class="material-symbols-outlined inline text-base mr-1">close</span>Rechazar';
+                rejectBtn.addEventListener('click', () => rejectStayRequest(req.id));
+                
+                const approveBtn = document.createElement('button');
+                approveBtn.className = 'flex-1 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors';
+                approveBtn.innerHTML = '<span class="material-symbols-outlined inline text-base mr-1">check_circle</span>Aprobar';
+                approveBtn.addEventListener('click', () => approveStayRequest(req.id));
+                
+                actionsRow.appendChild(rejectBtn);
+                actionsRow.appendChild(approveBtn);
+                
+                card.appendChild(headerRow);
+                card.appendChild(detailsRow);
+                card.appendChild(actionsRow);
+                container.appendChild(card);
+            });
+        }
+
+        async function approveStayRequest(requestId) {
+            const confirmed = await uiConfirm('¿Deseas aprobar esta solicitud de estancia?');
+            if (!confirmed) return;
+
+            try {
+                const resp = await fetch(apiUrl('api/group_requests.php'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        request_id: requestId,
+                        action: 'approve'
+                    })
+                });
+                const json = await parseJsonSafe(resp);
+                if (!resp.ok || json.error) {
+                    showToast(json.error || 'Error al aprobar la solicitud', 'error');
+                    return;
+                }
+                showToast('Solicitud aprobada correctamente', 'success');
+                // Recargar las solicitudes
+                const stayRequests = await fetchStayRequests();
+                renderStayRequests(stayRequests);
+            } catch (error) {
+                console.error('Error approving request:', error);
+                showToast('Error de conexión al servidor', 'error');
+            }
+        }
+
+        async function rejectStayRequest(requestId) {
+            const confirmed = await uiConfirm('¿Deseas rechazar esta solicitud de estancia?');
+            if (!confirmed) return;
+
+            try {
+                const resp = await fetch(apiUrl('api/group_requests.php'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        request_id: requestId,
+                        action: 'reject'
+                    })
+                });
+                const json = await parseJsonSafe(resp);
+                if (!resp.ok || json.error) {
+                    showToast(json.error || 'Error al rechazar la solicitud', 'error');
+                    return;
+                }
+                showToast('Solicitud rechazada', 'success');
+                // Recargar las solicitudes
+                const stayRequests = await fetchStayRequests();
+                renderStayRequests(stayRequests);
+            } catch (error) {
+                console.error('Error rejecting request:', error);
+                showToast('Error de conexión al servidor', 'error');
+            }
+        }
+
         async function loadAndRender() {
             await Promise.all([fetchGroups(), fetchEmployees()]);
             employeeBaselineById = new Map(employees.map((emp) => [Number(emp.id), employeeSignature(emp)]));
@@ -1085,6 +1250,10 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             render();
             renderGroupManager();
             updateSaveButtonLabel();
+            
+            // Cargar y renderizar solicitudes de estancias
+            const stayRequests = await fetchStayRequests();
+            renderStayRequests(stayRequests);
             
             // Agregar event listeners
             const searchInput = document.getElementById('historySearchInput');
