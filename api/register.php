@@ -95,6 +95,20 @@ if ($missing) {
     exit;
 }
 
+// En registro inicial también exigimos datos mínimos de solicitud de estancia.
+$requiredStay = ['group_id', 'fecha_inicio', 'fecha_fin'];
+$missingStay = [];
+foreach ($requiredStay as $field) {
+    if (empty($data[$field]) && $data[$field] !== '0') {
+        $missingStay[] = $field;
+    }
+}
+if ($missingStay) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Faltan datos de estancia', 'missing' => $missingStay]);
+    exit;
+}
+
 if (strlen((string) $data['password']) < 6) {
     http_response_code(400);
     echo json_encode(['error' => 'La contrasena debe tener al menos 6 caracteres']);
@@ -191,14 +205,14 @@ $username = (string) $data['username'];
 $email = (string) $data['email'];
 $dni = (string) $data['dni_pasaporte'];
 
-$dupStmt = $mysqli->prepare('SELECT id, username, email, dni_pasaporte FROM employees WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR dni_pasaporte = ? LIMIT 1');
+$dupStmt = $mysqli->prepare('SELECT id, username, email, dni_pasaporte FROM employees WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR dni_pasaporte = ? OR LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) LIMIT 1');
 if (!$dupStmt) {
     $mysqli->rollback();
     http_response_code(500);
     echo json_encode(['error' => 'Error al preparar comprobacion de duplicados']);
     exit;
 }
-$dupStmt->bind_param('sss', $username, $email, $dni);
+$dupStmt->bind_param('sssss', $username, $email, $dni, $email, $username);
 $dupStmt->execute();
 $dupStmt->store_result();
 if ($dupStmt->num_rows > 0) {
@@ -209,8 +223,10 @@ if ($dupStmt->num_rows > 0) {
     $mysqli->rollback();
 
     $field = 'username';
-    if (strcasecmp((string) $existingEmail, $email) === 0) {
+    if (strcasecmp((string) $existingEmail, $email) === 0 || strcasecmp((string) $existingUser, $email) === 0) {
         $field = 'email';
+    } elseif (strcasecmp((string) $existingUser, $username) === 0 || strcasecmp((string) $existingEmail, $username) === 0) {
+        $field = 'username';
     } elseif ((string) $existingDni === $dni) {
         $field = 'dni_pasaporte';
     }
@@ -264,6 +280,7 @@ FROM DUAL
 WHERE NOT EXISTS (
     SELECT 1 FROM employees
     WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR dni_pasaporte = ?
+       OR LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)
 )";
 
 $stmt = $mysqli->prepare($sql);
@@ -273,11 +290,11 @@ if (!$stmt) {
     exit;
 }
 
-$bindParams = array_merge($params, [$username, $email, $dni]);
-$stmt->bind_param($types . 'sss', ...$bindParams);
-$stmt->execute();
+$bindParams = array_merge($params, [$username, $email, $dni, $email, $username]);
+$stmt->bind_param($types . 'sssss', ...$bindParams);
+$okInsertEmployee = $stmt->execute();
 
-if ($stmt->errno) {
+if (!$okInsertEmployee || $stmt->errno) {
     $mysqli->rollback();
     if ($stmt->errno === 1062) {
         echo json_encode([
@@ -340,13 +357,30 @@ $requestStmt->bind_param(
     $stayPais,
     $approvalToken
 );
-$requestStmt->execute();
+$okInsertRequest = $requestStmt->execute();
+if (!$okInsertRequest || $requestStmt->errno) {
+    $requestStmt->close();
+    $mysqli->rollback();
+    http_response_code(500);
+    echo json_encode(['error' => 'No se pudo crear la solicitud de aprobacion']);
+    exit;
+}
 $requestId = (int) $mysqli->insert_id;
 $requestStmt->close();
 
-$mysqli->commit();
+$okCommit = $mysqli->commit();
+if (!$okCommit) {
+    $mysqli->rollback();
+    http_response_code(500);
+    echo json_encode(['error' => 'No se pudo confirmar el registro']);
+    exit;
+}
 
-require_once __DIR__ . '/email_templates.php';
+try {
+    require_once __DIR__ . '/email_templates.php';
+} catch (Throwable $e) {
+    // El registro ya está confirmado; no romper respuesta por correo.
+}
 
 $firstName = trim((string) ($data['nombre'] ?? ''));
 $userName = trim((string) ($data['username'] ?? ''));
@@ -398,29 +432,35 @@ if (!$approvers) {
 }
 
 $sentApprovalEmail = false;
-foreach ($approvers as $approver) {
-    $supervisorName = trim(($approver['nombre'] ?? '') . ' ' . ($approver['apellidos'] ?? ''));
-    $targetEmail = trim((string) ($approver['email'] ?? ''));
-    if ($targetEmail === '') {
-        continue;
+if (function_exists('sendGroupApprovalRequestEmail')) {
+    foreach ($approvers as $approver) {
+        $supervisorName = trim(($approver['nombre'] ?? '') . ' ' . ($approver['apellidos'] ?? ''));
+        $targetEmail = trim((string) ($approver['email'] ?? ''));
+        if ($targetEmail === '') {
+            continue;
+        }
+        try {
+            $ok = @sendGroupApprovalRequestEmail(
+                $targetEmail,
+                $supervisorName,
+                [
+                    'employee_name' => $requestName,
+                    'employee_email' => $email,
+                    'group_name' => $groupName,
+                    'motivo' => $stayMotivo,
+                    'fecha_inicio' => $stayInicio,
+                    'fecha_fin' => $stayFin,
+                    'institucion' => $stayInst,
+                    'pais' => $stayPais,
+                    'approve_url' => $approveUrl,
+                ],
+                $config
+            );
+            $sentApprovalEmail = $sentApprovalEmail || (bool)$ok;
+        } catch (Throwable $e) {
+            // Ignorar errores de correo; no debe afectar al alta.
+        }
     }
-    $ok = @sendGroupApprovalRequestEmail(
-        $targetEmail,
-        $supervisorName,
-        [
-            'employee_name' => $requestName,
-            'employee_email' => $email,
-            'group_name' => $groupName,
-            'motivo' => $stayMotivo,
-            'fecha_inicio' => $stayInicio,
-            'fecha_fin' => $stayFin,
-            'institucion' => $stayInst,
-            'pais' => $stayPais,
-            'approve_url' => $approveUrl,
-        ],
-        $config
-    );
-    $sentApprovalEmail = $sentApprovalEmail || $ok;
 }
 
 if ($sentApprovalEmail) {
@@ -432,7 +472,13 @@ if ($sentApprovalEmail) {
     }
 }
 
-@sendWelcomeEmail($email, $userName, $firstName, $loginUrl, $config);
+if (function_exists('sendWelcomeEmail')) {
+    try {
+        @sendWelcomeEmail($email, $userName, $firstName, $loginUrl, $config);
+    } catch (Throwable $e) {
+        // Ignorar errores de correo; no debe afectar al alta.
+    }
+}
 
 echo json_encode([
     'success' => true,

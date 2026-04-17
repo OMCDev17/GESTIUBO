@@ -9,7 +9,7 @@ $config = require __DIR__ . '/config.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $user = getSessionUser();
 
-$sendError = function(int $code, string $msg) {
+$sendError = function (int $code, string $msg) {
     http_response_code($code);
     echo json_encode(['error' => $msg]);
     exit;
@@ -22,7 +22,6 @@ try {
     $sendError(500, 'Error de conexión con la base de datos');
 }
 
-// GET: Obtener solicitudes pendientes para el supervisor del grupo actual o todas para admin
 if ($method === 'GET') {
     try {
         $userId = (int)($user['id'] ?? 0);
@@ -55,31 +54,16 @@ if ($method === 'GET') {
             INNER JOIN groups g ON g.id = gjr.group_id
             WHERE gjr.status = 'pending'
         ";
-        
-        // Si no es admin, filtrar solo por el grupo del coordinador
+
         if ($userRole !== 'admin') {
-            // Obtener el grupo activo del supervisor
-            $stayStmt = $mysqli->prepare("
-                SELECT DISTINCT group_id
-                FROM stays
-                WHERE employee_id = ?
-                  AND status = 'active'
-                LIMIT 1
-            ");
-            $stayStmt->bind_param('i', $userId);
-            $stayStmt->execute();
-            $stayRes = $stayStmt->get_result();
-            $stayRow = $stayRes ? $stayRes->fetch_assoc() : null;
-            $stayStmt->close();
-
-            if (!$stayRow) {
-                // Si no tiene grupo activo, retornar array vacío
-                echo json_encode(['requests' => []]);
-                exit;
-            }
-
-            $groupId = (int)$stayRow['group_id'];
-            $query .= " AND gjr.group_id = " . (int)$groupId;
+            // Mostrar solicitudes de cualquiera de los grupos activos del coordinador/supervisor.
+            $query .= " AND gjr.group_id IN (
+                            SELECT DISTINCT s.group_id
+                            FROM stays s
+                            WHERE s.employee_id = ?
+                              AND s.status = 'active'
+                              AND s.group_id IS NOT NULL
+                        )";
         }
 
         $query .= " ORDER BY gjr.created_at DESC";
@@ -87,6 +71,9 @@ if ($method === 'GET') {
         $reqStmt = $mysqli->prepare($query);
         if (!$reqStmt) {
             $sendError(500, 'Error preparando consulta');
+        }
+        if ($userRole !== 'admin') {
+            $reqStmt->bind_param('i', $userId);
         }
         $reqStmt->execute();
         $reqRes = $reqStmt->get_result();
@@ -103,30 +90,36 @@ if ($method === 'GET') {
     }
 }
 
-// POST: Aprobar o rechazar una solicitud
 if ($method === 'POST') {
     try {
         $body = json_decode(file_get_contents('php://input'), true);
         if (!is_array($body)) {
+            $body = $_POST;
+        }
+        if (!is_array($body)) {
             $sendError(400, 'Payload inválido');
         }
 
-        $requestId = isset($body['request_id']) ? (int)$body['request_id'] : null;
-        $action = strtolower(trim($body['action'] ?? ''));
+        $requestIdRaw = $body['request_id'] ?? $body['requestId'] ?? $body['id'] ?? null;
+        $requestId = $requestIdRaw !== null ? (int)$requestIdRaw : null;
 
-        if (!$requestId || !in_array($action, ['approve', 'reject'])) {
+        $actionRaw = strtolower(trim((string)($body['action'] ?? $body['accion'] ?? '')));
+        $actionMap = [
+            'approve' => 'approve', 'approved' => 'approve', 'aprobar' => 'approve', 'aceptar' => 'approve', 'accept' => 'approve',
+            'reject' => 'reject', 'rejected' => 'reject', 'rechazar' => 'reject', 'denegar' => 'reject', 'deny' => 'reject',
+        ];
+        $action = $actionMap[$actionRaw] ?? $actionRaw;
+
+        if (!$requestId || !in_array($action, ['approve', 'reject'], true)) {
             $sendError(400, 'Faltan parámetros o acción inválida');
         }
 
-        // Obtener la solicitud
-        $getReq = $mysqli->prepare("
-            SELECT gjr.*, g.name AS group_name, e.nombre, e.apellidos, e.email
+        $getReq = $mysqli->prepare("SELECT gjr.*, g.name AS group_name, e.nombre, e.apellidos, e.email
             FROM group_join_requests gjr
             INNER JOIN employees e ON e.id = gjr.employee_id
             INNER JOIN groups g ON g.id = gjr.group_id
             WHERE gjr.id = ? AND gjr.status = 'pending'
-            LIMIT 1
-        ");
+            LIMIT 1");
         $getReq->bind_param('i', $requestId);
         $getReq->execute();
         $getReqRes = $getReq->get_result();
@@ -137,18 +130,12 @@ if ($method === 'POST') {
             $sendError(404, 'Solicitud no encontrada o ya procesada');
         }
 
-        // Verificar permisos: admin puede procesar cualquier solicitud, coordinador solo su grupo
         $supervisorId = (int)($user['id'] ?? 0);
         $userRole = strtolower(trim($user['rol'] ?? ''));
         $groupId = (int)($request['group_id'] ?? 0);
-        
+
         if ($userRole !== 'admin') {
-            // Si no es admin, verificar que el usuario pertenece al grupo
-            $checkSuper = $mysqli->prepare("
-                SELECT 1 FROM stays
-                WHERE employee_id = ? AND group_id = ? AND status = 'active'
-                LIMIT 1
-            ");
+            $checkSuper = $mysqli->prepare("SELECT 1 FROM stays WHERE employee_id = ? AND group_id = ? AND status = 'active' LIMIT 1");
             $checkSuper->bind_param('ii', $supervisorId, $groupId);
             $checkSuper->execute();
             $checkSuperRes = $checkSuper->get_result();
@@ -163,12 +150,7 @@ if ($method === 'POST') {
         try {
             $welcomeEmailSent = null;
             if ($action === 'approve') {
-                // Verificar que no hay estancia activa
-                $checkActive = $mysqli->prepare("
-                    SELECT id FROM stays 
-                    WHERE employee_id = ? AND status = 'active'
-                    LIMIT 1
-                ");
+                $checkActive = $mysqli->prepare("SELECT id FROM stays WHERE employee_id = ? AND status = 'active' FOR UPDATE LIMIT 1");
                 $employeeId = (int)$request['employee_id'];
                 $checkActive->bind_param('i', $employeeId);
                 $checkActive->execute();
@@ -178,48 +160,21 @@ if ($method === 'POST') {
                 }
                 $checkActive->close();
 
-                // Crear la estancia
-                $ins = $mysqli->prepare("
-                    INSERT INTO stays (
-                        employee_id, fecha_inicio, fecha_fin, motivo, group_id,
-                        horario, institucion, pais, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')
-                ");
+                $ins = $mysqli->prepare("INSERT INTO stays (employee_id, fecha_inicio, fecha_fin, motivo, group_id, horario, institucion, pais, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')");
                 $horario = (int)$request['horario'];
-                $ins->bind_param(
-                    'isssiiss',
-                    $employeeId,
-                    $request['fecha_inicio'],
-                    $request['fecha_fin'],
-                    $request['motivo'],
-                    $groupId,
-                    $horario,
-                    $request['institucion'],
-                    $request['pais']
-                );
+                $ins->bind_param('isssiiss', $employeeId, $request['fecha_inicio'], $request['fecha_fin'], $request['motivo'], $groupId, $horario, $request['institucion'], $request['pais']);
                 $ins->execute();
                 $ins->close();
 
-                // Actualizar solicitud
-                $upd = $mysqli->prepare("
-                    UPDATE group_join_requests
-                    SET status = 'approved', approved_at = NOW(), approved_by_employee_id = ?
-                    WHERE id = ? AND status = 'pending'
-                    LIMIT 1
-                ");
+                $upd = $mysqli->prepare("UPDATE group_join_requests SET status = 'approved', approved_at = NOW(), approved_by_employee_id = ? WHERE id = ? AND status = 'pending' LIMIT 1");
                 $upd->bind_param('ii', $supervisorId, $requestId);
                 $upd->execute();
                 $upd->close();
 
                 $resultMsg = 'Solicitud aprobada correctamente';
             } else {
-                // Rechazar
-                $upd = $mysqli->prepare("
-                    UPDATE group_join_requests
-                    SET status = 'rejected', approved_at = NOW(), approved_by_employee_id = ?
-                    WHERE id = ? AND status = 'pending'
-                    LIMIT 1
-                ");
+                $upd = $mysqli->prepare("UPDATE group_join_requests SET status = 'rejected', approved_at = NOW(), approved_by_employee_id = ? WHERE id = ? AND status = 'pending' LIMIT 1");
                 $upd->bind_param('ii', $supervisorId, $requestId);
                 $upd->execute();
                 $upd->close();
@@ -242,19 +197,13 @@ if ($method === 'POST') {
                     'institucion' => $request['institucion'] ?? '',
                     'pais' => $request['pais'] ?? '',
                 ];
-                $welcomeEmailSent = @sendNewStayWelcomeEmail(
-                    (string)($request['email'] ?? ''),
-                    (string)($request['nombre'] ?? ''),
-                    $stayData,
-                    $loginUrl,
-                    $config
-                );
+                $welcomeEmailSent = @sendNewStayWelcomeEmail((string)($request['email'] ?? ''), (string)($request['nombre'] ?? ''), $stayData, $loginUrl, $config);
             }
 
             echo json_encode([
                 'success' => true,
                 'message' => $resultMsg,
-                'welcome_email_sent' => $welcomeEmailSent
+                'welcome_email_sent' => $welcomeEmailSent,
             ]);
             exit;
         } catch (Throwable $e) {

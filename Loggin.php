@@ -253,9 +253,6 @@ if ($user) {
                     return;
                 }
 
-                // Save session in localStorage for other pages to use.
-                window.localStorage.setItem('sessionUser', JSON.stringify(result.user));
-
                 // Redirect based on role (from backend)
                 if (result.redirect) {
                     window.location.href = result.redirect;

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 header('Content-Type: application/json; charset=utf-8');
 
 require __DIR__ . '/auth.php';
@@ -8,7 +8,7 @@ $config = require __DIR__ . '/config.php';
 $mysqli = new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
 if ($mysqli->connect_errno) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión con la base de datos']);
+    echo json_encode(['error' => 'Error de conexiÃ³n con la base de datos']);
     exit;
 }
 $mysqli->set_charset($config['charset']);
@@ -29,8 +29,8 @@ $whereSql = empty($where) ? '' : ' WHERE ' . implode(' AND ', $where);
 $securityView = (isset($_GET['view']) && $_GET['view'] === 'security');
 
 if ($securityView) {
-    // Vista de seguridad: usar la estancia real más relevante por empleado
-    // (prioriza activa; si no hay activa, toma la más reciente archivada).
+    // Vista de seguridad: usar la estancia real mÃ¡s relevante por empleado
+    // (prioriza activa; si no hay activa, toma la mÃ¡s reciente archivada).
     $query = "SELECT e.id, e.nombre, e.apellidos, e.dni_pasaporte, e.fecha_nacimiento, e.email,
                      e.phone_prefix, e.phone_number,
                      s.motivo, s.fecha_inicio, s.fecha_fin, s.group_id, g.name AS group_name, e.foto_url, e.rol, s.horario, s.institucion, s.pais,
@@ -81,7 +81,7 @@ if ($securityView) {
               {$whereSql}
               ORDER BY g.name, e.apellidos DESC, e.nombre DESC";
 } else {
-    // Vista general (supervisión/edición): solo estancia activa.
+    // Vista general (supervisiÃ³n/ediciÃ³n): solo estancia activa.
     $query = "SELECT e.id, e.nombre, e.apellidos, e.dni_pasaporte, e.fecha_nacimiento, e.email,
                      e.phone_prefix, e.phone_number,
                      s.motivo, s.fecha_inicio, s.fecha_fin, s.group_id, g.name AS group_name, e.foto_url, e.rol, s.horario, s.institucion, s.pais,
@@ -121,7 +121,14 @@ if ($securityView) {
                            AND gjr.status = 'pending'
                      ) AS pending_approval
               FROM employees e
-              LEFT JOIN stays s ON s.employee_id = e.id AND s.status = 'active'
+              LEFT JOIN stays s ON s.id = (
+                  SELECT s1.id
+                  FROM stays s1
+                  WHERE s1.employee_id = e.id
+                    AND s1.status = 'active'
+                  ORDER BY s1.updated_at DESC, s1.id DESC
+                  LIMIT 1
+              )
               LEFT JOIN groups g ON g.id = s.group_id
               {$whereSql}
               ORDER BY g.name, e.apellidos DESC, e.nombre DESC";
@@ -156,4 +163,5 @@ if (isset($_GET['include_history']) && $_GET['include_history'] === '1') {
 }
 
 echo json_encode(['employees' => $employees, 'history' => $history]);
+
 

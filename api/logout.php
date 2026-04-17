@@ -1,7 +1,12 @@
 <?php
 
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
+
 // Destroy the current session and redirect to login.
 if (session_status() === PHP_SESSION_NONE) {
+    session_name('GESTIUBOSESSID');
     session_start();
 }
 

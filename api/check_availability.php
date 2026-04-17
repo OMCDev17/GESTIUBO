@@ -27,16 +27,20 @@ if ($type !== 'email' && $type !== 'username') {
     exit;
 }
 
-// Validar que no sea el usuario actual (si viene desde formulario de edición)
-// Por ahora solo verificamos que no exista en BD
-$stmt = $mysqli->prepare("SELECT id FROM employees WHERE $type = ? LIMIT 1");
+// Comprobar también colisiones cruzadas: username vs email y email vs username.
+if ($type === 'email') {
+    $stmt = $mysqli->prepare("SELECT id FROM employees WHERE LOWER(email) = LOWER(?) OR LOWER(username) = LOWER(?) LIMIT 1");
+} else {
+    $stmt = $mysqli->prepare("SELECT id FROM employees WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) LIMIT 1");
+}
+
 if (!$stmt) {
     http_response_code(500);
     echo json_encode(['error' => 'Error preparando consulta']);
     exit;
 }
 
-$stmt->bind_param('s', $value);
+$stmt->bind_param('ss', $value, $value);
 $stmt->execute();
 $result = $stmt->get_result();
 $exists = $result && $result->num_rows > 0;

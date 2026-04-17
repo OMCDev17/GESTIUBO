@@ -15,11 +15,32 @@
  *   requireRole(['admin'], true);
  */
 
-// Forzar UTF-8 en toda la aplicación
+// Force UTF-8 across the app.
 ini_set('default_charset', 'UTF-8');
 mb_internal_encoding('UTF-8');
 
+// Avoid cache leakage between users (important on shared hosting).
+if (!headers_sent()) {
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+}
+
+// Harden PHP session handling.
+ini_set('session.use_strict_mode', '1');
+ini_set('session.use_only_cookies', '1');
+ini_set('session.use_trans_sid', '0');
+
 if (session_status() === PHP_SESSION_NONE) {
+    session_name('GESTIUBOSESSID');
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => '',
+        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
     session_start();
 }
 
@@ -53,7 +74,7 @@ function requireRole($roles, bool $isApi = false): void
 
     $user = getSessionUser();
     if (!$user) {
-        return; // requireLogin will already handle
+        return; // requireLogin already handled response/redirect.
     }
 
     $userRole = strtolower(trim($user['rol'] ?? ''));
@@ -74,4 +95,3 @@ function requireRole($roles, bool $isApi = false): void
         exit;
     }
 }
-

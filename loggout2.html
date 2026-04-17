@@ -5,6 +5,9 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>Logout Exitoso - Lab Portal</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link rel="icon" href="../GESTIUBO/imagenes/icono_circulo.png" type="image/png">
@@ -113,6 +116,13 @@
         </div>
     </div>
     <script>
+            (() => {
+                try {
+                    window.localStorage.removeItem('sessionUser');
+                    window.sessionStorage.removeItem('sessionUser');
+                } catch (e) {}
+            })();
+
             (() => {
                 const countdownEl = document.getElementById('countdown');
                 let remaining = 10;

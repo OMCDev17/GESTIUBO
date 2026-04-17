@@ -1,5 +1,8 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 
 $config = require __DIR__ . '/config.php';
 
@@ -47,6 +50,7 @@ $username = trim($input['username']);
 $password = $input['password'];
 
 if (session_status() === PHP_SESSION_NONE) {
+    session_name('GESTIUBOSESSID');
     session_start();
 }
 
@@ -58,10 +62,16 @@ $sql = 'SELECT e.id, e.nombre, e.apellidos, e.email, e.username, e.dni_pasaporte
             FROM employees e
             LEFT JOIN stays s ON s.employee_id = e.id AND s.status = "active"
             LEFT JOIN groups g ON g.id = s.group_id
-            WHERE e.username = ? OR e.email = ?
+            WHERE LOWER(e.username) = LOWER(?) OR LOWER(e.email) = LOWER(?)
+            ORDER BY
+                CASE
+                    WHEN LOWER(e.username) = LOWER(?) THEN 0
+                    WHEN LOWER(e.email) = LOWER(?) THEN 1
+                    ELSE 2
+                END
             LIMIT 1';
     $stmt = $db->prepare($sql);
-    $stmt->bind_param('ss', $username, $username);
+    $stmt->bind_param('ssss', $username, $username, $username, $username);
     $stmt->execute();
 
     if ($result = $stmt->get_result()) {
@@ -75,9 +85,15 @@ $sql = 'SELECT e.id, e.nombre, e.apellidos, e.email, e.username, e.dni_pasaporte
                           FROM employees e
                           LEFT JOIN stays s ON s.employee_id = e.id AND s.status = "active"
                           LEFT JOIN groups g ON g.id = s.group_id
-                          WHERE e.username = ? OR e.email = ?
+                          WHERE LOWER(e.username) = LOWER(?) OR LOWER(e.email) = LOWER(?)
+                          ORDER BY
+                              CASE
+                                  WHEN LOWER(e.username) = LOWER(?) THEN 0
+                                  WHEN LOWER(e.email) = LOWER(?) THEN 1
+                                  ELSE 2
+                              END
                           LIMIT 1');
-    $stmt->execute([$username, $username]);
+    $stmt->execute([$username, $username, $username, $username]);
     $user = $stmt->fetch();
 }
 
@@ -97,6 +113,8 @@ if (!$plainMatch && !$hashMatch) {
 }
 unset($user['password']);
 
+$_SESSION = [];
+session_regenerate_id(true);
 $_SESSION['user'] = $user;
 
 // Determine redirect according to stored role
