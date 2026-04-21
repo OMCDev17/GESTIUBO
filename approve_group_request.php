@@ -145,7 +145,7 @@ if (($request['status'] ?? '') === 'approved') {
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
         $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $basePath = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
-        $loginUrl = "{$scheme}://{$host}{$basePath}/Loggin.php";
+        $loginUrl = "{$scheme}://{$host}{$basePath}/acceso";
         $stayData = [
             'group_name' => $request['group_name'] ?? '',
             'motivo' => $request['motivo'] ?? '',
@@ -189,8 +189,10 @@ if (($request['status'] ?? '') === 'approved') {
             <p><strong>Email:</strong> <?php echo htmlspecialchars((string)($request['email'] ?? '-'), ENT_QUOTES, 'UTF-8'); ?></p>
         </div>
         <div class="mt-6">
-            <a href="Loggin.php" class="inline-flex items-center rounded-xl bg-slate-900 text-white px-5 py-3 font-semibold hover:bg-slate-700 transition">Ir al login</a>
+            <a href="acceso" class="inline-flex items-center rounded-xl bg-slate-900 text-white px-5 py-3 font-semibold hover:bg-slate-700 transition">Ir al login</a>
         </div>
     </div>
 </body>
 </html>
+
+

@@ -9,6 +9,23 @@ $config = require __DIR__ . '/config.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $user = getSessionUser();
 
+$resolveSessionEmployeeId = static function (?array $sessionUser): int {
+    if (!is_array($sessionUser)) {
+        return 0;
+    }
+    foreach (['id', 'employee_id', 'user_id'] as $k) {
+        $v = $sessionUser[$k] ?? null;
+        if ($v === null || $v === '') {
+            continue;
+        }
+        $id = (int)$v;
+        if ($id > 0) {
+            return $id;
+        }
+    }
+    return 0;
+};
+
 $sendError = function (int $code, string $msg) {
     http_response_code($code);
     echo json_encode(['error' => $msg]);
@@ -19,20 +36,21 @@ try {
     $mysqli = new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
     $mysqli->set_charset($config['charset']);
 } catch (Throwable $e) {
-    $sendError(500, 'Error de conexión con la base de datos');
+    $sendError(500, 'Database connection error');
 }
 
 if ($method === 'GET') {
     try {
-        $userId = (int)($user['id'] ?? 0);
-        $userRole = strtolower(trim($user['rol'] ?? ''));
-        if (!$userId) {
+        $userId = $resolveSessionEmployeeId($user);
+        $userRole = strtolower(trim((string)($user['rol'] ?? '')));
+        if ($userId <= 0) {
             $sendError(401, 'Usuario no autenticado');
         }
 
         $query = "
-            SELECT 
+            SELECT
                 gjr.id,
+                gjr.id AS request_id,
                 gjr.employee_id,
                 gjr.group_id,
                 gjr.requested_by_name,
@@ -56,7 +74,6 @@ if ($method === 'GET') {
         ";
 
         if ($userRole !== 'admin') {
-            // Mostrar solicitudes de cualquiera de los grupos activos del coordinador/supervisor.
             $query .= " AND gjr.group_id IN (
                             SELECT DISTINCT s.group_id
                             FROM stays s
@@ -92,16 +109,33 @@ if ($method === 'GET') {
 
 if ($method === 'POST') {
     try {
-        $body = json_decode(file_get_contents('php://input'), true);
+        $queryParams = [];
+        parse_str((string)($_SERVER['QUERY_STRING'] ?? ''), $queryParams);
+
+        $rawBody = (string)file_get_contents('php://input');
+        $body = json_decode($rawBody, true);
+        if (!is_array($body) && $rawBody !== '') {
+            parse_str($rawBody, $parsedBody);
+            if (is_array($parsedBody) && !empty($parsedBody)) {
+                $body = $parsedBody;
+            }
+        }
         if (!is_array($body)) {
             $body = $_POST;
         }
+        if (is_array($_REQUEST)) {
+            $body = array_merge($_REQUEST, is_array($body) ? $body : []);
+        }
+        if (is_array($queryParams)) {
+            $body = array_merge($queryParams, is_array($body) ? $body : []);
+        }
         if (!is_array($body)) {
-            $sendError(400, 'Payload inválido');
+            $sendError(400, 'Invalid payload');
         }
 
-        $requestIdRaw = $body['request_id'] ?? $body['requestId'] ?? $body['id'] ?? null;
-        $requestId = $requestIdRaw !== null ? (int)$requestIdRaw : null;
+        $requestId = (int)($body['request_id'] ?? $body['requestId'] ?? $body['id'] ?? 0);
+        $employeeIdFromBody = (int)($body['employee_id'] ?? $body['employeeId'] ?? 0);
+        $groupIdFromBody = (int)($body['group_id'] ?? $body['groupId'] ?? 0);
 
         $actionRaw = strtolower(trim((string)($body['action'] ?? $body['accion'] ?? '')));
         $actionMap = [
@@ -110,8 +144,40 @@ if ($method === 'POST') {
         ];
         $action = $actionMap[$actionRaw] ?? $actionRaw;
 
-        if (!$requestId || !in_array($action, ['approve', 'reject'], true)) {
-            $sendError(400, 'Faltan parámetros o acción inválida');
+        if (!in_array($action, ['approve', 'reject'], true)) {
+            $sendError(400, 'Faltan parametros o accion invalida');
+        }
+
+        if ($requestId <= 0 && $employeeIdFromBody > 0 && $groupIdFromBody > 0) {
+            $resolveReq = $mysqli->prepare("SELECT id FROM group_join_requests WHERE employee_id = ? AND group_id = ? AND status = 'pending' ORDER BY created_at DESC, id DESC LIMIT 1");
+            if ($resolveReq) {
+                $resolveReq->bind_param('ii', $employeeIdFromBody, $groupIdFromBody);
+                $resolveReq->execute();
+                $resolveRes = $resolveReq->get_result();
+                $resolved = $resolveRes ? $resolveRes->fetch_assoc() : null;
+                $resolveReq->close();
+                if ($resolved && !empty($resolved['id'])) {
+                    $requestId = (int)$resolved['id'];
+                }
+            }
+        }
+
+        if ($requestId <= 0 && $employeeIdFromBody > 0) {
+            $resolveReqByEmp = $mysqli->prepare("SELECT id FROM group_join_requests WHERE employee_id = ? AND status = 'pending' ORDER BY created_at DESC, id DESC LIMIT 1");
+            if ($resolveReqByEmp) {
+                $resolveReqByEmp->bind_param('i', $employeeIdFromBody);
+                $resolveReqByEmp->execute();
+                $resolveEmpRes = $resolveReqByEmp->get_result();
+                $resolvedEmp = $resolveEmpRes ? $resolveEmpRes->fetch_assoc() : null;
+                $resolveReqByEmp->close();
+                if ($resolvedEmp && !empty($resolvedEmp['id'])) {
+                    $requestId = (int)$resolvedEmp['id'];
+                }
+            }
+        }
+
+        if ($requestId <= 0) {
+            $sendError(400, 'Faltan parametros o accion invalida');
         }
 
         $getReq = $mysqli->prepare("SELECT gjr.*, g.name AS group_name, e.nombre, e.apellidos, e.email
@@ -130,9 +196,13 @@ if ($method === 'POST') {
             $sendError(404, 'Solicitud no encontrada o ya procesada');
         }
 
-        $supervisorId = (int)($user['id'] ?? 0);
-        $userRole = strtolower(trim($user['rol'] ?? ''));
+        $supervisorId = $resolveSessionEmployeeId($user);
+        $userRole = strtolower(trim((string)($user['rol'] ?? '')));
         $groupId = (int)($request['group_id'] ?? 0);
+
+        if ($supervisorId <= 0) {
+            $sendError(401, 'No se pudo identificar al usuario autenticado');
+        }
 
         if ($userRole !== 'admin') {
             $checkSuper = $mysqli->prepare("SELECT 1 FROM stays WHERE employee_id = ? AND group_id = ? AND status = 'active' LIMIT 1");
@@ -150,7 +220,7 @@ if ($method === 'POST') {
         try {
             $welcomeEmailSent = null;
             if ($action === 'approve') {
-                $checkActive = $mysqli->prepare("SELECT id FROM stays WHERE employee_id = ? AND status = 'active' FOR UPDATE LIMIT 1");
+                $checkActive = $mysqli->prepare("SELECT id FROM stays WHERE employee_id = ? AND status = 'active' LIMIT 1 FOR UPDATE");
                 $employeeId = (int)$request['employee_id'];
                 $checkActive->bind_param('i', $employeeId);
                 $checkActive->execute();
@@ -187,7 +257,7 @@ if ($method === 'POST') {
                 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
                 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
                 $basePath = rtrim(dirname(dirname($_SERVER['PHP_SELF'])), '/\\');
-                $loginUrl = "{$scheme}://{$host}{$basePath}/Loggin.php";
+                $loginUrl = "{$scheme}://{$host}{$basePath}/acceso";
 
                 $stayData = [
                     'group_name' => $request['group_name'] ?? '',
@@ -215,4 +285,6 @@ if ($method === 'POST') {
     }
 }
 
-$sendError(405, 'Método no permitido');
+$sendError(405, 'Metodo no permitido');
+
+

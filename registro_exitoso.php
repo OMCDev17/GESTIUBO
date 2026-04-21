@@ -5,6 +5,10 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Registro Exitoso - Instituto de Bio-Orgánica Antonio González</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link rel="icon" href="/GESTIUBO/imagenes/icono_circulo.png" type="image/png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/GESTIUBO/imagenes/icono_circulo.png"/>
+<link rel="icon" type="image/png" sizes="16x16" href="/GESTIUBO/imagenes/icono_circulo.png"/>
+<link rel="apple-touch-icon" href="/GESTIUBO/imagenes/icono_circulo.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -73,7 +77,7 @@
 </div>
 <!-- Actions -->
 <div class="flex flex-col gap-3">
-<a href="Loggin.php" class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-5 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] hover:opacity-90 transition-opacity">
+<a href="acceso" class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-5 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] hover:opacity-90 transition-opacity">
 <span class="truncate">Ir a iniciar sesión / Go to Login</span>
 </a>
 <div class="flex justify-center mt-4">
@@ -101,7 +105,7 @@
             remaining -= 1;
             if (countdownEl) countdownEl.textContent = remaining.toString();
             if (remaining <= 0) {
-                window.location.href = 'Loggin.php';
+                window.location.href = 'acceso';
             } else {
                 setTimeout(tick, 1000);
             }
@@ -110,5 +114,8 @@
     })();
 </script>
 </body></html>
+
+
+
 
 

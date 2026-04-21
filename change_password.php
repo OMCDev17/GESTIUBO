@@ -35,6 +35,10 @@ if (!$isPasswordResetToken) {
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Cambiar contraseña - Instituto de Bio-Orgánica Antonio González</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link rel="icon" href="/GESTIUBO/imagenes/icono_circulo.png" type="image/png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/GESTIUBO/imagenes/icono_circulo.png"/>
+<link rel="icon" type="image/png" sizes="16x16" href="/GESTIUBO/imagenes/icono_circulo.png"/>
+<link rel="apple-touch-icon" href="/GESTIUBO/imagenes/icono_circulo.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -80,7 +84,7 @@ if (!$isPasswordResetToken) {
                 <?php echo htmlspecialchars($tokenError); ?>
             </div>
             <div class="text-center">
-                <a href="Recuperacion.html" class="text-sm text-primary hover:underline">Volver a recuperar contraseña</a>
+                <a href="recuperar" class="text-sm text-primary hover:underline">Volver a recuperar contraseña</a>
             </div>
         <?php else: ?>
             <form id="pwdForm" class="space-y-4">
@@ -104,7 +108,7 @@ if (!$isPasswordResetToken) {
             </form>
         <?php endif; ?>
         <div class="text-center">
-            <a href="<?php echo $isPasswordResetToken ? 'Loggin.php' : 'empleado.php'; ?>" class="text-sm text-primary hover:underline"><?php echo $isPasswordResetToken ? 'Volver al inicio de sesión' : 'Volver a mi perfil'; ?></a>
+            <a href="<?php echo $isPasswordResetToken ? 'acceso' : 'usuario'; ?>" class="text-sm text-primary hover:underline"><?php echo $isPasswordResetToken ? 'Volver al inicio de sesión' : 'Volver a mi perfil'; ?></a>
         </div>
     </div>
 </div>
@@ -166,7 +170,7 @@ if (!$isPasswordResetToken) {
                     showAlert(isRecovery ? 'Contraseña restablecida correctamente.' : 'Contraseña actualizada correctamente.', true);
                     form.reset();
                     if (isRecovery) {
-                        setTimeout(() => { window.location.href = 'Loggin.php'; }, 3000);
+                        setTimeout(() => { window.location.href = 'acceso'; }, 3000);
                     }
                 }
             } catch (err) {
@@ -181,4 +185,8 @@ if (!$isPasswordResetToken) {
     }
 </script>
 </body></html>
+
+
+
+
 

@@ -13,10 +13,10 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GestIUBO - Seguridad</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link rel="icon" href="../GESTIUBO/imagenes/icono_circulo.png" type="image/png">
-    <link rel="icon" type="image/png" sizes="32x32" href="../GESTIUBO/imagenes/icono_circulo.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../GESTIUBO/imagenes/icono_circulo.png">
-    <link rel="apple-touch-icon" href="../GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="icon" href="/GESTIUBO/imagenes/icono_circulo.png" type="image/png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="apple-touch-icon" href="/GESTIUBO/imagenes/icono_circulo.png">
     <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
@@ -56,16 +56,24 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             <!-- Navigation / Header -->
             <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-10 py-4 fixed top-0 left-0 right-0 z-50">
                 <div class="flex items-center gap-3 flex-wrap">
-                    <img alt="Logo de la Institución" class="h-10 w-auto object-contain" src="imagenes/instituto-biorganica-agonzalez-original.png" />
+                    <img alt="Logo de la InstituciÃƒÆ’Ã‚Â³n" class="h-10 w-auto object-contain" src="imagenes/instituto-biorganica-agonzalez-original.png" />
                     <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] border-l border-slate-300 dark:border-slate-700 pl-4">Seguridad</h2>
                     <?php if ($fullName): ?>
                         <span class="text-sm text-slate-500 dark:text-slate-400 pl-4">Hola, <?php echo $fullName; ?></span>
                     <?php endif; ?>
                 </div>
                 <div class="flex items-center gap-3 w-full md:w-auto justify-end">
-                    <a href="#" onclick="logout(); return false;" aria-label="Cerrar sesión" title="Cerrar sesión" class="flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 w-11 border border-primary bg-white dark:bg-slate-900 text-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary hover:text-white transition-colors">
-                        <span class="material-symbols-outlined text-base">power_settings_new</span>
-                    </a>
+                    <button id="mobileMenuToggleSecurity" type="button" class="md:hidden flex shrink-0 items-center justify-center overflow-hidden rounded-xl h-11 w-11 border border-primary bg-white dark:bg-slate-900 text-primary hover:bg-primary hover:text-white transition-colors" aria-label="Abrir menÃƒÂº">
+                        <span class="material-symbols-outlined text-base">menu</span>
+                    </button>
+                    <div class="hidden md:flex items-center gap-3">
+                        <a href="#" onclick="logout(); return false;" aria-label="Cerrar sesiÃƒÂ³n" title="Cerrar sesiÃƒÂ³n" class="flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 w-11 border border-primary bg-white dark:bg-slate-900 text-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-base">power_settings_new</span>
+                        </a>
+                    </div>
+                </div>
+                <div id="mobileMenuSecurity" class="hidden md:hidden w-full border-t border-slate-200 dark:border-slate-800 pt-3">
+                    <a href="#" onclick="logout(); return false;" class="w-full flex items-center justify-center rounded-xl h-11 border border-primary text-primary text-sm font-bold hover:bg-primary hover:text-white transition-colors">Cerrar sesiÃƒÂ³n</a>
                 </div>
             </header>
 
@@ -81,7 +89,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                             <input id="searchInput" type="text" placeholder="Buscar por nombre o apellidos" class="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-primary focus:border-primary">
                             <button id="searchButton" class="rounded-lg bg-primary text-white font-semibold px-4 py-2 text-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50">Buscar</button>
                         </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Por privacidad no se muestran datos hasta realizar una búsqueda (mínimo 3 caracteres).</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Por privacidad no se muestran datos hasta realizar una bÃƒÆ’Ã‚Âºsqueda (mÃƒÆ’Ã‚Â­nimo 3 caracteres).</p>
                     </div>
 
                     <div id="resultsContainer" class="flex flex-col gap-4"></div>
@@ -89,13 +97,70 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             </main>
 
             <footer class="text-center py-6 text-slate-500 text-sm">
-                © 2026 GestIUBO. Todos los derechos reservados / All rights reserved.
+                Ãƒâ€šÃ‚Â© 2026 GestIUBO. Todos los derechos reservados / All rights reserved.
             </footer>
         </div>
     </div>
 
-    <script>
-        // Toast reutilizable con estética del panel (morado)
+        <script>
+        function fixMojibakeText(input) {
+            let s = String(input ?? '');
+            const cp1252Reverse = {
+                0x20AC: 0x80, 0x201A: 0x82, 0x0192: 0x83, 0x201E: 0x84, 0x2026: 0x85,
+                0x2020: 0x86, 0x2021: 0x87, 0x02C6: 0x88, 0x2030: 0x89, 0x0160: 0x8A,
+                0x2039: 0x8B, 0x0152: 0x8C, 0x017D: 0x8E, 0x2018: 0x91, 0x2019: 0x92,
+                0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97,
+                0x02DC: 0x98, 0x2122: 0x99, 0x0161: 0x9A, 0x203A: 0x9B, 0x0153: 0x9C,
+                0x017E: 0x9E, 0x0178: 0x9F
+            };
+            const utf8 = new TextDecoder('utf-8', { fatal: false });
+            const suspicious = /[ÃÂ][\x80-\u017F]?|â€|â€™|â€œ|â€|Ãƒ|Ã‚/;
+
+            const toBytes = (str) => Uint8Array.from([...str].map((ch) => {
+                const code = ch.codePointAt(0);
+                if (code <= 0xFF) return code;
+                if (cp1252Reverse[code] !== undefined) return cp1252Reverse[code];
+                return 0x3F;
+            }));
+
+            for (let i = 0; i < 4; i++) {
+                if (!suspicious.test(s)) break;
+                const repaired = utf8.decode(toBytes(s));
+                if (!repaired || repaired === s) break;
+                s = repaired;
+            }
+            return s;
+        }
+
+        function normalizeNodeText(node) {
+            if (!node) return;
+            if (node.nodeType === Node.TEXT_NODE) {
+                const fixed = fixMojibakeText(node.nodeValue);
+                if (fixed !== node.nodeValue) node.nodeValue = fixed;
+                return;
+            }
+            if (node.nodeType !== Node.ELEMENT_NODE) return;
+            for (const attr of ['title', 'aria-label', 'placeholder']) {
+                const val = node.getAttribute(attr);
+                if (val) {
+                    const fixed = fixMojibakeText(val);
+                    if (fixed !== val) node.setAttribute(attr, fixed);
+                }
+            }
+            for (const child of node.childNodes) normalizeNodeText(child);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            normalizeNodeText(document.body);
+            const observer = new MutationObserver((mutations) => {
+                for (const m of mutations) {
+                    if (m.type === 'characterData') normalizeNodeText(m.target);
+                    if (m.type === 'childList') m.addedNodes.forEach((n) => normalizeNodeText(n));
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+        });
+        // Toast reutilizable con estÃƒÆ’Ã‚Â©tica del panel (morado)
         const toastHost = (() => {
             const existing = document.getElementById('toastHost');
             if (existing) return existing;
@@ -123,7 +188,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
         const maskDni = (value) => {
             const str = String(value ?? '').trim();
-            if (!str) return '—';
+            if (!str) return 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â';
             if (str.length <= 4) return `**${str.slice(0, 1)}***`;
             const middle = str.slice(2, -2) || '***';
             return `**${middle}**`;
@@ -192,7 +257,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         }
 
         async function fetchEmployees() {
-            const res = await fetch('api/employees.php?view=security', {
+            const res = await fetch('/GESTIUBO/api/employees.php?view=security', {
                 credentials: 'same-origin'
             });
             if (!res.ok) throw new Error('No se pudieron cargar los usuarios');
@@ -203,7 +268,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 grupo: e.group_name || e.grupo || '-',
                 coordinador_grupo: e.coordinator_name || '-',
                 coordinador_telefono: e.coordinator_phone || '',
-                user_phone: (e.phone_prefix || '+34') + ' ' + (e.phone_number || '000000000'),
+                user_phone: (e.phone_number || ''),
                 is_group_coordinator: Number(e.is_group_coordinator) === 1,
                 pendiente_aprobacion: Number(e.pending_approval) === 1,
                 foto: e.foto_url || 'https://i.pravatar.cc/160?u=' + encodeURIComponent(e.email || e.username || e.id || Math.random()),
@@ -246,9 +311,9 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         <p class="text-lg font-semibold text-slate-900 dark:text-slate-100 truncate">${emp.nombre} ${emp.apellidos}</p>
                         <p class="text-sm text-slate-500 dark:text-slate-400">Grupo: ${emp.grupo || '-'}</p>
                         ${emp.is_group_coordinator ? 
-                            `<p class="text-sm text-primary font-semibold">📞 Coordinador del grupo: ${emp.user_phone}</p>` :
-                            `<p class="text-sm text-slate-500 dark:text-slate-400">📞 Teléfono: ${emp.user_phone}</p>
-                             <p class="text-sm text-slate-500 dark:text-slate-400">📞 Tel. Coordinador: ${emp.coordinador_telefono || '-'}</p>`
+                            `<p class="text-sm text-primary font-semibold">Responsable: ${emp.user_phone}</p>` :
+                            `<p class="text-sm text-slate-500 dark:text-slate-400">TelÃƒÆ’Ã‚Â©fono: ${emp.user_phone || '-'}</p>
+                             <p class="text-sm text-slate-500 dark:text-slate-400">Tel. Responsable: ${emp.coordinador_telefono || '-'}</p>`
                         }
                         <p class="text-sm text-slate-500 dark:text-slate-400">DNI/Pasaporte: ${maskDni(emp.dni_pasaporte)}</p>
                         ${isSoloLectivo ? `<p class="mt-1 inline-flex items-center gap-2 text-xs font-semibold ${soloLectivoBadgeClass} px-2 py-1 rounded-full">
@@ -322,11 +387,22 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
     </script>
 
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('mobileMenuToggleSecurity');
+            const menu = document.getElementById('mobileMenuSecurity');
+            if (!btn || !menu) return;
+            btn.addEventListener('click', () => menu.classList.toggle('hidden'));
+        });
+
         function logout() {
-            window.location.href = 'api/logout.php';
+            window.location.href = '/GESTIUBO/logout';
         }
     </script>
 </body>
 
 </html>
+
+
+
+
 

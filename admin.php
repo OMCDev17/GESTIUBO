@@ -15,10 +15,10 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>GestIUBO - Admin</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link rel="icon" href="../GESTIUBO/imagenes/icono_circulo.png" type="image/png">
-    <link rel="icon" type="image/png" sizes="32x32" href="../GESTIUBO/imagenes/icono_circulo.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../GESTIUBO/imagenes/icono_circulo.png">
-    <link rel="apple-touch-icon" href="../GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="icon" href="/GESTIUBO/imagenes/icono_circulo.png" type="image/png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="apple-touch-icon" href="/GESTIUBO/imagenes/icono_circulo.png">
     <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
@@ -56,28 +56,37 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
     <div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
         <div class="layout-container flex h-full grow flex-col">
             <!-- Navigation / Header -->
-            <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-10 py-4 fixed top-0 left-0 right-0 z-50">
+            <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-10 py-4 sticky top-0 z-50">
                 <div class="flex items-center gap-3 flex-wrap">
-                    <img alt="Logo de la Institución" class="h-10 w-auto object-contain" src="imagenes/instituto-biorganica-agonzalez-original.png" />
-                    <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] border-l border-slate-300 dark:border-slate-700 pl-4">Admin / Administración</h2>
+                    <img alt="Logo de la InstituciÃƒÆ’Ã‚Â³n" class="h-10 w-auto object-contain" src="imagenes/instituto-biorganica-agonzalez-original.png" />
+                    <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] border-l border-slate-300 dark:border-slate-700 pl-4">AdministraciÃƒÆ’Ã‚Â³n</h2>
                     <?php if ($fullName): ?>
                         <span class="text-sm text-slate-500 dark:text-slate-400 pl-4">Hola, <?php echo $fullName; ?></span>
                     <?php endif; ?>
                 </div>
                 <div class="flex items-center gap-3 w-full md:w-auto justify-end">
-                    <button id="saveAll" class="flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 px-4 border border-primary text-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary hover:text-white transition-colors">
-                        <span class="truncate">Guardar cambios</span>
+                    <button id="mobileMenuToggleAdmin" type="button" class="md:hidden flex shrink-0 items-center justify-center overflow-hidden rounded-xl h-11 w-11 border border-primary bg-white dark:bg-slate-900 text-primary hover:bg-primary hover:text-white transition-colors" aria-label="Abrir menÃƒÂº">
+                        <span class="material-symbols-outlined text-base">menu</span>
                     </button>
-                    <a href="#" onclick="logout(); return false;" aria-label="Cerrar sesión" title="Cerrar sesión" class="flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 w-11 border border-primary bg-white dark:bg-slate-900 text-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary hover:text-white transition-colors">
-                        <span class="material-symbols-outlined text-base">power_settings_new</span>
-                    </a>
+                    <div class="hidden md:flex items-center gap-3">
+                        <button id="saveAll" class="flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 px-4 border border-primary text-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary hover:text-white transition-colors">
+                            <span class="truncate">Guardar cambios</span>
+                        </button>
+                        <a href="#" onclick="logout(); return false;" aria-label="Cerrar sesiÃƒÂ³n" title="Cerrar sesiÃƒÂ³n" class="flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 w-11 border border-primary bg-white dark:bg-slate-900 text-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-base">power_settings_new</span>
+                        </a>
+                    </div>
+                </div>
+                <div id="mobileMenuAdmin" class="hidden md:hidden w-full border-t border-slate-200 dark:border-slate-800 pt-3 flex flex-col gap-2">
+                    <button type="button" onclick="document.getElementById('saveAll')?.click();" class="w-full rounded-xl h-11 border border-primary text-primary text-sm font-bold hover:bg-primary hover:text-white transition-colors">Guardar cambios</button>
+                    <a href="#" onclick="logout(); return false;" class="w-full flex items-center justify-center rounded-xl h-11 border border-primary text-primary text-sm font-bold hover:bg-primary hover:text-white transition-colors">Cerrar sesiÃƒÂ³n</a>
                 </div>
             </header>
 
-            <main class="flex-1 flex justify-center pt-36 md:pt-28 pb-10 px-4 md:px-0">
+            <main class="flex-1 flex justify-center pt-6 md:pt-8 pb-10 px-4 md:px-0">
                 <div class="w-full max-w-[980px] flex flex-col gap-6">
                     <div class="text-center">
-                        <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Panel de Administración</h1>
+                        <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Panel de AdministraciÃƒÆ’Ã‚Â³n</h1>
                         <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Edita cualquier dato de los usuarios y guarda los cambios cuando termines.</p>
                     </div>
 
@@ -91,7 +100,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                                 id="groupFilterSelect" 
                                 class="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-primary focus:border-primary"
                             >
-                                <option value="">— Selecciona un grupo —</option>
+                                <option value="">- Selecciona un grupo -</option>
                             </select>
                             <span class="text-sm text-slate-500 dark:text-slate-400" id="groupUserCount"></span>
                         </div>
@@ -100,7 +109,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
                     <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
                         <h2 class="text-lg font-bold text-primary">Historial de estancias finalizadas</h2>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Aquí puedes ver ejemplos de usuarios que ya no tienen estancia activa.</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">AquÃƒÆ’Ã‚Â­ puedes ver ejemplos de usuarios que ya no tienen estancia activa.</p>
                         <div class="mt-4 flex items-center gap-2 mb-4">
                             <input 
                                 type="text" 
@@ -126,12 +135,58 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             </main>
 
             <footer class="text-center py-6 text-slate-500 text-sm">
-                © 2026 Laboratory Academic Management System. Todos los derechos reservados / All rights reserved.
+                Ãƒâ€šÂ© 2026 GestIUBO. Todos los derechos reservados / All rights reserved.
             </footer>
         </div>
     </div>
 
     <script>
+        function fixMojibakeText(input) {
+            let s = String(input ?? '');
+            for (let i = 0; i < 4; i++) {
+                if (!/[\u00C2\u00C3]/.test(s)) break;
+                try {
+                    const repaired = decodeURIComponent(escape(s));
+                    if (repaired === s) break;
+                    s = repaired;
+                } catch (e) {
+                    break;
+                }
+            }
+            return s;
+        }
+
+        function normalizeNodeText(node) {
+            if (!node) return;
+            if (node.nodeType === Node.TEXT_NODE) {
+                const fixed = fixMojibakeText(node.nodeValue);
+                if (fixed !== node.nodeValue) node.nodeValue = fixed;
+                return;
+            }
+            if (node.nodeType !== Node.ELEMENT_NODE) return;
+            for (const attr of ['title', 'aria-label', 'placeholder']) {
+                const val = node.getAttribute(attr);
+                if (val) {
+                    const fixed = fixMojibakeText(val);
+                    if (fixed !== val) node.setAttribute(attr, fixed);
+                }
+            }
+            for (const child of node.childNodes) normalizeNodeText(child);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            normalizeNodeText(document.body);
+            const observer = new MutationObserver((mutations) => {
+                for (const m of mutations) {
+                    if (m.type === 'characterData') normalizeNodeText(m.target);
+                    if (m.type === 'childList') {
+                        m.addedNodes.forEach((n) => normalizeNodeText(n));
+                    }
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+        });
+
         const roles = [{
                 value: 'empleado',
                 label: 'Usuario'
@@ -159,46 +214,46 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             },
         ];
         const phonePrefixOptions = [
-            { value: '+34', label: '🇪🇸 España (+34)' },
-            { value: '+1', label: '🇺🇸 Estados Unidos (+1)' },
-            { value: '+44', label: '🇬🇧 Reino Unido (+44)' },
-            { value: '+33', label: '🇫🇷 Francia (+33)' },
-            { value: '+49', label: '🇩🇪 Alemania (+49)' },
-            { value: '+39', label: '🇮🇹 Italia (+39)' },
-            { value: '+81', label: '🇯🇵 Japón (+81)' },
-            { value: '+86', label: '🇨🇳 China (+86)' },
-            { value: '+91', label: '🇮🇳 India (+91)' },
-            { value: '+55', label: '🇧🇷 Brasil (+55)' },
-            { value: '+52', label: '🇲🇽 México (+52)' },
-            { value: '+54', label: '🇦🇷 Argentina (+54)' },
-            { value: '+56', label: '🇨🇱 Chile (+56)' },
-            { value: '+506', label: '🇨🇷 Costa Rica (+506)' },
-            { value: '+57', label: '🇨🇴 Colombia (+57)' },
-            { value: '+51', label: '🇵🇪 Perú (+51)' },
-            { value: '+58', label: '🇻🇪 Venezuela (+58)' },
-            { value: '+36', label: '🇭🇺 Hungría (+36)' },
-            { value: '+48', label: '🇵🇱 Polonia (+48)' },
-            { value: '+31', label: '🇳🇱 Países Bajos (+31)' },
-            { value: '+32', label: '🇧🇪 Bélgica (+32)' },
-            { value: '+43', label: '🇦🇹 Austria (+43)' },
-            { value: '+41', label: '🇨🇭 Suiza (+41)' },
-            { value: '+46', label: '🇸🇪 Suecia (+46)' },
-            { value: '+47', label: '🇳🇴 Noruega (+47)' },
-            { value: '+45', label: '🇩🇰 Dinamarca (+45)' },
-            { value: '+358', label: '🇫🇮 Finlandia (+358)' },
-            { value: '+30', label: '🇬🇷 Grecia (+30)' },
-            { value: '+60', label: '🇲🇾 Malasia (+60)' },
-            { value: '+65', label: '🇸🇬 Singapur (+65)' },
-            { value: '+62', label: '🇮🇩 Indonesia (+62)' },
-            { value: '+66', label: '🇹🇭 Tailandia (+66)' },
-            { value: '+84', label: '🇻🇳 Vietnam (+84)' },
-            { value: '+82', label: '🇰🇷 Corea del Sur (+82)' },
-            { value: '+61', label: '🇦🇺 Australia (+61)' },
-            { value: '+64', label: '🇳🇿 Nueva Zelanda (+64)' },
-            { value: '+27', label: '🇿🇦 Sudáfrica (+27)' },
-            { value: '+20', label: '🇪🇬 Egipto (+20)' },
-            { value: '+212', label: '🇲🇦 Marruecos (+212)' },
-            { value: '+1', label: '🇨🇦 Canadá (+1)' },
+            { value: '+34', label: 'EspaÃƒÆ’Ã‚Â±a (+34)' },
+            { value: '+1', label: 'Estados Unidos (+1)' },
+            { value: '+44', label: 'Reino Unido (+44)' },
+            { value: '+33', label: 'Francia (+33)' },
+            { value: '+49', label: 'Alemania (+49)' },
+            { value: '+39', label: 'Italia (+39)' },
+            { value: '+81', label: 'JapÃƒÆ’Ã‚Â³n (+81)' },
+            { value: '+86', label: 'China (+86)' },
+            { value: '+91', label: 'India (+91)' },
+            { value: '+55', label: 'Brasil (+55)' },
+            { value: '+52', label: 'MÃƒÆ’Â©xico (+52)' },
+            { value: '+54', label: 'Argentina (+54)' },
+            { value: '+56', label: 'Chile (+56)' },
+            { value: '+506', label: 'Costa Rica (+506)' },
+            { value: '+57', label: 'Colombia (+57)' },
+            { value: '+51', label: 'PerÃƒÆ’Ã‚Âº (+51)' },
+            { value: '+58', label: 'Venezuela (+58)' },
+            { value: '+36', label: 'HungrÃƒÆ’Ã‚Â­a (+36)' },
+            { value: '+48', label: 'Polonia (+48)' },
+            { value: '+31', label: 'PaÃƒÆ’Ã‚Â­ses Bajos (+31)' },
+            { value: '+32', label: 'BÃƒÆ’Â©lgica (+32)' },
+            { value: '+43', label: 'Austria (+43)' },
+            { value: '+41', label: 'Suiza (+41)' },
+            { value: '+46', label: 'Suecia (+46)' },
+            { value: '+47', label: 'Noruega (+47)' },
+            { value: '+45', label: 'Dinamarca (+45)' },
+            { value: '+358', label: 'Finlandia (+358)' },
+            { value: '+30', label: 'Grecia (+30)' },
+            { value: '+60', label: 'Malasia (+60)' },
+            { value: '+65', label: 'Singapur (+65)' },
+            { value: '+62', label: 'Indonesia (+62)' },
+            { value: '+66', label: 'Tailandia (+66)' },
+            { value: '+84', label: 'Vietnam (+84)' },
+            { value: '+82', label: 'Corea del Sur (+82)' },
+            { value: '+61', label: 'Australia (+61)' },
+            { value: '+64', label: 'Nueva Zelanda (+64)' },
+            { value: '+27', label: 'SudÃƒÆ’Ã‚Â¡frica (+27)' },
+            { value: '+20', label: 'Egipto (+20)' },
+            { value: '+212', label: 'Marruecos (+212)' },
+            { value: '+1', label: 'CanadÃƒÆ’Ã‚Â¡ (+1)' },
         ];
 
         let employees = [];
@@ -209,7 +264,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         const normalizeGroup = (value) => value ? String(value).toUpperCase() : '';
         const maskDni = (value) => {
             const str = String(value ?? '').trim();
-            if (!str) return '—';
+            if (!str) return 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â';
             if (str.length <= 4) return `**${str.slice(0, 1)}***`;
             const middle = str.slice(2, -2) || '***';
             return `**${middle}**`;
@@ -286,7 +341,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             setTimeout(() => toast.remove(), 3200);
         }
 
-        // Confirm modal con estilo de la página
+        // Confirm modal con estilo de la pÃƒÆ’Ã‚Â¡gina
         function uiConfirm(message) {
             return new Promise((resolve) => {
                 const overlay = document.createElement('div');
@@ -354,10 +409,19 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
         async function parseJsonSafe(resp) {
             const text = await resp.text();
+            const clean = text.replace(/^\uFEFF/, '').trim();
             try {
-                return JSON.parse(text);
+                return JSON.parse(clean);
             } catch (e) {
-                throw new Error(`Respuesta no JSON (HTTP ${resp.status}): ${text.slice(0, 200)}`);
+                const firstObj = clean.indexOf('{');
+                const lastObj = clean.lastIndexOf('}');
+                if (firstObj !== -1 && lastObj !== -1 && lastObj > firstObj) {
+                    const candidate = clean.slice(firstObj, lastObj + 1);
+                    try {
+                        return JSON.parse(candidate);
+                    } catch (_) {}
+                }
+                throw new Error(`Respuesta no JSON (HTTP ${resp.status}): ${clean.slice(0, 200)}`);
             }
         }
 
@@ -373,8 +437,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             header.className = 'flex flex-col md:flex-row md:items-center md:justify-between gap-3';
             header.innerHTML = `
             <div>
-                <h3 class="text-lg font-bold text-primary">Gestión de grupos</h3>
-                <p class="text-sm text-slate-500 dark:text-slate-400">Crea nuevos grupos o elimina los que ya no necesites. Las estancias finalizadas conservarán su nombre de grupo.</p>
+                <h3 class="text-lg font-bold text-primary">GestiÃƒÆ’Ã‚Â³n de grupos</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Crea nuevos grupos o elimina los que ya no necesites. Las estancias finalizadas conservarÃƒÆ’Ã‚Â¡n su nombre de grupo.</p>
             </div>
             <div class="flex gap-2">
                 <input id="newGroupInput" type="text" placeholder="Nuevo grupo" class="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm px-3 py-2 focus:outline-none focus:ring-primary focus:border-primary" />
@@ -421,8 +485,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         String(g.name || '').trim().toLowerCase() === name.toLowerCase()
                     );
                     const confirmMessage = deletedMatch ?
-                        `Este grupo ya existía y está eliminado: "${name}".\nSe va a REACTIVAR ese grupo.\n¿Deseas continuar?` :
-                        `Se creará el nuevo grupo: "${name}".\n¿Deseas continuar?`;
+                        `Este grupo ya existÃƒÆ’Ã‚Â­a y estÃƒÆ’Ã‚Â¡ eliminado: "${name}".\nSe va a REACTIVAR ese grupo.\nÃƒâ€šÂ¿Deseas continuar?` :
+                        `Se crearÃƒÆ’Ã‚Â¡ el nuevo grupo: "${name}".\nÃƒâ€šÂ¿Deseas continuar?`;
                     const ok = await uiConfirm(confirmMessage);
                     if (!ok) return;
                     const resp = await fetch(apiUrl('api/groups.php'), {
@@ -466,7 +530,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 showToast('Grupo no encontrado', 'error');
                 return;
             }
-            const ok = await uiConfirm(`Se eliminará el grupo: "${group.label}" ¿Deseas continuar?\nLos empleados existentes conservarán el nombre.`);
+            const ok = await uiConfirm(`Se eliminarÃƒÆ’Ã‚Â¡ el grupo: "${group.label}" Ãƒâ€šÂ¿Deseas continuar?\nLos empleados existentes conservarÃƒÆ’Ã‚Â¡n el nombre.`);
             if (!ok) return;
             const resp = await fetch(apiUrl('api/groups.php'), {
                 method: 'POST',
@@ -507,7 +571,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             }
             const newName = await uiPrompt('Editar nombre del grupo', group.label);
             if (!newName || newName === group.label) return;
-            const ok = await uiConfirm(`Vas a cambiar el nombre del grupo:\n"${group.label}" → "${newName}"\n¿Confirmas?`);
+            const ok = await uiConfirm(`Vas a cambiar el nombre del grupo:\n"${group.label}" ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ "${newName}"\nÃƒâ€šÂ¿Confirmas?`);
             if (!ok) return;
             const resp = await fetch(apiUrl('api/groups.php'), {
                 method: 'POST',
@@ -668,12 +732,13 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
         async function fetchEmployees() {
             try {
+                // Carga ligera para evitar respuestas muy grandes/truncadas en hosting compartido.
                 const resp = await fetch(apiUrl('api/employees.php?include_history=1'), {
                     credentials: 'same-origin'
                 });
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const json = await parseJsonSafe(resp);
-                if (!Array.isArray(json.employees)) throw new Error('Respuesta inválida');
+                if (!Array.isArray(json.employees)) throw new Error('Respuesta invÃƒÆ’Ã‚Â¡lida');
                 employees = json.employees.map(mapFromDb);
                 historyStays = Array.isArray(json.history) ? json.history : [];
             } catch (error) {
@@ -690,7 +755,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 });
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const json = await parseJsonSafe(resp);
-                if (!Array.isArray(json.groups)) throw new Error('Respuesta inválida');
+                if (!Array.isArray(json.groups)) throw new Error('Respuesta invÃƒÆ’Ã‚Â¡lida');
                 allGroups = json.groups.map(g => ({
                     id: Number(g.id),
                     name: String(g.name || '').trim(),
@@ -807,9 +872,9 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             // Llenar el selector de grupos con todas las opciones disponibles
             if (filterSelect) {
                 const currentValue = filterSelect.value;
-                filterSelect.innerHTML = '<option value="">— Selecciona un grupo —</option>';
+                filterSelect.innerHTML = '<option value="">- Selecciona un grupo -</option>';
                 
-                // Usar groupOptions para llenar el selector (dinámicamente desde BD)
+                // Usar groupOptions para llenar el selector (dinÃƒÆ’Ã‚Â¡micamente desde BD)
                 groupOptions.forEach((group) => {
                     const option = document.createElement('option');
                     option.value = group.label;
@@ -914,14 +979,14 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         type: 'email'
                     },
                     {
-                        label: 'Teléfono (Prefijo)',
+                        label: 'TelÃƒÆ’Â©fono (Prefijo)',
                         name: 'phone_prefix',
                         value: emp.phone_prefix || '+34',
                         type: 'select',
                         options: phonePrefixOptions
                     },
                     {
-                        label: 'Teléfono (Número)',
+                        label: 'TelÃƒÆ’Â©fono (NÃƒÆ’Ã‚Âºmero)',
                         name: 'phone_number',
                         value: emp.phone_number,
                         type: 'tel',
@@ -1022,14 +1087,14 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 row.appendChild(fields);
                 card.appendChild(row);
                 
-                // Agregar botón de eliminar
+                // Agregar botÃƒÆ’Ã‚Â³n de eliminar
                 const deleteButton = document.createElement('button');
                 deleteButton.type = 'button';
                 deleteButton.className = 'mt-4 w-full px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors';
                 deleteButton.textContent = 'Eliminar usuario';
                 deleteButton.addEventListener('click', async () => {
                     const confirmed = await uiConfirm(
-                        `¿Estás seguro que deseas borrar este usuario?\n${emp.nombre} ${emp.apellidos}\n\nLa acción será permanente.`
+                        `Ãƒâ€šÂ¿EstÃƒÆ’Ã‚Â¡s seguro que deseas borrar este usuario?\n${emp.nombre} ${emp.apellidos}\n\nLa acciÃƒÆ’Ã‚Â³n serÃƒÆ’Ã‚Â¡ permanente.`
                     );
                     if (!confirmed) return;
                     
@@ -1076,7 +1141,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
             const searchTerm = (searchInput?.value?.trim() || '').toLowerCase();
 
-            // Si no hay término de búsqueda, no renderizar nada
+            // Si no hay tÃƒÆ’Â©rmino de bÃƒÆ’Ã‚Âºsqueda, no renderizar nada
             if (!searchTerm) {
                 historyContainer.innerHTML = `<p class="text-sm text-slate-500 dark:text-slate-400">Usa el buscador para encontrar estancias finalizadas.</p>`;
                 return;
@@ -1109,7 +1174,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         <img class="h-12 w-12 rounded-full object-cover border border-slate-200 dark:border-slate-700" src="${emp.foto_url || emp.foto || 'https://i.pravatar.cc/160?u=' + encodeURIComponent(emp.email || emp.username || '')}" alt="${emp.nombre || ''} ${emp.apellidos || ''}" />
                         <div>
                             <p class="font-semibold text-slate-900 dark:text-slate-100">${emp.nombre || ''} ${emp.apellidos || ''}</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">${displayRole} — Grupo ${label}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">${displayRole} ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Grupo ${label}</p>
                         </div>
                     </div>
                     <span class="text-xs font-semibold text-rose-700 dark:text-rose-200">Estancia finalizada</span>
@@ -1204,7 +1269,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 detailsRow.innerHTML = `
                     <div>
                         <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">Motivo</p>
-                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.motivo || '—'}</p>
+                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.motivo || 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â'}</p>
                     </div>
                     <div>
                         <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">Inicio</p>
@@ -1219,12 +1284,12 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         <p class="text-slate-700 dark:text-slate-200 font-medium">${parseInt(req.horario) === 1 ? 'Completo' : 'Solo lectivo'}</p>
                     </div>
                     <div>
-                        <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">Institución</p>
-                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.institucion || '—'}</p>
+                        <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">InstituciÃƒÆ’Ã‚Â³n</p>
+                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.institucion || 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â'}</p>
                     </div>
                     <div>
-                        <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">País</p>
-                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.pais || '—'}</p>
+                        <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">PaÃƒÆ’Ã‚Â­s</p>
+                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.pais || 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â'}</p>
                     </div>
                 `;
                 
@@ -1252,7 +1317,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         }
 
         async function approveStayRequest(requestId) {
-            const confirmed = await uiConfirm('¿Deseas aprobar esta solicitud de estancia?');
+            const confirmed = await uiConfirm('Ãƒâ€šÂ¿Deseas aprobar esta solicitud de estancia?');
             if (!confirmed) return;
 
             try {
@@ -1276,12 +1341,12 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 renderStayRequests(stayRequests);
             } catch (error) {
                 console.error('Error approving request:', error);
-                showToast('Error de conexión al servidor', 'error');
+                showToast('Error de conexiÃƒÆ’Ã‚Â³n al servidor', 'error');
             }
         }
 
         async function rejectStayRequest(requestId) {
-            const confirmed = await uiConfirm('¿Deseas rechazar esta solicitud de estancia?');
+            const confirmed = await uiConfirm('Ãƒâ€šÂ¿Deseas rechazar esta solicitud de estancia?');
             if (!confirmed) return;
 
             try {
@@ -1305,12 +1370,14 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 renderStayRequests(stayRequests);
             } catch (error) {
                 console.error('Error rejecting request:', error);
-                showToast('Error de conexión al servidor', 'error');
+                showToast('Error de conexiÃƒÆ’Ã‚Â³n al servidor', 'error');
             }
         }
 
         async function loadAndRender() {
-            await Promise.all([fetchGroups(), fetchEmployees()]);
+            await fetchGroups();
+            renderGroupManager();
+            await fetchEmployees();
             employeeBaselineById = new Map(employees.map((emp) => [Number(emp.id), employeeSignature(emp)]));
             stayBaselineById = new Map(historyStays.map((stay) => [Number(stay.id), staySignature(stay)]));
             render();
@@ -1343,12 +1410,21 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
     </script>
 
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('mobileMenuToggleAdmin');
+            const menu = document.getElementById('mobileMenuAdmin');
+            if (!btn || !menu) return;
+            btn.addEventListener('click', () => menu.classList.toggle('hidden'));
+        });
+
         function logout() {
-            window.location.href = 'api/logout.php';
+            window.location.href = '/GESTIUBO/logout';
         }
     </script>
 </body>
 
 </html>
+
+
 
 

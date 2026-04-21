@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $isNewStay = (isset($_GET['mode']) && $_GET['mode'] === 'newstay');
 $prefill = [];
 if ($isNewStay) {
@@ -83,10 +83,10 @@ try {
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link rel="icon" href="../GESTIUBO/imagenes/icono_circulo.png" type="image/png">
-    <link rel="icon" type="image/png" sizes="32x32" href="../GESTIUBO/imagenes/icono_circulo.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../GESTIUBO/imagenes/icono_circulo.png">
-    <link rel="apple-touch-icon" href="../GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="icon" href="/GESTIUBO/imagenes/icono_circulo.png" type="image/png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="apple-touch-icon" href="/GESTIUBO/imagenes/icono_circulo.png">
     <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
@@ -252,7 +252,7 @@ try {
                                     <div class="lg:col-span-1">
                                         <p class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Foto / Photo</p>
                                         <label for="photoUpload" class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition">
-                                            <input id="photoUpload" name="photo" type="file" accept="image/*" class="sr-only" />
+                                            <input id="photoUpload" name="photo" type="file" accept="image/*" class="sr-only" required />
                                             <span id="photoDropHint" class="flex flex-col items-center gap-2">
                                                 <span class="material-symbols-outlined text-4xl text-primary">photo_camera</span>
                                                 <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Arrastra y suelta aquí una foto / Drag & drop a photo here</span>
@@ -348,7 +348,7 @@ try {
                                 <div class="flex items-start gap-3 p-4 bg-primary/5 rounded-lg border border-primary/10">
                                     <input id="acceptConfidentiality" type="checkbox" name="accept_confidentiality" required class="h-4 w-4 text-primary border-slate-300 dark:border-slate-700 rounded mt-0.5 flex-shrink-0">
                                     <label for="acceptConfidentiality" class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed cursor-pointer">
-                                        Acepto el <a href="#" id="confidentialityLinkEs" class="font-semibold text-primary hover:underline">compromiso de confidencialidad</a>. / I accept the <a href="#" id="confidentialityLinkEn" class="font-semibold text-primary hover:underline">confidentiality commitment</a>.
+                                        Acepto el <a href="/GESTIUBO/docs/pruebaPDF.pdf" download="compromiso_confidencialidad.pdf" id="confidentialityLinkEs" class="font-semibold text-primary hover:underline">compromiso de confidencialidad</a>. / I accept the <a href="/GESTIUBO/docs/pruebaPDF.pdf" download="confidentiality_commitment.pdf" id="confidentialityLinkEn" class="font-semibold text-primary hover:underline">confidentiality commitment</a>.
                                     </label>
                                 </div>
                                 <button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.01] flex items-center justify-center gap-2" type="submit">
@@ -356,7 +356,7 @@ try {
                                     Enviar Registro / Submit Registration
                                 </button>
                                 <div class="text-center">
-                                    <a href="Loggin.php" class="text-sm font-semibold text-primary hover:underline mt-2 inline-block">Volver al login / Back to login</a>
+                                    <a href="acceso" class="text-sm font-semibold text-primary hover:underline mt-2 inline-block">Volver al login / Back to login</a>
                                 </div>
                             </div>
                         </form>
@@ -903,6 +903,19 @@ try {
                     }
                 }
 
+                // La foto es obligatoria: en nueva estancia sirve la ya existente o una nueva.
+                // En registro nuevo, obliga a subir una nueva.
+                const hasExistingPhoto = Boolean(initialPhotoUrl);
+                if ((!isNewStay && !selectedPhoto) || (isNewStay && !selectedPhoto && !hasExistingPhoto)) {
+                    showPhotoError('La foto es obligatoria / Photo is required');
+                    photoUpload?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    releaseSubmit();
+                    return;
+                }
+
                 try {
                     const endpoint = isNewStay ? 'api/new_stay.php' : 'api/register.php';
                     const res = await fetch(endpoint, {
@@ -919,7 +932,7 @@ try {
                         const text = await res.text().catch(() => '');
                         if (res.status === 401) {
                             showToast('Sesión expirada. Vuelve a iniciar sesión.', 'error');
-                            window.location.href = 'Loggin.php';
+                            window.location.href = 'acceso';
                             return;
                         }
                         showToast(text || 'No se pudo conectar con el servidor.', 'error');
@@ -966,7 +979,7 @@ try {
                     form.reset();
                     toggleFechas();
                     resetPreview();
-                    window.location.href = isNewStay ? 'empleado.php' : 'registro_exitoso.php';
+                    window.location.href = isNewStay ? 'usuario' : 'registro-exitoso';
                 } catch (error) {
                     console.error(error);
                     showToast('No se pudo conectar con el servidor.', 'error');
@@ -1009,3 +1022,5 @@ The user guarantees that the data provided is accurate and undertakes to notify 
 </body>
 
 </html>
+
+

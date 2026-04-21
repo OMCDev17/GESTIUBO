@@ -49,6 +49,19 @@ function getSessionUser(): ?array
     return isset($_SESSION['user']) && is_array($_SESSION['user']) ? $_SESSION['user'] : null;
 }
 
+function loginRoute(): string
+{
+    $script = $_SERVER['SCRIPT_NAME'] ?? '/GESTIUBO/index.php';
+    $base = str_contains($script, '/api/')
+        ? dirname(dirname($script))
+        : dirname($script);
+    $base = rtrim(str_replace('\\', '/', $base), '/');
+    if ($base === '') {
+        $base = '/GESTIUBO';
+    }
+    return $base . '/acceso';
+}
+
 function requireLogin(bool $isApi = false): void
 {
     if (!getSessionUser()) {
@@ -59,7 +72,7 @@ function requireLogin(bool $isApi = false): void
             exit;
         }
 
-        header('Location: ../Loggin.php');
+        header('Location: ' . loginRoute());
         exit;
     }
 }
@@ -91,7 +104,9 @@ function requireRole($roles, bool $isApi = false): void
             exit;
         }
 
-        header('Location: ../Loggin.php');
+        header('Location: ' . loginRoute());
         exit;
     }
 }
+
+

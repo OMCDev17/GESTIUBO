@@ -4,20 +4,20 @@
 // ============================================================================
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: Recuperacion.html');
+    header('Location: recuperar');
     exit;
 }
 
 $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
 if (!$email) {
-    header('Location: Recuperacion.html?error=invalid');
+    header('Location: recuperar?error=invalid');
     exit;
 }
 
 $config = require __DIR__ . '/api/config.php';
 $mysqli = new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
 if ($mysqli->connect_errno) {
-    header('Location: Recuperacion.html?error=db');
+    header('Location: recuperar?error=db');
     exit;
 }
 $mysqli->set_charset($config['charset']);
@@ -91,6 +91,10 @@ if ($mailSent) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Código enviado - Instituto de Bio-Orgánica Antonio González</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link rel="icon" href="/GESTIUBO/imagenes/icono_circulo.png" type="image/png">
+<link rel="icon" type="image/png" sizes="32x32" href="/GESTIUBO/imagenes/icono_circulo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/GESTIUBO/imagenes/icono_circulo.png">
+<link rel="apple-touch-icon" href="/GESTIUBO/imagenes/icono_circulo.png">
 <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -142,7 +146,7 @@ if ($mailSent) {
                         <div class="text-sm text-blue-800 dark:text-blue-300">
                             <p class="font-semibold mb-2">Hemos enviado un código de 4 dígitos a tu correo</p>
                             <p class="mb-3">El código expira en 15 minutos. Utilízalo para restablecer tu contraseña.</p>
-                            <a href="resetear_contraseña.php" class="inline-flex items-center gap-2 text-blue-700 dark:text-blue-300 hover:underline font-semibold">
+                            <a href="restablecer-password" class="inline-flex items-center gap-2 text-blue-700 dark:text-blue-300 hover:underline font-semibold">
                                 Ingresar código de verificación →
                             </a>
                         </div>
@@ -159,11 +163,11 @@ if ($mailSent) {
                 </div>
                 
                 <div class="flex gap-3">
-                    <a href="resetear_contraseña.php" class="flex-grow text-center h-12 rounded-xl bg-primary text-white font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                    <a href="restablecer-password" class="flex-grow text-center h-12 rounded-xl bg-primary text-white font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
                         <span class="text-white font-bold">✔</span>
                         Validar Código / Verify code
                     </a>
-                    <a href="Loggin.php" class="flex-grow text-center h-12 rounded-xl border border-primary text-primary font-bold hover:bg-primary/5 transition flex items-center justify-center">
+                    <a href="acceso" class="flex-grow text-center h-12 rounded-xl border border-primary text-primary font-bold hover:bg-primary/5 transition flex items-center justify-center">
                         Volver / Back
                     </a>
                 </div>
@@ -178,5 +182,8 @@ if ($mailSent) {
 </html>
 <?php
 exit;
+
+
+
 
 

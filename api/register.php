@@ -388,8 +388,8 @@ $groupName = trim((string) ($data['grupo'] ?? ''));
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $basePath = rtrim(dirname(dirname($_SERVER['PHP_SELF'])), '/\\');
-$loginUrl = "{$scheme}://{$host}{$basePath}/Loggin.php";
-$approveUrl = "{$scheme}://{$host}{$basePath}/approve_group_request.php?token={$approvalToken}";
+$loginUrl = "{$scheme}://{$host}{$basePath}/acceso";
+$approveUrl = "{$scheme}://{$host}{$basePath}/aprobar-solicitud?token={$approvalToken}";
 
 $approverQuery = $mysqli->prepare("
     SELECT DISTINCT e.id, e.nombre, e.apellidos, e.email
@@ -486,3 +486,6 @@ echo json_encode([
     'pending_approval' => true,
     'approval_email_sent' => $sentApprovalEmail,
 ]);
+
+
+

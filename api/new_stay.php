@@ -78,6 +78,7 @@ foreach (['institucion', 'pais'] as $key) {
 }
 
 $targetId = isset($payload['user_id']) ? (int)$payload['user_id'] : $sessionId;
+$newPhotoUrl = trim((string)($payload['foto_url'] ?? ''));
 
 // Solo admin puede crear estancias para otros
 if ($targetId !== $sessionId && $sessionRole !== 'admin') {
@@ -243,6 +244,17 @@ try {
 
     if (!$userData) {
         throw new RuntimeException('No se pudo obtener los datos del usuario');
+    }
+
+    // Si llega una nueva foto desde "new stay", actualizarla en el perfil del usuario.
+    if ($newPhotoUrl !== '') {
+        $updPhoto = $mysqli->prepare("UPDATE employees SET foto_url = ? WHERE id = ?");
+        if (!$updPhoto) {
+            throw new RuntimeException('No se pudo preparar la actualización de foto');
+        }
+        $updPhoto->bind_param('si', $newPhotoUrl, $targetId);
+        $updPhoto->execute();
+        $updPhoto->close();
     }
 
     // Generar token de aprobación único

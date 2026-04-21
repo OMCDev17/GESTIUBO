@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step == 1) {
                 $_SESSION['reset_code'] = $resetCode;
                 
                 // Redirigir al paso 2
-                header('Location: resetear_contraseña.php?step=2');
+                header('Location: restablecer-password?step=2');
                 exit;
             } else {
                 $codeError = 'El código es inválido o ha expirado';
@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step == 1) {
         $resetCode = $_SESSION['reset_code'];
     } else {
         // Si no hay datos en sesión, redirige al inicio
-        header('Location: resetear_contraseña.php');
+        header('Location: restablecer-password');
         exit;
     }
 }
@@ -75,6 +75,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step == 1) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $validCode ? 'Nueva Contraseña' : 'Validar Código'; ?> - Instituto de Bio-Orgánica Antonio González</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="icon" href="/GESTIUBO/imagenes/icono_circulo.png" type="image/png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="apple-touch-icon" href="/GESTIUBO/imagenes/icono_circulo.png">
     <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
     <script id="tailwind-config">
@@ -203,12 +207,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step == 1) {
 
             <div class="text-center pt-4 border-t border-slate-200 dark:border-slate-700 text-sm">
                 <p id="noCodeText" class="text-slate-600 dark:text-slate-400 mb-2">¿No recibiste el código?</p>
-                <a id="newCodeText" href="Recuperacion.html" class="text-primary hover:underline">Solicitar un nuevo código →</a>
+                <a id="newCodeText" href="recuperar" class="text-primary hover:underline">Solicitar un nuevo código →</a>
             </div>
         <?php endif; ?>
 
         <div class="text-center">
-            <a href="Loggin.php" class="text-sm text-slate-500 dark:text-slate-400 hover:underline">Volver al inicio de sesión</a>
+            <a href="acceso" class="text-sm text-slate-500 dark:text-slate-400 hover:underline">Volver al inicio de sesión</a>
         </div>
     </div>
 </div>
@@ -271,7 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step == 1) {
 
                 if (data.success) {
                     showToast(window.passwordAlerts?.alertSuccess || 'Contraseña restablecida exitosamente', 'success');
-                    window.location.href = 'Loggin.php';
+                    window.location.href = 'acceso';
                 } else {
                     showToast(data.error || window.passwordAlerts?.alertError || 'Error al restablecer la contraseña', 'error');
                     btn.disabled = false;
@@ -380,4 +384,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step == 1) {
 </script>
 </body>
 </html>
+
+
+
 

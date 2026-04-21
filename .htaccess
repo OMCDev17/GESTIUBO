@@ -1,0 +1,55 @@
+RewriteEngine On
+RewriteBase /GESTIUBO/
+
+# Redirección canónica: rutas antiguas -> rutas del mapa
+RewriteCond %{THE_REQUEST} \s/+GESTIUBO/Loggin\.php[\s?] [NC]
+RewriteRule ^Loggin\.php$ acceso [R=302,L,NC]
+RewriteCond %{THE_REQUEST} \s/+GESTIUBO/empleado\.php[\s?] [NC]
+RewriteRule ^empleado\.php$ usuario [R=302,L,NC]
+RewriteCond %{THE_REQUEST} \s/+GESTIUBO/admin\.php[\s?] [NC]
+RewriteRule ^admin\.php$ admin [R=302,L,NC]
+RewriteCond %{THE_REQUEST} \s/+GESTIUBO/seguridad\.php[\s?] [NC]
+RewriteRule ^seguridad\.php$ seguridad [R=302,L,NC]
+RewriteCond %{THE_REQUEST} \s/+GESTIUBO/supervisor\.php[\s?] [NC]
+RewriteRule ^supervisor\.php$ coordinador [R=302,L,NC]
+RewriteCond %{THE_REQUEST} \s/+GESTIUBO/Formulario\.php[\s?] [NC]
+RewriteRule ^Formulario\.php$ registro [R=302,L,NC]
+RewriteCond %{THE_REQUEST} \s/+GESTIUBO/Recuperacion\.html[\s?] [NC]
+RewriteRule ^Recuperacion\.html$ recuperar [R=302,L,NC]
+RewriteCond %{THE_REQUEST} \s/+GESTIUBO/change_password\.php[\s?] [NC]
+RewriteRule ^change_password\.php$ cambiar-password [R=302,L,NC]
+RewriteCond %{THE_REQUEST} \s/+GESTIUBO/resetear_contrase(?:%C3%B1|ñ)a\.php[\s?] [NC]
+RewriteRule ^resetear_contrase(?:%C3%B1|ñ)a\.php$ restablecer-password [R=302,L,NC]
+RewriteCond %{THE_REQUEST} \s/+GESTIUBO/registro_exitoso\.php[\s?] [NC]
+RewriteRule ^registro_exitoso\.php$ registro-exitoso [R=302,L,NC]
+RewriteCond %{THE_REQUEST} \s/+GESTIUBO/approve_group_request\.php[\s?] [NC]
+RewriteRule ^approve_group_request\.php$ aprobar-solicitud [R=302,L,NC]
+
+# Si el archivo o carpeta existe, no reescribir.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Rutas principales
+RewriteRule ^acceso/?$ Loggin.php [L,NC,QSA]
+RewriteRule ^login/?$ Loggin.php [L,NC,QSA]
+RewriteRule ^usuario/?$ empleado.php [L,NC,QSA]
+RewriteRule ^empleado/?$ empleado.php [L,NC,QSA]
+RewriteRule ^admin/?$ admin.php [L,NC,QSA]
+RewriteRule ^seguridad/?$ seguridad.php [L,NC,QSA]
+RewriteRule ^coordinador/?$ supervisor.php [L,NC,QSA]
+RewriteRule ^supervisor/?$ supervisor.php [L,NC,QSA]
+RewriteRule ^registro/?$ Formulario.php [L,NC,QSA]
+RewriteRule ^nueva-estancia/?$ Formulario.php?mode=newstay [L,NC,QSA]
+
+# Recuperación / contraseña
+RewriteRule ^recuperar/?$ Recuperacion.html [L,NC,QSA]
+RewriteRule ^cambiar-password/?$ change_password.php [L,NC,QSA]
+RewriteRule ^restablecer-password/?$ resetear_contraseña.php [L,NC,QSA]
+
+# Utilidades
+RewriteRule ^logout/?$ api/logout.php [L,NC,QSA]
+RewriteRule ^loggout2/?$ loggout2.html [L,NC,QSA]
+RewriteRule ^salida/?$ loggout2.html [L,NC,QSA]
+RewriteRule ^aprobar-solicitud/?$ approve_group_request.php [L,NC,QSA]
+RewriteRule ^registro-exitoso/?$ registro_exitoso.php [L,NC,QSA]

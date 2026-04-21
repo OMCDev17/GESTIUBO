@@ -119,17 +119,17 @@ $_SESSION['user'] = $user;
 
 // Determine redirect according to stored role
 $role = strtolower($user['rol'] ?? '');
-$redirect = 'empleado.php';
+$redirect = 'usuario';
 switch ($role) {
     case 'admin':
-        $redirect = 'admin.php';
+        $redirect = 'admin';
         break;
     case 'supervisor':
     case 'coordinador':
-        $redirect = 'supervisor.php';
+        $redirect = 'coordinador';
         break;
     case 'seguridad':
-        $redirect = 'seguridad.php';
+        $redirect = 'seguridad';
         break;
 }
 
@@ -138,4 +138,7 @@ echo json_encode([
     'user' => $user,
     'redirect' => $redirect,
 ]);
+
+
+
 

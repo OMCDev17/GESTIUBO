@@ -19,6 +19,7 @@ if (ini_get('session.use_cookies')) {
 }
 session_destroy();
 
-header('Location: ../loggout2.html');
+$basePath = rtrim(dirname(dirname($_SERVER['PHP_SELF'] ?? '/GESTIUBO/api/logout.php')), '/\\');
+header('Location: ' . $basePath . '/salida');
 exit;
 

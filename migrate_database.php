@@ -124,8 +124,8 @@ $mysqli->close();
             <p class="text-slate-300">La tabla password_resets ha sido actualizada correctamente.</p>
             <p class="text-slate-400 text-sm mt-4">Ya puedes usar el sistema de restablecimiento de contraseña.</p>
             <div class="mt-6 flex gap-3">
-                <a href="Loggin.php" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">Ir al Login</a>
-                <a href="Recuperacion.html" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition">Recuperar Contraseña</a>
+                <a href="acceso" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">Ir al Login</a>
+                <a href="recuperar" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition">Recuperar Contraseña</a>
             </div>
         </div>
     </div>

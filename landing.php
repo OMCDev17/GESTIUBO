@@ -3,6 +3,10 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="icon" href="/GESTIUBO/imagenes/icono_circulo.png" type="image/png"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="/GESTIUBO/imagenes/icono_circulo.png"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="/GESTIUBO/imagenes/icono_circulo.png"/>
+    <link rel="apple-touch-icon" href="/GESTIUBO/imagenes/icono_circulo.png"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -50,10 +54,10 @@
                     <span class="text-slate-300">|</span>
                     <span id="lang-en" class="cursor-pointer text-slate-400 border-b-2 border-transparent hover:text-primary hover:border-primary pb-0.5" onclick="switchLanguage('en')">EN</span>
                 </div>
-                <a href="Loggin.php" class="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-white text-sm font-semibold hover:bg-primary/90 transition-colors">
+                <a href="acceso" class="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-white text-sm font-semibold hover:bg-primary/90 transition-colors">
                     <span id="t-header-login">Ingresar</span>
                 </a>
-                <a href="Formulario.php" class="inline-flex items-center gap-2 rounded-full border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm font-semibold text-primary hover:border-primary">
+                <a href="registro" class="inline-flex items-center gap-2 rounded-full border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm font-semibold text-primary hover:border-primary">
                     <span id="t-header-register">Registrar</span>
                 </a>
             </div>
@@ -98,7 +102,7 @@
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-3">
-                            <a href="Loggin.php" class="inline-flex items-center gap-2 rounded-full bg-white text-primary font-semibold px-5 py-3 shadow-lg hover:shadow-xl transition">
+                            <a href="acceso" class="inline-flex items-center gap-2 rounded-full bg-white text-primary font-semibold px-5 py-3 shadow-lg hover:shadow-xl transition">
                                 <span id="t-hero-cta1">Ir al panel</span>
                             </a>
                             <a href="#informacion" class="inline-flex items-center gap-2 rounded-full border border-white/40 text-white font-semibold px-5 py-3 hover:bg-white/10 transition">
@@ -478,4 +482,7 @@
 </script>
 </body>
 </html>
+
+
+
 

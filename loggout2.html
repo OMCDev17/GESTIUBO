@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 
 <html class="light" lang="es">
 
@@ -8,12 +8,12 @@
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <title>Logout Exitoso - Lab Portal</title>
+    <title>GestIUBO - Logout Exitoso</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link rel="icon" href="../GESTIUBO/imagenes/icono_circulo.png" type="image/png">
-    <link rel="icon" type="image/png" sizes="32x32" href="../GESTIUBO/imagenes/icono_circulo.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../GESTIUBO/imagenes/icono_circulo.png">
-    <link rel="apple-touch-icon" href="../GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="icon" href="/GESTIUBO/imagenes/icono_circulo.png" type="image/png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="apple-touch-icon" href="/GESTIUBO/imagenes/icono_circulo.png">
     <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&amp;display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap"
@@ -94,7 +94,7 @@
                     </div>
                     <!-- Actions -->
                     <div class="flex flex-col gap-3">
-                        <a href="Loggin.php"
+                        <a href="acceso"
                             class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-5 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] hover:opacity-90 transition-opacity">
                             <span class="truncate">Volver al Inicio / Back to Login</span>
                         </a>
@@ -110,7 +110,7 @@
             <!-- Footer / Copyright -->
             <footer class="py-6 px-10 border-t border-primary/5 text-center">
                 <p class="text-slate-400 text-xs font-medium uppercase tracking-widest">
-                    © 2026 Lab Portal. All Rights Reserved.
+                    © 2026 GestIUBO. All Rights Reserved.
                 </p>
             </footer>
         </div>
@@ -130,7 +130,7 @@
                     remaining -= 1;
                     if (countdownEl) countdownEl.textContent = remaining.toString();
                     if (remaining <= 0) {
-                        window.location.href = 'Loggin.php';
+                        window.location.href = 'acceso';
                     } else {
                         setTimeout(tick, 1000);
                     }

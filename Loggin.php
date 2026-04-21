@@ -6,13 +6,13 @@ $user = getSessionUser();
 if ($user) {
     $role = strtolower($user['rol'] ?? '');
     $mapping = [
-        'admin' => 'admin.php',
-        'supervisor' => 'supervisor.php',
-        'coordinador' => 'supervisor.php',
-        'seguridad' => 'seguridad.php',
-        'empleado' => 'empleado.php',
+        'admin' => 'admin',
+        'supervisor' => 'coordinador',
+        'coordinador' => 'coordinador',
+        'seguridad' => 'seguridad',
+        'empleado' => 'usuario',
     ];
-    $target = $mapping[$role] ?? 'empleado.php';
+    $target = $mapping[$role] ?? 'usuario';
     header("Location: $target");
     exit;
 }
@@ -27,10 +27,10 @@ if ($user) {
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>GestIUBO - Acceso</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link rel="icon" href="../GESTIUBO/imagenes/icono_circulo.png" type="image/png">
-    <link rel="icon" type="image/png" sizes="32x32" href="../GESTIUBO/imagenes/icono_circulo.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../GESTIUBO/imagenes/icono_circulo.png">
-    <link rel="apple-touch-icon" href="../GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="icon" href="/GESTIUBO/imagenes/icono_circulo.png" type="image/png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/GESTIUBO/imagenes/icono_circulo.png">
+    <link rel="apple-touch-icon" href="/GESTIUBO/imagenes/icono_circulo.png">
     <link href="https://fonts.googleapis.com/css2?family=Argentum+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
     <script>
@@ -131,7 +131,7 @@ if ($user) {
                     if (loginButtonText) loginButtonText.textContent = t.signIn;
 
                     const footerP = document.querySelector('.mt-12.pt-8 p');
-                    if (footerP) footerP.innerHTML = `${t.noAccount} <a class="text-lab-accent font-bold hover:underline" href="Formulario.php">${t.createAccount}</a>`;
+                    if (footerP) footerP.innerHTML = `${t.noAccount} <a class="text-lab-accent font-bold hover:underline" href="registro">${t.createAccount}</a>`;
 
                     // Update Language UI Toggle
                     const esBtn = document.getElementById('lang-es');
@@ -199,7 +199,7 @@ if ($user) {
             <div class="mt-12 pt-8 border-t border-slate-100 text-center">
                 <p class="text-slate-500 text-sm">
                     ¿No tienes una cuenta?
-                    <a class="text-lab-accent font-bold hover:underline" href="Formulario.php">Crear Cuenta de Miembro</a>
+                    <a class="text-lab-accent font-bold hover:underline" href="registro">Crear Cuenta de Miembro</a>
                 </p>
             </div>
         </section>
@@ -257,7 +257,7 @@ if ($user) {
                 if (result.redirect) {
                     window.location.href = result.redirect;
                 } else {
-                    window.location.href = 'empleado.php';
+                    window.location.href = 'usuario';
                 }
             } catch (err) {
                 console.error(err);
@@ -268,7 +268,10 @@ if ($user) {
             }
         }
     </script>
-
+    <!-- Footer -->
+    <footer class="text-center py-6 text-slate-500 text-sm">
+        © 2026 GestIUBO. Todos los derechos reservados / All rights reserved.
+    </footer>
 </body>
 
 </html>
