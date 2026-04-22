@@ -313,7 +313,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         ${emp.is_group_coordinator ? 
                             `<p class="text-sm text-primary font-semibold">Responsable: ${emp.user_phone}</p>` :
                             `<p class="text-sm text-slate-500 dark:text-slate-400">TelÃƒÆ’Ã‚Â©fono: ${emp.user_phone || '-'}</p>
-                             <p class="text-sm text-slate-500 dark:text-slate-400">Tel. Responsable: ${emp.coordinador_telefono || '-'}</p>`
+                             <p class="text-sm text-slate-500 dark:text-slate-400">Tel. Responsable: ${emp.coordinador_telefono ? `${emp.coordinador_telefono}${emp.coordinador_grupo && emp.coordinador_grupo !== '-' ? ` (${emp.coordinador_grupo})` : ''}` : '-'}</p>`
                         }
                         <p class="text-sm text-slate-500 dark:text-slate-400">DNI/Pasaporte: ${maskDni(emp.dni_pasaporte)}</p>
                         ${isSoloLectivo ? `<p class="mt-1 inline-flex items-center gap-2 text-xs font-semibold ${soloLectivoBadgeClass} px-2 py-1 rounded-full">

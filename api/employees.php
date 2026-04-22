@@ -31,7 +31,7 @@ $securityView = (isset($_GET['view']) && $_GET['view'] === 'security');
 if ($securityView) {
     // Vista de seguridad: usar la estancia real más relevante por empleado
     // (prioriza activa; si no hay activa, toma la más reciente archivada).
-    $query = "SELECT e.id, e.nombre, e.apellidos, e.dni_pasaporte, e.fecha_nacimiento, e.email,
+    $query = "SELECT e.id, e.nombre, e.apellidos, e.username, e.dni_pasaporte, e.fecha_nacimiento, e.email,
                      e.phone_prefix, e.phone_number,
                      s.motivo, s.fecha_inicio, s.fecha_fin, COALESCE(s.group_id, pgr.group_id) AS group_id, g.name AS group_name, e.foto_url, e.rol, s.horario, s.institucion, s.pais,
                      (
@@ -92,7 +92,7 @@ if ($securityView) {
               ORDER BY g.name, e.apellidos DESC, e.nombre DESC";
 } else {
     // Vista general (supervisión/edición): solo estancia activa.
-    $query = "SELECT e.id, e.nombre, e.apellidos, e.dni_pasaporte, e.fecha_nacimiento, e.email,
+    $query = "SELECT e.id, e.nombre, e.apellidos, e.username, e.dni_pasaporte, e.fecha_nacimiento, e.email,
                      e.phone_prefix, e.phone_number,
                      s.motivo, s.fecha_inicio, s.fecha_fin, COALESCE(s.group_id, pgr.group_id) AS group_id, g.name AS group_name, e.foto_url, e.rol, s.horario, s.institucion, s.pais,
                      (

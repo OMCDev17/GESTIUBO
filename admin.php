@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/api/auth.php';
 requireRole('admin');
+header('Content-Type: text/html; charset=UTF-8');
 
 $user = getSessionUser();
 $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user['apellidos'] ?? ''))) : '';
@@ -13,7 +14,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>GestIUBO - Admin</title>
+    <title>GestIUBO - Administración</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link rel="icon" href="/GESTIUBO/imagenes/icono_circulo.png" type="image/png">
     <link rel="icon" type="image/png" sizes="32x32" href="/GESTIUBO/imagenes/icono_circulo.png">
@@ -58,35 +59,35 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             <!-- Navigation / Header -->
             <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-10 py-4 sticky top-0 z-50">
                 <div class="flex items-center gap-3 flex-wrap">
-                    <img alt="Logo de la InstituciÃƒÆ’Ã‚Â³n" class="h-10 w-auto object-contain" src="imagenes/instituto-biorganica-agonzalez-original.png" />
-                    <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] border-l border-slate-300 dark:border-slate-700 pl-4">AdministraciÃƒÆ’Ã‚Â³n</h2>
+                    <img alt="Logo de la Institucion" class="h-10 w-auto object-contain" src="imagenes/instituto-biorganica-agonzalez-original.png" />
+                    <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] border-l border-slate-300 dark:border-slate-700 pl-4">Administración</h2>
                     <?php if ($fullName): ?>
                         <span class="text-sm text-slate-500 dark:text-slate-400 pl-4">Hola, <?php echo $fullName; ?></span>
                     <?php endif; ?>
                 </div>
                 <div class="flex items-center gap-3 w-full md:w-auto justify-end">
-                    <button id="mobileMenuToggleAdmin" type="button" class="md:hidden flex shrink-0 items-center justify-center overflow-hidden rounded-xl h-11 w-11 border border-primary bg-white dark:bg-slate-900 text-primary hover:bg-primary hover:text-white transition-colors" aria-label="Abrir menÃƒÂº">
+                    <button id="mobileMenuToggleAdmin" type="button" class="md:hidden flex shrink-0 items-center justify-center overflow-hidden rounded-xl h-11 w-11 border border-primary bg-white dark:bg-slate-900 text-primary hover:bg-primary hover:text-white transition-colors" aria-label="Abrir menu">
                         <span class="material-symbols-outlined text-base">menu</span>
                     </button>
                     <div class="hidden md:flex items-center gap-3">
                         <button id="saveAll" class="flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 px-4 border border-primary text-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary hover:text-white transition-colors">
                             <span class="truncate">Guardar cambios</span>
                         </button>
-                        <a href="#" onclick="logout(); return false;" aria-label="Cerrar sesiÃƒÂ³n" title="Cerrar sesiÃƒÂ³n" class="flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 w-11 border border-primary bg-white dark:bg-slate-900 text-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary hover:text-white transition-colors">
+                        <a href="#" onclick="logout(); return false;" aria-label="Cerrar sesion" title="Cerrar sesion" class="flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 w-11 border border-primary bg-white dark:bg-slate-900 text-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary hover:text-white transition-colors">
                             <span class="material-symbols-outlined text-base">power_settings_new</span>
                         </a>
                     </div>
                 </div>
                 <div id="mobileMenuAdmin" class="hidden md:hidden w-full border-t border-slate-200 dark:border-slate-800 pt-3 flex flex-col gap-2">
                     <button type="button" onclick="document.getElementById('saveAll')?.click();" class="w-full rounded-xl h-11 border border-primary text-primary text-sm font-bold hover:bg-primary hover:text-white transition-colors">Guardar cambios</button>
-                    <a href="#" onclick="logout(); return false;" class="w-full flex items-center justify-center rounded-xl h-11 border border-primary text-primary text-sm font-bold hover:bg-primary hover:text-white transition-colors">Cerrar sesiÃƒÂ³n</a>
+                    <a href="#" onclick="logout(); return false;" class="w-full flex items-center justify-center rounded-xl h-11 border border-primary text-primary text-sm font-bold hover:bg-primary hover:text-white transition-colors">Cerrar sesion</a>
                 </div>
             </header>
 
             <main class="flex-1 flex justify-center pt-6 md:pt-8 pb-10 px-4 md:px-0">
                 <div class="w-full max-w-[980px] flex flex-col gap-6">
                     <div class="text-center">
-                        <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Panel de AdministraciÃƒÆ’Ã‚Â³n</h1>
+                        <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Panel de Administración</h1>
                         <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Edita cualquier dato de los usuarios y guarda los cambios cuando termines.</p>
                     </div>
 
@@ -109,7 +110,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
                     <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
                         <h2 class="text-lg font-bold text-primary">Historial de estancias finalizadas</h2>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">AquÃƒÆ’Ã‚Â­ puedes ver ejemplos de usuarios que ya no tienen estancia activa.</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Aqui puedes ver ejemplos de usuarios que ya no tienen estancia activa.</p>
                         <div class="mt-4 flex items-center gap-2 mb-4">
                             <input 
                                 type="text" 
@@ -135,57 +136,12 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             </main>
 
             <footer class="text-center py-6 text-slate-500 text-sm">
-                Ãƒâ€šÂ© 2026 GestIUBO. Todos los derechos reservados / All rights reserved.
+                 2026 GestIUBO. Todos los derechos reservados / All rights reserved.
             </footer>
         </div>
     </div>
 
     <script>
-        function fixMojibakeText(input) {
-            let s = String(input ?? '');
-            for (let i = 0; i < 4; i++) {
-                if (!/[\u00C2\u00C3]/.test(s)) break;
-                try {
-                    const repaired = decodeURIComponent(escape(s));
-                    if (repaired === s) break;
-                    s = repaired;
-                } catch (e) {
-                    break;
-                }
-            }
-            return s;
-        }
-
-        function normalizeNodeText(node) {
-            if (!node) return;
-            if (node.nodeType === Node.TEXT_NODE) {
-                const fixed = fixMojibakeText(node.nodeValue);
-                if (fixed !== node.nodeValue) node.nodeValue = fixed;
-                return;
-            }
-            if (node.nodeType !== Node.ELEMENT_NODE) return;
-            for (const attr of ['title', 'aria-label', 'placeholder']) {
-                const val = node.getAttribute(attr);
-                if (val) {
-                    const fixed = fixMojibakeText(val);
-                    if (fixed !== val) node.setAttribute(attr, fixed);
-                }
-            }
-            for (const child of node.childNodes) normalizeNodeText(child);
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            normalizeNodeText(document.body);
-            const observer = new MutationObserver((mutations) => {
-                for (const m of mutations) {
-                    if (m.type === 'characterData') normalizeNodeText(m.target);
-                    if (m.type === 'childList') {
-                        m.addedNodes.forEach((n) => normalizeNodeText(n));
-                    }
-                }
-            });
-            observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-        });
 
         const roles = [{
                 value: 'empleado',
@@ -213,28 +169,37 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 label: 'Solo lectivo'
             },
         ];
+        const motivoOptions = [
+            { value: 'PDI', label: 'PDI' },
+            { value: 'Postdoctoral', label: 'Postdoctoral' },
+            { value: 'Predoctoral', label: 'Predoctoral' },
+            { value: 'TFG', label: 'TFG' },
+            { value: 'TFM', label: 'TFM' },
+            { value: 'ERASMUS', label: 'ERASMUS' },
+            { value: 'Visitante', label: 'Visitante' },
+        ];
         const phonePrefixOptions = [
-            { value: '+34', label: 'EspaÃƒÆ’Ã‚Â±a (+34)' },
+            { value: '+34', label: 'Espana (+34)' },
             { value: '+1', label: 'Estados Unidos (+1)' },
             { value: '+44', label: 'Reino Unido (+44)' },
             { value: '+33', label: 'Francia (+33)' },
             { value: '+49', label: 'Alemania (+49)' },
             { value: '+39', label: 'Italia (+39)' },
-            { value: '+81', label: 'JapÃƒÆ’Ã‚Â³n (+81)' },
+            { value: '+81', label: 'Japon (+81)' },
             { value: '+86', label: 'China (+86)' },
             { value: '+91', label: 'India (+91)' },
             { value: '+55', label: 'Brasil (+55)' },
-            { value: '+52', label: 'MÃƒÆ’Â©xico (+52)' },
+            { value: '+52', label: 'Mexico (+52)' },
             { value: '+54', label: 'Argentina (+54)' },
             { value: '+56', label: 'Chile (+56)' },
             { value: '+506', label: 'Costa Rica (+506)' },
             { value: '+57', label: 'Colombia (+57)' },
-            { value: '+51', label: 'PerÃƒÆ’Ã‚Âº (+51)' },
+            { value: '+51', label: 'Peru (+51)' },
             { value: '+58', label: 'Venezuela (+58)' },
-            { value: '+36', label: 'HungrÃƒÆ’Ã‚Â­a (+36)' },
+            { value: '+36', label: 'Hungria (+36)' },
             { value: '+48', label: 'Polonia (+48)' },
-            { value: '+31', label: 'PaÃƒÆ’Ã‚Â­ses Bajos (+31)' },
-            { value: '+32', label: 'BÃƒÆ’Â©lgica (+32)' },
+            { value: '+31', label: 'Paises Bajos (+31)' },
+            { value: '+32', label: 'Blgica (+32)' },
             { value: '+43', label: 'Austria (+43)' },
             { value: '+41', label: 'Suiza (+41)' },
             { value: '+46', label: 'Suecia (+46)' },
@@ -250,10 +215,10 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             { value: '+82', label: 'Corea del Sur (+82)' },
             { value: '+61', label: 'Australia (+61)' },
             { value: '+64', label: 'Nueva Zelanda (+64)' },
-            { value: '+27', label: 'SudÃƒÆ’Ã‚Â¡frica (+27)' },
+            { value: '+27', label: 'Sudafrica (+27)' },
             { value: '+20', label: 'Egipto (+20)' },
             { value: '+212', label: 'Marruecos (+212)' },
-            { value: '+1', label: 'CanadÃƒÆ’Ã‚Â¡ (+1)' },
+            { value: '+1', label: 'Canada (+1)' },
         ];
 
         let employees = [];
@@ -264,7 +229,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         const normalizeGroup = (value) => value ? String(value).toUpperCase() : '';
         const maskDni = (value) => {
             const str = String(value ?? '').trim();
-            if (!str) return 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â';
+            if (!str) return '';
             if (str.length <= 4) return `**${str.slice(0, 1)}***`;
             const middle = str.slice(2, -2) || '***';
             return `**${middle}**`;
@@ -294,7 +259,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         function formatEndDate(dateStr, role) {
             const isIndef = String(dateStr).split('T')[0] === '2100-01-01';
             const isCoveredRole = role === 'empleado' || role === 'seguridad';
-            if (isIndef && isCoveredRole) return 'Personal indefinido';
+            if (isIndef && isCoveredRole) return 'Perusonal indefinido';
             return formatDate(dateStr);
         }
 
@@ -341,7 +306,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             setTimeout(() => toast.remove(), 3200);
         }
 
-        // Confirm modal con estilo de la pÃƒÆ’Ã‚Â¡gina
+        // Confirm modal con estilo de la pgina
         function uiConfirm(message) {
             return new Promise((resolve) => {
                 const overlay = document.createElement('div');
@@ -437,8 +402,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             header.className = 'flex flex-col md:flex-row md:items-center md:justify-between gap-3';
             header.innerHTML = `
             <div>
-                <h3 class="text-lg font-bold text-primary">GestiÃƒÆ’Ã‚Â³n de grupos</h3>
-                <p class="text-sm text-slate-500 dark:text-slate-400">Crea nuevos grupos o elimina los que ya no necesites. Las estancias finalizadas conservarÃƒÆ’Ã‚Â¡n su nombre de grupo.</p>
+                <h3 class="text-lg font-bold text-primary">Gestion de grupos</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Crea nuevos grupos o elimina los que ya no necesites. Las estancias finalizadas conservaran su nombre de grupo.</p>
             </div>
             <div class="flex gap-2">
                 <input id="newGroupInput" type="text" placeholder="Nuevo grupo" class="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm px-3 py-2 focus:outline-none focus:ring-primary focus:border-primary" />
@@ -485,8 +450,8 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         String(g.name || '').trim().toLowerCase() === name.toLowerCase()
                     );
                     const confirmMessage = deletedMatch ?
-                        `Este grupo ya existÃƒÆ’Ã‚Â­a y estÃƒÆ’Ã‚Â¡ eliminado: "${name}".\nSe va a REACTIVAR ese grupo.\nÃƒâ€šÂ¿Deseas continuar?` :
-                        `Se crearÃƒÆ’Ã‚Â¡ el nuevo grupo: "${name}".\nÃƒâ€šÂ¿Deseas continuar?`;
+                        `Este grupo ya exista y est eliminado: "${name}".\nSe va a REACTIVAR ese grupo.\nDeseas continuar?` :
+                        `Se crear el nuevo grupo: "${name}".\nDeseas continuar?`;
                     const ok = await uiConfirm(confirmMessage);
                     if (!ok) return;
                     const resp = await fetch(apiUrl('api/groups.php'), {
@@ -530,7 +495,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 showToast('Grupo no encontrado', 'error');
                 return;
             }
-            const ok = await uiConfirm(`Se eliminarÃƒÆ’Ã‚Â¡ el grupo: "${group.label}" Ãƒâ€šÂ¿Deseas continuar?\nLos empleados existentes conservarÃƒÆ’Ã‚Â¡n el nombre.`);
+            const ok = await uiConfirm(`Se eliminara el grupo: "${group.label}" Deseas continuar?\nLos empleados existentes conservaran el nombre.`);
             if (!ok) return;
             const resp = await fetch(apiUrl('api/groups.php'), {
                 method: 'POST',
@@ -571,7 +536,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             }
             const newName = await uiPrompt('Editar nombre del grupo', group.label);
             if (!newName || newName === group.label) return;
-            const ok = await uiConfirm(`Vas a cambiar el nombre del grupo:\n"${group.label}" ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ "${newName}"\nÃƒâ€šÂ¿Confirmas?`);
+            const ok = await uiConfirm(`Vas a cambiar el nombre del grupo:\n"${group.label}" -> "${newName}"\nConfirmas?`);
             if (!ok) return;
             const resp = await fetch(apiUrl('api/groups.php'), {
                 method: 'POST',
@@ -603,11 +568,11 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         }
 
         function mapFromDb(emp) {
-            const fallbackFoto = emp.foto_url || `https://i.pravatar.cc/160?u=${encodeURIComponent(emp.email || emp.username || emp.id || Math.random())}`;
             return {
                 ...emp,
+                username: emp.username || '',
                 dni: emp.dni_pasaporte,
-                foto: fallbackFoto,
+                foto: emp.foto_url || '',
                 horario: typeof emp.horario !== 'undefined' ? Number(emp.horario) : 1,
                 group_id: emp.group_id || null,
                 grupo: resolveGroupName(emp.group_name || emp.grupo),
@@ -621,6 +586,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 id: emp.id,
                 nombre: emp.nombre,
                 apellidos: emp.apellidos,
+                username: emp.username || null,
                 dni_pasaporte: emp.dni,
                 fecha_nacimiento: emp.fecha_nacimiento || null,
                 email: emp.email,
@@ -633,7 +599,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 fecha_fin: emp.fecha_fin || null,
                 group_id: emp.group_id || null,
                 grupo: emp.grupo || emp.group_name || null,
-                foto_url: emp.foto || null,
+                foto_url: emp.foto_url || emp.foto || null,
                 rol: emp.rol || 'empleado',
                 horario: typeof emp.horario !== 'undefined' ? Number(emp.horario) : 1,
             };
@@ -645,6 +611,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 id: Number(db.id),
                 nombre: db.nombre || '',
                 apellidos: db.apellidos || '',
+                username: db.username || null,
                 dni_pasaporte: db.dni_pasaporte || '',
                 fecha_nacimiento: db.fecha_nacimiento || null,
                 email: db.email || '',
@@ -738,7 +705,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 });
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const json = await parseJsonSafe(resp);
-                if (!Array.isArray(json.employees)) throw new Error('Respuesta invÃƒÆ’Ã‚Â¡lida');
+                if (!Array.isArray(json.employees)) throw new Error('Respuesta invlida');
                 employees = json.employees.map(mapFromDb);
                 historyStays = Array.isArray(json.history) ? json.history : [];
             } catch (error) {
@@ -755,7 +722,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 });
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const json = await parseJsonSafe(resp);
-                if (!Array.isArray(json.groups)) throw new Error('Respuesta invÃƒÆ’Ã‚Â¡lida');
+                if (!Array.isArray(json.groups)) throw new Error('Respuesta invlida');
                 allGroups = json.groups.map(g => ({
                     id: Number(g.id),
                     name: String(g.name || '').trim(),
@@ -874,7 +841,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 const currentValue = filterSelect.value;
                 filterSelect.innerHTML = '<option value="">- Selecciona un grupo -</option>';
                 
-                // Usar groupOptions para llenar el selector (dinÃƒÆ’Ã‚Â¡micamente desde BD)
+                // Usar groupOptions para llenar el selector (dinmicamente desde BD)
                 groupOptions.forEach((group) => {
                     const option = document.createElement('option');
                     option.value = group.label;
@@ -918,35 +885,78 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
             groupEmployees.forEach((emp) => {
                 const card = document.createElement('div');
-                card.className = 'bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 p-6';
+                card.className = 'relative bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 p-6';
 
                 const row = document.createElement('div');
                 row.className = 'grid gap-5 md:grid-cols-[1fr_1.2fr]';
 
                 const avatarSection = document.createElement('div');
-                avatarSection.className = 'flex flex-col items-center gap-4';
+                avatarSection.className = 'flex flex-col items-center justify-center gap-3';
                 avatarSection.innerHTML = `
-                        <img class="h-20 w-20 rounded-full object-cover border border-slate-200 dark:border-slate-700" src="${emp.foto_url || emp.foto || 'https://i.pravatar.cc/160?u=' + encodeURIComponent(emp.email || emp.username || '')}" alt="${emp.nombre || ''} ${emp.apellidos || ''}" />
-                        <label class="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Foto (subir archivo)</label>
+                        <label class="group relative block h-24 w-24 cursor-pointer" title="Cambiar foto">
+                            <img class="h-24 w-24 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-sm transition-transform duration-200 group-hover:scale-[1.03]" src="${emp.foto_url || emp.foto || 'https://i.pravatar.cc/160?u=' + encodeURIComponent(emp.email || emp.username || '')}" alt="${emp.nombre || ''} ${emp.apellidos || ''}" />
+                            <span class="absolute inset-0 rounded-full bg-primary/70 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center text-white">
+                                <span class="material-symbols-outlined text-lg">photo_camera</span>
+                            </span>
+                        </label>
+                        <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Cambiar foto</p>
                     `;
                 const fotoInput = createInput({
                     type: 'file',
                     name: 'foto',
                     className: ''
                 });
+                fotoInput.className = 'hidden';
                 fotoInput.accept = 'image/*';
-                fotoInput.addEventListener('change', (event) => {
+                const fotoPicker = avatarSection.querySelector('label');
+                if (fotoPicker) {
+                    fotoPicker.appendChild(fotoInput);
+                }
+                fotoInput.addEventListener('change', async (event) => {
                     const file = event.target.files?.[0];
                     if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                        emp.foto = reader.result;
-                        card.querySelector('img').src = emp.foto;
+                    if (!/^image\/(jpeg|png)$/i.test(file.type)) {
+                        showToast('Formato no permitido (solo JPG/PNG)', 'error');
+                        event.target.value = '';
+                        return;
+                    }
+                    if (file.size > 5 * 1024 * 1024) {
+                        showToast('La imagen supera los 5MB', 'error');
+                        event.target.value = '';
+                        return;
+                    }
+
+                    const previewUrl = URL.createObjectURL(file);
+                    const imgEl = card.querySelector('img');
+                    const previousUrl = emp.foto_url || emp.foto || '';
+                    if (imgEl) imgEl.src = previewUrl;
+
+                    try {
+                        const fd = new FormData();
+                        fd.append('photo', file);
+                        const upRes = await fetch(apiUrl('api/upload_photo.php'), {
+                            method: 'POST',
+                            body: fd,
+                            credentials: 'same-origin'
+                        });
+                        const upJson = await parseJsonSafe(upRes);
+                        if (!upRes.ok || !upJson.url) {
+                            throw new Error(upJson.error || 'No se pudo subir la imagen');
+                        }
+                        emp.foto_url = upJson.url;
+                        emp.foto = upJson.url;
+                        if (imgEl) imgEl.src = upJson.url;
                         updateSaveButtonLabel();
-                    };
-                    reader.readAsDataURL(file);
+                    } catch (err) {
+                        if (imgEl) {
+                            imgEl.src = previousUrl || ('https://i.pravatar.cc/160?u=' + encodeURIComponent(emp.email || emp.username || ''));
+                        }
+                        showToast(err?.message || 'No se pudo subir la imagen', 'error');
+                    } finally {
+                        URL.revokeObjectURL(previewUrl);
+                        event.target.value = '';
+                    }
                 });
-                avatarSection.appendChild(fotoInput);
 
                 const fields = document.createElement('div');
                 fields.className = 'grid gap-4 md:grid-cols-2';
@@ -973,30 +983,54 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         value: emp.apellidos
                     },
                     {
+                        label: 'Usuario',
+                        name: 'username',
+                        value: emp.username || ''
+                    },
+                    {
                         label: 'Email',
                         name: 'email',
                         value: emp.email,
                         type: 'email'
                     },
                     {
-                        label: 'TelÃƒÆ’Â©fono (Prefijo)',
+                        label: 'Telefono (Prefijo)',
                         name: 'phone_prefix',
                         value: emp.phone_prefix || '+34',
                         type: 'select',
                         options: phonePrefixOptions
                     },
                     {
-                        label: 'TelÃƒÆ’Â©fono (NÃƒÆ’Ã‚Âºmero)',
+                        label: 'Telefono (Numero)',
                         name: 'phone_number',
                         value: emp.phone_number,
                         type: 'tel',
                         required: true
                     },
                     {
-                        label: 'DNI / Pasaporte',
+                        label: 'DNI / Paisaporte',
                         name: 'dni',
                         value: emp.dni,
                         type: 'text'
+                    },
+                    {
+                        label: 'Institucion',
+                        name: 'institucion',
+                        value: emp.institucion || '',
+                        type: 'text'
+                    },
+                    {
+                        label: 'Pais',
+                        name: 'pais',
+                        value: emp.pais || '',
+                        type: 'text'
+                    },
+                    {
+                        label: 'Motivo',
+                        name: 'motivo',
+                        value: emp.motivo || '',
+                        type: 'select',
+                        options: motivoOptions
                     },
                     {
                         label: 'Grupo',
@@ -1018,18 +1052,6 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         value: String(emp.horario ?? 1),
                         type: 'select',
                         options: horarioOptions
-                    },
-                    {
-                        label: 'Inicio',
-                        name: 'fecha_inicio',
-                        value: emp.fecha_inicio,
-                        type: 'date'
-                    },
-                    {
-                        label: 'Fin',
-                        name: 'fecha_fin',
-                        value: emp.fecha_fin,
-                        type: 'date'
                     },
                 ];
 
@@ -1083,18 +1105,54 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                     fields.appendChild(wrapper);
                 });
 
+                const dateRow = document.createElement('div');
+                dateRow.className = 'md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4';
+
+                const startWrapper = document.createElement('div');
+                startWrapper.className = 'space-y-1';
+                startWrapper.innerHTML = '<p class="text-[11px] uppercase tracking-widest font-semibold text-slate-500 dark:text-slate-400">Inicio</p>';
+                const startInput = createInput({
+                    type: 'date',
+                    value: emp.fecha_inicio,
+                    name: 'fecha_inicio'
+                });
+                startInput.addEventListener('input', (event) => {
+                    emp.fecha_inicio = event.target.value;
+                    updateSaveButtonLabel();
+                });
+                startWrapper.appendChild(startInput);
+
+                const endWrapper = document.createElement('div');
+                endWrapper.className = 'space-y-1';
+                endWrapper.innerHTML = '<p class="text-[11px] uppercase tracking-widest font-semibold text-slate-500 dark:text-slate-400">Fin</p>';
+                const endInput = createInput({
+                    type: 'date',
+                    value: emp.fecha_fin,
+                    name: 'fecha_fin'
+                });
+                endInput.addEventListener('input', (event) => {
+                    emp.fecha_fin = event.target.value;
+                    updateSaveButtonLabel();
+                });
+                endWrapper.appendChild(endInput);
+
+                dateRow.appendChild(startWrapper);
+                dateRow.appendChild(endWrapper);
+                fields.appendChild(dateRow);
+
                 row.appendChild(avatarSection);
                 row.appendChild(fields);
                 card.appendChild(row);
                 
-                // Agregar botÃƒÆ’Ã‚Â³n de eliminar
                 const deleteButton = document.createElement('button');
                 deleteButton.type = 'button';
-                deleteButton.className = 'mt-4 w-full px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors';
-                deleteButton.textContent = 'Eliminar usuario';
+                deleteButton.className = 'absolute left-4 top-4 h-9 w-9 inline-flex items-center justify-center rounded-full border border-primary/35 bg-white/95 dark:bg-slate-900/95 text-primary hover:bg-primary hover:text-white hover:border-primary transition-colors shadow-sm';
+                deleteButton.innerHTML = '<span class="material-symbols-outlined text-lg">delete</span>';
+                deleteButton.title = 'Eliminar usuario';
+                deleteButton.setAttribute('aria-label', 'Eliminar usuario');
                 deleteButton.addEventListener('click', async () => {
                     const confirmed = await uiConfirm(
-                        `Ãƒâ€šÂ¿EstÃƒÆ’Ã‚Â¡s seguro que deseas borrar este usuario?\n${emp.nombre} ${emp.apellidos}\n\nLa acciÃƒÆ’Ã‚Â³n serÃƒÆ’Ã‚Â¡ permanente.`
+                        `¿Estás seguro que deseas borrar este usuario?\n${emp.nombre} ${emp.apellidos}\n\nLa acción será permanente.`
                     );
                     if (!confirmed) return;
                     
@@ -1141,7 +1199,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 
             const searchTerm = (searchInput?.value?.trim() || '').toLowerCase();
 
-            // Si no hay tÃƒÆ’Â©rmino de bÃƒÆ’Ã‚Âºsqueda, no renderizar nada
+            // Si no hay termino de busqueda, no renderizar nada
             if (!searchTerm) {
                 historyContainer.innerHTML = `<p class="text-sm text-slate-500 dark:text-slate-400">Usa el buscador para encontrar estancias finalizadas.</p>`;
                 return;
@@ -1174,7 +1232,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         <img class="h-12 w-12 rounded-full object-cover border border-slate-200 dark:border-slate-700" src="${emp.foto_url || emp.foto || 'https://i.pravatar.cc/160?u=' + encodeURIComponent(emp.email || emp.username || '')}" alt="${emp.nombre || ''} ${emp.apellidos || ''}" />
                         <div>
                             <p class="font-semibold text-slate-900 dark:text-slate-100">${emp.nombre || ''} ${emp.apellidos || ''}</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">${displayRole} ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Grupo ${label}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">${displayRole}  Grupo ${label}</p>
                         </div>
                     </div>
                     <span class="text-xs font-semibold text-rose-700 dark:text-rose-200">Estancia finalizada</span>
@@ -1269,7 +1327,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 detailsRow.innerHTML = `
                     <div>
                         <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">Motivo</p>
-                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.motivo || 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â'}</p>
+                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.motivo || ''}</p>
                     </div>
                     <div>
                         <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">Inicio</p>
@@ -1284,12 +1342,12 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         <p class="text-slate-700 dark:text-slate-200 font-medium">${parseInt(req.horario) === 1 ? 'Completo' : 'Solo lectivo'}</p>
                     </div>
                     <div>
-                        <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">InstituciÃƒÆ’Ã‚Â³n</p>
-                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.institucion || 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â'}</p>
+                        <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">Institucion</p>
+                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.institucion || ''}</p>
                     </div>
                     <div>
-                        <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">PaÃƒÆ’Ã‚Â­s</p>
-                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.pais || 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â'}</p>
+                        <p class="text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold">Pais</p>
+                        <p class="text-slate-700 dark:text-slate-200 font-medium">${req.pais || ''}</p>
                     </div>
                 `;
                 
@@ -1317,7 +1375,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
         }
 
         async function approveStayRequest(requestId) {
-            const confirmed = await uiConfirm('Ãƒâ€šÂ¿Deseas aprobar esta solicitud de estancia?');
+            const confirmed = await uiConfirm('Deseas aprobar esta solicitud de estancia?');
             if (!confirmed) return;
 
             try {
@@ -1341,12 +1399,12 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 renderStayRequests(stayRequests);
             } catch (error) {
                 console.error('Error approving request:', error);
-                showToast('Error de conexiÃƒÆ’Ã‚Â³n al servidor', 'error');
+                showToast('Error de conexion al servidor', 'error');
             }
         }
 
         async function rejectStayRequest(requestId) {
-            const confirmed = await uiConfirm('Ãƒâ€šÂ¿Deseas rechazar esta solicitud de estancia?');
+            const confirmed = await uiConfirm('Deseas rechazar esta solicitud de estancia?');
             if (!confirmed) return;
 
             try {
@@ -1370,7 +1428,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 renderStayRequests(stayRequests);
             } catch (error) {
                 console.error('Error rejecting request:', error);
-                showToast('Error de conexiÃƒÆ’Ã‚Â³n al servidor', 'error');
+                showToast('Error de conexion al servidor', 'error');
             }
         }
 
@@ -1424,7 +1482,3 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
 </body>
 
 </html>
-
-
-
-
