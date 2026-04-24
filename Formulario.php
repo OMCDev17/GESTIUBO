@@ -252,11 +252,11 @@ try {
                                     <div class="lg:col-span-1">
                                         <p class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Foto / Photo</p>
                                         <label for="photoUpload" class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition">
-                                            <input id="photoUpload" name="photo" type="file" accept="image/*" class="sr-only" required />
+                                            <input id="photoUpload" name="photo" type="file" accept="image/*" class="sr-only" <?= (!$isNewStay || empty($prefill['foto_url'])) ? 'required' : '' ?> />
                                             <span id="photoDropHint" class="flex flex-col items-center gap-2">
                                                 <span class="material-symbols-outlined text-4xl text-primary">photo_camera</span>
                                                 <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Arrastra y suelta aquí una foto / Drag & drop a photo here</span>
-                                                <span class="text-xs text-slate-500 dark:text-slate-400">JPG/PNG hasta 5?MB / JPG/PNG up to 5?MB</span>
+                                                <span class="text-xs text-slate-500 dark:text-slate-400">JPG/PNG hasta 5 MB / JPG/PNG up to 5 MB</span>
                                             </span>
                                             <div id="photoPreview" class="hidden flex flex-col items-center gap-2">
                                                 <img id="photoPreviewImg" alt="Vista previa" class="h-28 w-28 rounded-full object-cover border border-slate-200 dark:border-slate-700" />

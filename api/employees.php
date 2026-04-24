@@ -94,12 +94,12 @@ if ($securityView) {
     // Vista general (supervisión/edición): solo estancia activa.
     $query = "SELECT e.id, e.nombre, e.apellidos, e.username, e.dni_pasaporte, e.fecha_nacimiento, e.email,
                      e.phone_prefix, e.phone_number,
-                     s.motivo, s.fecha_inicio, s.fecha_fin, COALESCE(s.group_id, pgr.group_id) AS group_id, g.name AS group_name, e.foto_url, e.rol, s.horario, s.institucion, s.pais,
+                     s.motivo, s.fecha_inicio, s.fecha_fin, s.group_id AS group_id, g.name AS group_name, e.foto_url, e.rol, s.horario, s.institucion, s.pais,
                      (
                          SELECT CONCAT(TRIM(c.nombre), ' ', TRIM(c.apellidos))
                          FROM employees c
                          INNER JOIN stays sc ON sc.employee_id = c.id AND sc.status = 'active'
-                         WHERE sc.group_id = COALESCE(s.group_id, pgr.group_id)
+                         WHERE sc.group_id = s.group_id
                            AND LOWER(c.rol) IN ('coordinador', 'supervisor')
                          ORDER BY FIELD(LOWER(c.rol), 'coordinador', 'supervisor'), c.nombre, c.apellidos
                          LIMIT 1
@@ -108,7 +108,7 @@ if ($securityView) {
                          SELECT c.phone_number
                          FROM employees c
                          INNER JOIN stays sc ON sc.employee_id = c.id AND sc.status = 'active'
-                         WHERE sc.group_id = COALESCE(s.group_id, pgr.group_id)
+                         WHERE sc.group_id = s.group_id
                            AND LOWER(c.rol) IN ('coordinador', 'supervisor')
                          ORDER BY FIELD(LOWER(c.rol), 'coordinador', 'supervisor'), c.nombre, c.apellidos
                          LIMIT 1
@@ -118,7 +118,7 @@ if ($securityView) {
                              SELECT 1
                              FROM stays sc
                              WHERE sc.employee_id = e.id
-                               AND sc.group_id = COALESCE(s.group_id, pgr.group_id)
+                               AND sc.group_id = s.group_id
                                AND sc.status = 'active'
                                AND LOWER(e.rol) IN ('coordinador', 'supervisor')
                          ) THEN 1
@@ -139,17 +139,7 @@ if ($securityView) {
                   ORDER BY s1.updated_at DESC, s1.id DESC
                   LIMIT 1
               )
-              LEFT JOIN (
-                  SELECT g1.employee_id, g1.group_id
-                  FROM group_join_requests g1
-                  INNER JOIN (
-                      SELECT employee_id, MAX(id) AS max_id
-                      FROM group_join_requests
-                      WHERE status = 'pending'
-                      GROUP BY employee_id
-                  ) latest ON latest.max_id = g1.id
-              ) pgr ON pgr.employee_id = e.id
-              LEFT JOIN groups g ON g.id = COALESCE(s.group_id, pgr.group_id)
+              LEFT JOIN groups g ON g.id = s.group_id
               {$whereSql}
               ORDER BY g.name, e.apellidos DESC, e.nombre DESC";
 }

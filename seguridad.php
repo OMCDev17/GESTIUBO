@@ -302,6 +302,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 const isSoloLectivo = Number(emp.horario) === 0;
                 const soloLectivoBadgeClass = 'text-sky-700 dark:text-sky-200 bg-sky-100 dark:bg-sky-900/35';
                 const stayStatus = getStayStatus(emp);
+                const showStayStatusBadge = !emp.pendiente_aprobacion || stayStatus.label === 'Activa';
                 const card = document.createElement('div');
                 card.className = 'bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5';
                 card.innerHTML = `
@@ -322,9 +323,9 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                         ${emp.pendiente_aprobacion ? `<p class="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-100 bg-amber-200 dark:bg-amber-900/45 px-2 py-1 rounded-full">
                             <span class="material-symbols-outlined text-base">pending</span>Pendiente de aprobacion
                         </p>` : ''}
-                        <p class="mt-2 inline-flex items-center gap-2 text-xs font-semibold ${stayStatus.toneClass} px-2 py-1 rounded-full">
+                        ${showStayStatusBadge ? `<p class="mt-2 inline-flex items-center gap-2 text-xs font-semibold ${stayStatus.toneClass} px-2 py-1 rounded-full">
                             <span class="material-symbols-outlined text-base">${stayStatus.icon}</span>Estancia ${stayStatus.label}
-                        </p>
+                        </p>` : ''}
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 text-sm text-slate-600 dark:text-slate-300">
