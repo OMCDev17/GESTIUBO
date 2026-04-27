@@ -57,7 +57,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
     <div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
         <div class="layout-container flex h-full grow flex-col">
             <!-- Navigation / Header -->
-            <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-10 py-4 sticky top-0 z-50">
+            <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-10 py-4 fixed top-0 left-0 right-0 z-50">
                 <div class="flex items-center gap-3 flex-wrap">
                     <img alt="Logo de la Institucion" class="h-10 w-auto object-contain" src="imagenes/instituto-biorganica-agonzalez-original.png" />
                     <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] border-l border-slate-300 dark:border-slate-700 pl-4">Administración</h2>
@@ -84,7 +84,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 </div>
             </header>
 
-            <main class="flex-1 flex justify-center pt-6 md:pt-8 pb-10 px-4 md:px-0">
+            <main class="flex-1 flex justify-center pt-36 md:pt-28 pb-10 px-4 md:px-0">
                 <div class="w-full max-w-[980px] flex flex-col gap-6">
                     <div class="text-center">
                         <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Panel de Administración</h1>
@@ -1202,6 +1202,10 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
             // Si no hay termino de busqueda, no renderizar nada
             if (!searchTerm) {
                 historyContainer.innerHTML = `<p class="text-sm text-slate-500 dark:text-slate-400">Usa el buscador para encontrar estancias finalizadas.</p>`;
+                return;
+            }
+            if (searchTerm.length < 3) {
+                historyContainer.innerHTML = `<p class="text-sm text-slate-500 dark:text-slate-400">Escribe al menos 3 caracteres para buscar.</p>`;
                 return;
             }
 

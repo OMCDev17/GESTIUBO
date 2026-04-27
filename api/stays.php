@@ -3,6 +3,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 require __DIR__ . '/auth.php';
 requireLogin(true);
+require_once __DIR__ . '/stay_lifecycle.php';
 
 $sessionUser = getSessionUser();
 $userId = (int)($sessionUser['id'] ?? 0);
@@ -17,6 +18,7 @@ if ($mysqli->connect_errno) {
 }
 $mysqli->set_charset($config['charset']);
 $mysqli->query("SET NAMES {$config['charset']}");
+expireStaysAndPendingRequests($mysqli);
 
 // Asegurar tabla stays
 $mysqli->query("

@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/api/auth.php';
 requireRole(['empleado', 'supervisor', 'coordinador', 'admin']);
+require_once __DIR__ . '/api/stay_lifecycle.php';
 
 // Obtener datos del usuario autenticado desde la base de datos
 $employee = getSessionUser();
@@ -13,6 +14,7 @@ if (!$mysqli->connect_errno) {
     try {
         $mysqli->set_charset($config['charset']);
         $mysqli->query("SET NAMES {$config['charset']}");
+        expireStaysAndPendingRequests($mysqli);
 
         // Asegurar tabla stays (para estancias activas + historico)
         $mysqli->query("
@@ -289,33 +291,23 @@ $fullName = htmlspecialchars(trim(($employee['nombre'] ?? '') . ' ' . ($employee
                                     <span class="material-symbols-outlined text-sm">person</span>
                                     <span id="secPersonal">InformaciÃƒÂ³n Personal</span>
                                 </h3>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 flex flex-col items-center gap-3 md:row-span-2">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 flex flex-col items-center justify-center gap-3 md:row-span-2 h-full">
                                         <img class="h-28 w-28 rounded-full object-cover border border-slate-200 dark:border-slate-700" src="<?= htmlspecialchars($fotoUrl, ENT_QUOTES, 'UTF-8') ?>" alt="Foto del empleado" />
                                         <p id="lblFoto" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Foto</p>
                                     </div>
-                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5">
-                                        <p id="lblNombre" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Nombre</p>
+                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 h-full">                                         <p id="lblNombre" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Nombre</p>
                                         <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100"><?= $safe('nombre') ?></p>
                                     </div>
-                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5">
-                                        <p id="lblApellidos" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Apellidos</p>
+                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 h-full">                                         <p id="lblApellidos" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Apellidos</p>
                                         <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100"><?= $safe('apellidos') ?></p>
                                     </div>
-                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 md:col-span-2">
-                                        <p id="lblDni" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">DNI/Pasaporte</p>
-                                        <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100"><?= $safe('dni_pasaporte') ?></p>
-                                    </div>
-                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5">
-                                        <p id="lblNacimiento" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Fecha de Nacimiento</p>
+                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 md:col-span-2 h-full">                                         <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Email</p>                                         <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100 break-all leading-relaxed"><?= $safe('email') ?></p>                                    </div>
+                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 h-full">                                         <p id="lblNacimiento" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Fecha de Nacimiento</p>
                                         <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100"><?= $safe('fecha_nacimiento') ?></p>
                                     </div>
-                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5">
-                                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Email</p>
-                                        <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100"><?= $safe('email') ?></p>
-                                    </div>
-                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5">
-                                        <p id="lblTelefono" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">TelÃƒÂ©fono</p>
+                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 h-full">                                         <p id="lblDni" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">DNI/Pasaporte</p>                                         <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100 break-words"><?= $safe('dni_pasaporte') ?></p>                                    </div>
+                                    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 h-full">                                         <p id="lblTelefono" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">TelÃƒÂ©fono</p>
                                         <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100"><?= $safe('phone_prefix') ?> <?= $safe('phone_number') ?></p>
                                     </div>
                                 </div>
@@ -731,6 +723,10 @@ $fullName = htmlspecialchars(trim(($employee['nombre'] ?? '') . ' ' . ($employee
 </body>
 
 </html>
+
+
+
+
 
 
 

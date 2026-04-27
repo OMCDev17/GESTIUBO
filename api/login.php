@@ -5,6 +5,7 @@ header('Pragma: no-cache');
 header('Expires: 0');
 
 $config = require __DIR__ . '/config.php';
+require_once __DIR__ . '/stay_lifecycle.php';
 
 function send500($msg)
 {
@@ -22,6 +23,7 @@ if ($usingMysqli) {
     }
     $db->set_charset($config['charset']);
     $db->query("SET NAMES {$config['charset']}");
+    expireStaysAndPendingRequests($db);
 } elseif (extension_loaded('pdo_mysql')) {
     try {
         $dsn = "mysql:host={$config['host']};dbname={$config['db']};charset={$config['charset']}";

@@ -232,7 +232,9 @@ CREATE TABLE IF NOT EXISTS group_join_requests (
     INDEX idx_group_join_requests_status (status)
 )");
 
+$inTransaction = false;
 $mysqli->begin_transaction();
+$inTransaction = true;
 try {
     // Obtener datos del usuario que solicita
     $userStmt = $mysqli->prepare("SELECT nombre, apellidos, email FROM employees WHERE id = ? LIMIT 1");
@@ -246,7 +248,7 @@ try {
         throw new RuntimeException('No se pudo obtener los datos del usuario');
     }
 
-    // Si llega una nueva foto desde "new stay", actualizarla en el perfil del usuario.
+    // Si llega una nueva foto desde "New Internship", actualizarla en el perfil del usuario.
     if ($newPhotoUrl !== '') {
         $updPhoto = $mysqli->prepare("UPDATE employees SET foto_url = ? WHERE id = ?");
         if (!$updPhoto) {
@@ -295,13 +297,118 @@ try {
     $ins->close();
 
     $mysqli->commit();
-    echo json_encode([
+    $inTransaction = false;
+
+    $sentApprovalEmail = false;
+    try {
+        require_once __DIR__ . '/email_templates.php';
+    } catch (Throwable $e) {
+        // No bloquear la solicitud por errores de carga del módulo de correo.
+    }
+
+    if (function_exists('sendGroupApprovalRequestEmail')) {
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $basePath = rtrim(dirname(dirname($_SERVER['PHP_SELF'])), '/\\');
+        $approveUrl = "{$scheme}://{$host}{$basePath}/aprobar-solicitud?token={$approvalToken}";
+
+        $approvers = [];
+        $approverQuery = $mysqli->prepare("
+            SELECT DISTINCT e.id, e.nombre, e.apellidos, e.email
+            FROM employees e
+            INNER JOIN stays s ON s.employee_id = e.id AND s.status = 'active'
+            WHERE s.group_id = ?
+              AND e.rol IN ('supervisor', 'coordinador')
+              AND e.email IS NOT NULL
+              AND e.email <> ''
+            ORDER BY FIELD(e.rol, 'supervisor', 'coordinador'), e.nombre, e.apellidos
+        ");
+        if ($approverQuery) {
+            $approverQuery->bind_param('i', $newGroupId);
+            $approverQuery->execute();
+            $approverRes = $approverQuery->get_result();
+            while ($approverRes && ($row = $approverRes->fetch_assoc())) {
+                $approvers[] = $row;
+            }
+            $approverQuery->close();
+        }
+
+        if (!$approvers) {
+            $adminQuery = $mysqli->prepare("
+                SELECT e.id, e.nombre, e.apellidos, e.email
+                FROM employees e
+                WHERE e.rol = 'admin'
+                  AND e.email IS NOT NULL
+                  AND e.email <> ''
+                ORDER BY e.nombre, e.apellidos
+            ");
+            if ($adminQuery) {
+                $adminQuery->execute();
+                $adminRes = $adminQuery->get_result();
+                while ($adminRes && ($row = $adminRes->fetch_assoc())) {
+                    $approvers[] = $row;
+                }
+                $adminQuery->close();
+            }
+        }
+
+        foreach ($approvers as $approver) {
+            $supervisorName = trim((string)(($approver['nombre'] ?? '') . ' ' . ($approver['apellidos'] ?? '')));
+            $targetEmail = trim((string)($approver['email'] ?? ''));
+            if ($targetEmail === '') {
+                continue;
+            }
+            try {
+                $ok = @sendGroupApprovalRequestEmail(
+                    $targetEmail,
+                    $supervisorName,
+                    [
+                        'employee_name' => $requestedByName,
+                        'employee_email' => $requestedByEmail,
+                        'group_name' => $grupoName,
+                        'motivo' => $newMotivo,
+                        'fecha_inicio' => $newFechaInicio,
+                        'fecha_fin' => $newFechaFin,
+                        'institucion' => $newInstitucion,
+                        'pais' => $newPais,
+                        'approve_url' => $approveUrl,
+                    ],
+                    $config
+                );
+                $sentApprovalEmail = $sentApprovalEmail || (bool)$ok;
+            } catch (Throwable $e) {
+                // No bloquear por fallo de correo.
+            }
+        }
+
+        if ($sentApprovalEmail) {
+            $markSentStmt = $mysqli->prepare('UPDATE group_join_requests SET email_sent_at = NOW() WHERE id = ? LIMIT 1');
+            if ($markSentStmt) {
+                $markSentStmt->bind_param('i', $requestId);
+                $markSentStmt->execute();
+                $markSentStmt->close();
+            }
+        }
+    }
+    $payload = [
         'success' => true,
-        'message' => 'Solicitud de estancia creada y enviada al coordinador para aprobaciÃ³n.',
-        'request_id' => $requestId
-    ]);
+        'message' => 'Solicitud de estancia creada y enviada al coordinador para aprobacion.',
+        'request_id' => $requestId,
+        'approval_email_sent' => $sentApprovalEmail
+    ];
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
 } catch (Throwable $e) {
-    $mysqli->rollback();
+    if ($inTransaction) {
+        $mysqli->rollback();
+    }
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => (string)$e->getMessage()], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
 }
+
+
+
+
+
+

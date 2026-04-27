@@ -3,6 +3,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 require __DIR__ . '/auth.php';
 requireRole(['admin', 'supervisor', 'coordinador', 'seguridad'], true);
+require_once __DIR__ . '/stay_lifecycle.php';
 
 $config = require __DIR__ . '/config.php';
 $mysqli = new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
@@ -13,6 +14,7 @@ if ($mysqli->connect_errno) {
 }
 $mysqli->set_charset($config['charset']);
 $mysqli->query("SET NAMES {$config['charset']}");
+expireStaysAndPendingRequests($mysqli);
 
 $sessionUser = getSessionUser();
 $sessionRole = strtolower(trim($sessionUser['rol'] ?? ''));
@@ -33,7 +35,13 @@ if ($securityView) {
     // (prioriza activa; si no hay activa, toma la más reciente archivada).
     $query = "SELECT e.id, e.nombre, e.apellidos, e.username, e.dni_pasaporte, e.fecha_nacimiento, e.email,
                      e.phone_prefix, e.phone_number,
-                     s.motivo, s.fecha_inicio, s.fecha_fin, COALESCE(s.group_id, pgr.group_id) AS group_id, g.name AS group_name, e.foto_url, e.rol, s.horario, s.institucion, s.pais,
+                     COALESCE(pgr.motivo, s.motivo) AS motivo,
+                     COALESCE(pgr.fecha_inicio, s.fecha_inicio) AS fecha_inicio,
+                     COALESCE(pgr.fecha_fin, s.fecha_fin) AS fecha_fin,
+                     COALESCE(s.group_id, pgr.group_id) AS group_id, g.name AS group_name, e.foto_url, e.rol,
+                     COALESCE(pgr.horario, s.horario) AS horario,
+                     COALESCE(pgr.institucion, s.institucion) AS institucion,
+                     COALESCE(pgr.pais, s.pais) AS pais,
                      (
                          SELECT CONCAT(TRIM(c.nombre), ' ', TRIM(c.apellidos))
                          FROM employees c
@@ -78,7 +86,7 @@ if ($securityView) {
                   LIMIT 1
               )
               LEFT JOIN (
-                  SELECT g1.employee_id, g1.group_id
+                  SELECT g1.id AS request_id, g1.employee_id, g1.group_id, g1.motivo, g1.fecha_inicio, g1.fecha_fin, g1.horario, g1.institucion, g1.pais
                   FROM group_join_requests g1
                   INNER JOIN (
                       SELECT employee_id, MAX(id) AS max_id

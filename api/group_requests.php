@@ -4,6 +4,7 @@ header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . '/auth.php';
 requireRole(['supervisor', 'coordinador', 'admin']);
 require_once __DIR__ . '/email_templates.php';
+require_once __DIR__ . '/stay_lifecycle.php';
 
 $config = require __DIR__ . '/config.php';
 $method = $_SERVER['REQUEST_METHOD'];
@@ -35,6 +36,7 @@ $sendError = function (int $code, string $msg) {
 try {
     $mysqli = new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
     $mysqli->set_charset($config['charset']);
+    expireStaysAndPendingRequests($mysqli);
 } catch (Throwable $e) {
     $sendError(500, 'Database connection error');
 }
@@ -267,7 +269,25 @@ if ($method === 'POST') {
                     'institucion' => $request['institucion'] ?? '',
                     'pais' => $request['pais'] ?? '',
                 ];
-                $welcomeEmailSent = @sendNewStayWelcomeEmail((string)($request['email'] ?? ''), (string)($request['nombre'] ?? ''), $stayData, $loginUrl, $config);
+                $recipientEmail = trim((string)($request['email'] ?? ''));
+                if ($recipientEmail === '') {
+                    $recipientEmail = trim((string)($request['requested_by_email'] ?? ''));
+                }
+                if ($recipientEmail === '') {
+                    $emailStmt = $mysqli->prepare("SELECT email FROM employees WHERE id = ? LIMIT 1");
+                    if ($emailStmt) {
+                        $emailStmt->bind_param('i', $employeeId);
+                        $emailStmt->execute();
+                        $emailRes = $emailStmt->get_result();
+                        $emailRow = $emailRes ? $emailRes->fetch_assoc() : null;
+                        $recipientEmail = trim((string)($emailRow['email'] ?? ''));
+                        $emailStmt->close();
+                    }
+                }
+                $welcomeEmailSent = @sendNewStayWelcomeEmail($recipientEmail, (string)($request['nombre'] ?? ''), $stayData, $loginUrl, $config);
+                if ($welcomeEmailSent === false) {
+                    error_log("Fallo correo nueva estancia (API) para request_id={$requestId}, recipient={$recipientEmail}");
+                }
             }
 
             echo json_encode([

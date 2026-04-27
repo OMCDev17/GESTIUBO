@@ -7,6 +7,29 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+function getInstituteLogoPath(): string {
+    return __DIR__ . '/../imagenes/instituto-biorganica-agonzalez-original.png';
+}
+
+function getInstituteLogoFallbackUrl(): string {
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    return "{$scheme}://{$host}/GESTIUBO/imagenes/instituto-biorganica-agonzalez-original.png";
+}
+
+function attachInstituteLogo(PHPMailer $mailer): string {
+    $logoPath = getInstituteLogoPath();
+    if (is_file($logoPath) && is_readable($logoPath)) {
+        try {
+            $mailer->addEmbeddedImage($logoPath, 'gestiubo_logo', 'instituto-logo.png');
+            return 'cid:gestiubo_logo';
+        } catch (Throwable $e) {
+            error_log('No se pudo embeder el logo del correo: ' . $e->getMessage());
+        }
+    }
+    return getInstituteLogoFallbackUrl();
+}
+
 /**
  * Envía un correo de restablecimiento de contraseña con código de 4 dígitos
  * 
@@ -19,7 +42,6 @@ use PHPMailer\PHPMailer\Exception;
 function sendPasswordResetEmail($email, $userName, $code, $config) {
     require_once __DIR__ . '/../vendor/autoload.php';
 
-    $htmlBody = getPasswordResetTemplate($userName, $code);
     $textBody = "Restablecimiento de contrasena / Password reset\n\n"
         . "Hola {$userName} / Hello {$userName},\n\n"
         . "Tu codigo de verificacion / Your verification code: {$code}\n"
@@ -38,6 +60,8 @@ function sendPasswordResetEmail($email, $userName, $code, $config) {
         $mailer->Port = $config['smtp']['port'];
         $mailer->setFrom($config['smtp']['from_email'], 'Instituto de Bio-Orgánica Antonio González');
         $mailer->addAddress($email);
+        $logoSrc = attachInstituteLogo($mailer);
+        $htmlBody = getPasswordResetTemplate($userName, $code, $logoSrc);
         $mailer->Subject = 'Restablecimiento de contrasena / Password reset - Instituto de Bio-Organica Antonio Gonzalez';
         $mailer->isHTML(true);
         $mailer->Body = $htmlBody;
@@ -45,7 +69,7 @@ function sendPasswordResetEmail($email, $userName, $code, $config) {
         $mailer->send();
         return true;
     } catch (Exception $e) {
-        error_log("Error enviando correo de restablecimiento: " . $e->getMessage());
+        error_log("Error enviando correo de restablecimiento a {$email}: " . $e->getMessage());
         return false;
     }
 }
@@ -63,7 +87,6 @@ function sendPasswordResetEmail($email, $userName, $code, $config) {
 function sendWelcomeEmail($email, $userName, $firstName, $loginUrl, $config) {
     require_once __DIR__ . '/../vendor/autoload.php';
 
-    $htmlBody = getWelcomeTemplate($firstName, $userName, $loginUrl);
     $textBody = "Bienvenido/a / Welcome\n\n"
         . "Hola {$firstName} / Hello {$firstName},\n\n"
         . "Tu cuenta ha sido creada correctamente / Your account has been created successfully.\n"
@@ -82,6 +105,8 @@ function sendWelcomeEmail($email, $userName, $firstName, $loginUrl, $config) {
         $mailer->Port = $config['smtp']['port'];
         $mailer->setFrom($config['smtp']['from_email'], 'Instituto de Bio-Orgánica Antonio González');
         $mailer->addAddress($email);
+        $logoSrc = attachInstituteLogo($mailer);
+        $htmlBody = getWelcomeTemplate($firstName, $userName, $loginUrl, $logoSrc);
         $mailer->Subject = 'Bienvenido/a / Welcome - Instituto de Bio-Organica Antonio Gonzalez';
         $mailer->isHTML(true);
         $mailer->Body = $htmlBody;
@@ -96,12 +121,16 @@ function sendWelcomeEmail($email, $userName, $firstName, $loginUrl, $config) {
 
 function sendNewStayWelcomeEmail($email, $firstName, $stayData, $loginUrl, $config) {
     require_once __DIR__ . '/../vendor/autoload.php';
+    $email = trim((string)$email);
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        error_log("Error enviando correo de nueva estancia: destinatario invalido [" . $email . "]");
+        return false;
+    }
 
-    $htmlBody = getNewStayWelcomeTemplate($firstName, $stayData, $loginUrl);
     $textBody = "Bienvenido/a de nuevo / Welcome back\n\n"
         . "Hola {$firstName} / Hello {$firstName},\n\n"
         . "Tu nueva estancia ha sido aprobada.\n"
-        . "Your new stay has been approved.\n\n"
+        . "Your New Internship has been approved.\n\n"
         . "Grupo / Group: " . ($stayData['group_name'] ?? '-') . "\n"
         . "Motivo / Purpose: " . ($stayData['motivo'] ?? '-') . "\n"
         . "Inicio / Start: " . ($stayData['fecha_inicio'] ?? '-') . "\n"
@@ -122,6 +151,8 @@ function sendNewStayWelcomeEmail($email, $firstName, $stayData, $loginUrl, $conf
         $mailer->Port = $config['smtp']['port'];
         $mailer->setFrom($config['smtp']['from_email'], 'Instituto de Bio-Organica Antonio Gonzalez');
         $mailer->addAddress($email);
+        $logoSrc = attachInstituteLogo($mailer);
+        $htmlBody = getNewStayWelcomeTemplate($firstName, $stayData, $loginUrl, $logoSrc);
         $mailer->Subject = 'Bienvenido/a de nuevo / Welcome back - Nueva estancia aprobada';
         $mailer->isHTML(true);
         $mailer->Body = $htmlBody;
@@ -129,21 +160,23 @@ function sendNewStayWelcomeEmail($email, $firstName, $stayData, $loginUrl, $conf
         $mailer->send();
         return true;
     } catch (Exception $e) {
-        error_log("Error enviando correo de nueva estancia: " . $e->getMessage());
+        error_log("Error enviando correo de nueva estancia a {$email}: " . $e->getMessage());
         return false;
     }
 }
 
 function sendGroupApprovalRequestEmail($email, $supervisorName, $requestData, $config) {
     require_once __DIR__ . '/../vendor/autoload.php';
-
-    $htmlBody = getGroupApprovalRequestTemplate($supervisorName, $requestData);
-    $textBody = "Solicitud de aprobacion de grupo / Group approval request\n\n"
-        . "Empleado / Employee: " . ($requestData['employee_name'] ?? '') . "\n"
+    $email = trim((string)$email);
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        error_log("Error enviando correo de aprobacion de grupo: destinatario invalido [" . $email . "]");
+        return false;
+    }
+    $textBody = "Solicitud de aprobacion de grupo\n\n"
+        . "Empleado: " . ($requestData['employee_name'] ?? '') . "\n"
         . "Email: " . ($requestData['employee_email'] ?? '') . "\n"
-        . "Grupo / Group: " . ($requestData['group_name'] ?? '') . "\n"
-        . "Por favor accede a la aplicacion para aprobar o rechazar la solicitud.\n"
-        . "Please access the application to approve or reject this request.";
+        . "Grupo: " . ($requestData['group_name'] ?? '') . "\n"
+        . "Por favor accede a la aplicacion para aprobar o rechazar la solicitud.\n";
 
     try {
         $mailer = new PHPMailer(true);
@@ -157,19 +190,21 @@ function sendGroupApprovalRequestEmail($email, $supervisorName, $requestData, $c
         $mailer->Port = $config['smtp']['port'];
         $mailer->setFrom($config['smtp']['from_email'], 'Instituto de Bio-Organica Antonio Gonzalez');
         $mailer->addAddress($email);
-        $mailer->Subject = 'Nueva solicitud de miembro / New group member request';
+        $logoSrc = attachInstituteLogo($mailer);
+        $htmlBody = getGroupApprovalRequestTemplate($supervisorName, $requestData, $logoSrc);
+        $mailer->Subject = 'Nueva solicitud de miembro';
         $mailer->isHTML(true);
         $mailer->Body = $htmlBody;
         $mailer->AltBody = $textBody;
         $mailer->send();
         return true;
     } catch (Exception $e) {
-        error_log("Error enviando correo de aprobacion de grupo: " . $e->getMessage());
+        error_log("Error enviando correo de aprobacion de grupo a {$email}: " . $e->getMessage());
         return false;
     }
 }
 
-function getGroupApprovalRequestTemplate($supervisorName, $requestData) {
+function getGroupApprovalRequestTemplate($supervisorName, $requestData, $logoSrc = null) {
     $year = date('Y');
     $employeeName = htmlspecialchars((string)($requestData['employee_name'] ?? ''), ENT_QUOTES, 'UTF-8');
     $employeeEmail = htmlspecialchars((string)($requestData['employee_email'] ?? ''), ENT_QUOTES, 'UTF-8');
@@ -179,7 +214,13 @@ function getGroupApprovalRequestTemplate($supervisorName, $requestData) {
     $fechaFin = htmlspecialchars((string)($requestData['fecha_fin'] ?? ''), ENT_QUOTES, 'UTF-8');
     $institucion = htmlspecialchars((string)($requestData['institucion'] ?? ''), ENT_QUOTES, 'UTF-8');
     $pais = htmlspecialchars((string)($requestData['pais'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $approveUrl = trim((string)($requestData['approve_url'] ?? ''));
+    $approveUrlEsc = htmlspecialchars($approveUrl, ENT_QUOTES, 'UTF-8');
+    $logoSrc = htmlspecialchars((string)($logoSrc ?? getInstituteLogoFallbackUrl()), ENT_QUOTES, 'UTF-8');
     $supervisorName = htmlspecialchars((string)$supervisorName, ENT_QUOTES, 'UTF-8');
+    $approveCta = $approveUrl !== ''
+        ? "<div class=\"cta\"><a href=\"{$approveUrlEsc}\">Abrir solicitud</a></div>"
+        : '';
 
     return <<<HTML
     <!DOCTYPE html>
@@ -192,41 +233,46 @@ function getGroupApprovalRequestTemplate($supervisorName, $requestData) {
             body { margin:0; padding:0; font-family:Arial,sans-serif; background:#f8fafc; color:#0f172a; }
             .container { max-width:620px; margin:32px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(15,23,42,.08); }
             .header { background:linear-gradient(135deg,#5c068c 0%,#7c1fa8 100%); color:#fff; padding:32px 24px; }
+            .logo { height:60px; margin:0 auto 16px auto; display:block; background:#ffffff; padding:8px 10px; border-radius:10px; }
             .content { padding:32px 24px; }
             .card { background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin:24px 0; }
             .label { font-size:12px; text-transform:uppercase; color:#64748b; margin-bottom:4px; }
             .value { font-size:15px; font-weight:600; color:#0f172a; margin-bottom:14px; }
             .note { margin-top:20px; font-size:13px; color:#475569; line-height:1.6; }
+            .cta { margin: 22px 0 8px 0; }
+            .cta a { display:inline-block; background:#5c068c; color:#fff !important; text-decoration:none; padding:12px 20px; border-radius:8px; font-weight:700; font-size:14px; }
             .footer { padding:24px; background:#f8fafc; border-top:1px solid #e2e8f0; color:#64748b; font-size:12px; }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <h1 style="margin:0;font-size:26px;">Nueva solicitud de miembro / New member request</h1>
-                <p style="margin:10px 0 0 0;font-size:14px;color:#ede9fe;">Hay una nueva solicitud pendiente de aprobacion / A new request is pending approval</p>
+                <img alt="Logo Instituto de Bio-Orgánica Antonio González" class="logo" src="{$logoSrc}" />
+                <h1 style="margin:0;font-size:26px;">Nueva solicitud de miembro</h1>
+                <p style="margin:10px 0 0 0;font-size:14px;color:#ede9fe;">Hay una nueva solicitud pendiente de aprobacion</p>
             </div>
             <div class="content">
-                <p>Hola {$supervisorName},<br>Hello {$supervisorName},</p>
-                <p>Un nuevo usuario se ha registrado y solicita incorporarse al grupo <strong>{$groupName}</strong>.<br>A new user has registered and requested to join group <strong>{$groupName}</strong>.</p>
+                <p>Hola {$supervisorName},</p>
+                <p>Un nuevo usuario se ha registrado y solicita incorporarse al grupo <strong>{$groupName}</strong>.</p>
                 <div class="card">
-                    <div class="label">Empleado / Employee</div>
+                    <div class="label">Empleado</div>
                     <div class="value">{$employeeName}</div>
                     <div class="label">Email</div>
                     <div class="value">{$employeeEmail}</div>
-                    <div class="label">Motivo / Purpose</div>
+                    <div class="label">Motivo</div>
                     <div class="value">{$motivo}</div>
-                    <div class="label">Fechas / Dates</div>
+                    <div class="label">Fechas</div>
                     <div class="value">{$fechaInicio} - {$fechaFin}</div>
-                    <div class="label">Institucion / Institution</div>
+                    <div class="label">Institucion</div>
                     <div class="value">{$institucion}</div>
-                    <div class="label">Pais / Country</div>
+                    <div class="label">Pais</div>
                     <div class="value">{$pais}</div>
                 </div>
-                <p class="note"><strong>Accede a la aplicacion GestIUBO / Access GestIUBO</strong> para revisar y tomar una decision sobre esta solicitud desde el panel de coordinador. Podras aprobar o rechazarla directamente en el sistema.<br>Review this request in the coordinator panel and approve or reject it directly in the system.</p>
+                <p class="note"><strong>Accede a la aplicacion GestIUBO</strong> para revisar y tomar una decision sobre esta solicitud desde el panel de coordinador. Podras aprobar o rechazarla directamente en el sistema.</p>
+                {$approveCta}
             </div>
             <div class="footer">
-                <p style="margin:0;">Correo automatico de GestIUBO / Automated email from GestIUBO.</p>
+                <p style="margin:0;">Correo automatico de GestIUBO.</p>
                 <p style="margin:8px 0 0 0;">&copy; {$year} Instituto de Bio-Organica Antonio Gonzalez</p>
             </div>
         </div>
@@ -242,8 +288,9 @@ function getGroupApprovalRequestTemplate($supervisorName, $requestData) {
  * @param string $code Código de 4 dígitos
  * @return string HTML del correo
  */
-function getPasswordResetTemplate($userName, $code) {
+function getPasswordResetTemplate($userName, $code, $logoSrc = null) {
     $year = date('Y');
+    $logoSrc = htmlspecialchars((string)($logoSrc ?? getInstituteLogoFallbackUrl()), ENT_QUOTES, 'UTF-8');
     return <<<HTML
     <!DOCTYPE html>
     <html lang="es" style="margin: 0; padding: 0;">
@@ -275,7 +322,11 @@ function getPasswordResetTemplate($userName, $code) {
             }
             .logo {
                 height: 60px;
-                margin-bottom: 20px;
+                margin: 0 auto 20px auto;
+                display: block;
+                background: #ffffff;
+                padding: 8px 10px;
+                border-radius: 10px;
             }
             .header h1 {
                 margin: 0;
@@ -397,6 +448,7 @@ function getPasswordResetTemplate($userName, $code) {
         <div class="container">
             <!-- Header -->
             <div class="header">
+                <img alt="Logo Instituto de Bio-Org�nica Antonio Gonz�lez" class="logo" src="{$logoSrc}" />
                 <h1>Restablecimiento de contraseña / Password reset</h1>
                 <p style="font-size:14px; margin-top: 8px; color: #e5e7eb;">Instituto de Bio-Orgánica Antonio González - GestIUBO</p>
             </div>
@@ -469,8 +521,9 @@ function getPasswordResetTemplate($userName, $code) {
  * @param string $loginUrl URL de la página de login
  * @return string HTML del correo
  */
-function getWelcomeTemplate($firstName, $userName, $loginUrl) {
+function getWelcomeTemplate($firstName, $userName, $loginUrl, $logoSrc = null) {
     $year = date('Y');
+    $logoSrc = htmlspecialchars((string)($logoSrc ?? getInstituteLogoFallbackUrl()), ENT_QUOTES, 'UTF-8');
     return <<<HTML
     <!DOCTYPE html>
     <html lang="es" style="margin: 0; padding: 0;">
@@ -502,7 +555,11 @@ function getWelcomeTemplate($firstName, $userName, $loginUrl) {
             }
             .logo {
                 height: 60px;
-                margin-bottom: 20px;
+                margin: 0 auto 20px auto;
+                display: block;
+                background: #ffffff;
+                padding: 8px 10px;
+                border-radius: 10px;
             }
             .header h1 {
                 margin: 0;
@@ -682,7 +739,7 @@ function getWelcomeTemplate($firstName, $userName, $loginUrl) {
         <div class="container">
             <!-- Header -->
             <div class="header">
-                <img alt="Logo Instituto de Bio-Orgánica Antonio González" class="logo" src="https://localhost/GESTIUBO/imagenes/instituto-biorganica-agonzalez-original.png" />
+                <img alt="Logo Instituto de Bio-Orgánica Antonio González" class="logo" src="{$logoSrc}" />
                 <h1>Bienvenido/a al Instituto de Bio-Orgánica Antonio González / Welcome to Instituto de Bio-Orgánica Antonio González</h1>
                 <p>Tu cuenta ha sido creada exitosamente / Your account has been created successfully</p>
             </div>
@@ -757,7 +814,7 @@ function getWelcomeTemplate($firstName, $userName, $loginUrl) {
     HTML;
 }
 
-function getNewStayWelcomeTemplate($firstName, $stayData, $loginUrl) {
+function getNewStayWelcomeTemplate($firstName, $stayData, $loginUrl, $logoSrc = null) {
     $year = date('Y');
     $firstName = htmlspecialchars((string)$firstName, ENT_QUOTES, 'UTF-8');
     $groupName = htmlspecialchars((string)($stayData['group_name'] ?? '-'), ENT_QUOTES, 'UTF-8');
@@ -767,6 +824,7 @@ function getNewStayWelcomeTemplate($firstName, $stayData, $loginUrl) {
     $institucion = htmlspecialchars((string)($stayData['institucion'] ?? '-'), ENT_QUOTES, 'UTF-8');
     $pais = htmlspecialchars((string)($stayData['pais'] ?? '-'), ENT_QUOTES, 'UTF-8');
     $loginUrl = htmlspecialchars((string)$loginUrl, ENT_QUOTES, 'UTF-8');
+    $logoSrc = htmlspecialchars((string)($logoSrc ?? getInstituteLogoFallbackUrl()), ENT_QUOTES, 'UTF-8');
 
     return <<<HTML
     <!DOCTYPE html>
@@ -779,6 +837,7 @@ function getNewStayWelcomeTemplate($firstName, $stayData, $loginUrl) {
             body { margin:0; padding:0; font-family:Arial,sans-serif; background:#f8fafc; color:#0f172a; }
             .container { max-width:620px; margin:32px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(15,23,42,.08); }
             .header { background:linear-gradient(135deg,#5c068c 0%,#7c1fa8 100%); color:#fff; padding:32px 24px; }
+            .logo { height:60px; margin:0 auto 16px auto; display:block; background:#ffffff; padding:8px 10px; border-radius:10px; }
             .content { padding:32px 24px; }
             .card { background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin:24px 0; }
             .label { font-size:12px; text-transform:uppercase; color:#64748b; margin-bottom:4px; }
@@ -790,12 +849,13 @@ function getNewStayWelcomeTemplate($firstName, $stayData, $loginUrl) {
     <body>
         <div class="container">
             <div class="header">
+                <img alt="Logo Instituto de Bio-Org�nica Antonio Gonz�lez" class="logo" src="{$logoSrc}" />
                 <h1 style="margin:0;font-size:26px;">Bienvenido/a de nuevo / Welcome back</h1>
-                <p style="margin:10px 0 0 0;font-size:14px;color:#ede9fe;">Tu nueva estancia fue aprobada / Your new stay has been approved</p>
+                <p style="margin:10px 0 0 0;font-size:14px;color:#ede9fe;">Tu nueva estancia fue aprobada / Your New Internship has been approved</p>
             </div>
             <div class="content">
                 <p>Hola <strong>{$firstName}</strong>,<br>Hello <strong>{$firstName}</strong>,</p>
-                <p>Tu solicitud de nueva estancia ha sido aprobada. Aquí tienes el detalle:<br>Your new stay request has been approved. Here are the details:</p>
+                <p>Tu solicitud de nueva estancia ha sido aprobada. Aquí tienes el detalle:<br>Your New Internship request has been approved. Here are the details:</p>
                 <div class="card">
                     <div class="label">Grupo / Group</div>
                     <div class="value">{$groupName}</div>
@@ -823,6 +883,11 @@ function getNewStayWelcomeTemplate($firstName, $stayData, $loginUrl) {
     </html>
     HTML;
 }
+
+
+
+
+
 
 
 

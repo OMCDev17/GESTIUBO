@@ -1,6 +1,7 @@
 <?php
 $config = require __DIR__ . '/api/config.php';
 require_once __DIR__ . '/api/email_templates.php';
+require_once __DIR__ . '/api/stay_lifecycle.php';
 $mysqli = new mysqli($config['host'], $config['user'], $config['pass'], $config['db']);
 if ($mysqli->connect_errno) {
     http_response_code(500);
@@ -52,6 +53,7 @@ CREATE TABLE IF NOT EXISTS stays (
     INDEX idx_stays_employee (employee_id),
     INDEX idx_stays_status (status)
 )");
+expireStaysAndPendingRequests($mysqli);
 
 $token = trim((string)($_GET['token'] ?? ''));
 if ($token === '') {
@@ -154,14 +156,30 @@ if (($request['status'] ?? '') === 'approved') {
             'institucion' => $request['institucion'] ?? '',
             'pais' => $request['pais'] ?? '',
         ];
+        $recipientEmail = trim((string)($request['email'] ?? ''));
+        if ($recipientEmail === '') {
+            $recipientEmail = trim((string)($request['requested_by_email'] ?? ''));
+        }
+        if ($recipientEmail === '') {
+            $emailStmt = $mysqli->prepare("SELECT email FROM employees WHERE id = ? LIMIT 1");
+            if ($emailStmt) {
+                $emailStmt->bind_param('i', $employeeId);
+                $emailStmt->execute();
+                $emailRes = $emailStmt->get_result();
+                $emailRow = $emailRes ? $emailRes->fetch_assoc() : null;
+                $recipientEmail = trim((string)($emailRow['email'] ?? ''));
+                $emailStmt->close();
+            }
+        }
         $welcomeEmailSent = @sendNewStayWelcomeEmail(
-            (string)($request['email'] ?? ''),
+            $recipientEmail,
             (string)($request['nombre'] ?? ''),
             $stayData,
             $loginUrl,
             $config
         );
         if ($welcomeEmailSent === false) {
+            error_log("Fallo correo nueva estancia (token) para request_id={$requestId}, recipient={$recipientEmail}");
             $message .= ' No se pudo enviar el correo de bienvenida de nueva estancia.';
         }
     } catch (Throwable $e) {

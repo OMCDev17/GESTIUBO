@@ -302,7 +302,7 @@ $fullName = $user ? htmlspecialchars(trim(($user['nombre'] ?? '') . ' ' . ($user
                 const isSoloLectivo = Number(emp.horario) === 0;
                 const soloLectivoBadgeClass = 'text-sky-700 dark:text-sky-200 bg-sky-100 dark:bg-sky-900/35';
                 const stayStatus = getStayStatus(emp);
-                const showStayStatusBadge = !emp.pendiente_aprobacion || stayStatus.label === 'Activa';
+                const showStayStatusBadge = !emp.pendiente_aprobacion;
                 const card = document.createElement('div');
                 card.className = 'bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5';
                 card.innerHTML = `
